@@ -9,24 +9,27 @@ const Hero = () => {
       
       <div className="container relative mx-auto px-4">
         <div className="mx-auto max-w-4xl text-center">
-          {/* Brand Badge */}
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-card/50 px-4 py-2 text-sm backdrop-blur-sm glow-effect">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="gradient-text font-semibold">AI MediaFlow</span>
+          {/* Logo */}
+          <div className="mb-8">
+            <img 
+              src="/lovable-uploads/08d2c79f-cac5-4355-aba2-b82c04ec1f90.png" 
+              alt="AI MediaFlow Logo" 
+              className="mx-auto h-32 w-auto object-contain"
+            />
           </div>
           
-          {/* Main Headline - Russian */}
+          {/* Main Headline - English */}
           <h1 className="mb-6 text-4xl font-bold leading-tight lg:text-6xl">
             AI MediaFlow:{" "}
             <span className="gradient-text">
-              Ваш партнер по внедрению AI в бизнес-процессы
+              Your Partner in AI Business Integration
             </span>
           </h1>
           
-          {/* Subtitle - Russian */}
+          {/* Subtitle - English */}
           <p className="mb-8 text-lg text-muted-foreground lg:text-xl">
-            Разрабатываем и внедряем индивидуальные AI-решения для автоматизации 
-            вашего документооборота и повышения эффективности.
+            We develop and implement custom AI solutions to automate your document workflows 
+            and enhance operational efficiency.
           </p>
           
           {/* English Quote */}

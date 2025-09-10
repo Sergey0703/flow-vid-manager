@@ -41,9 +41,11 @@ const Hero = () => {
           </div>
           
           {/* CTA Button */}
-          <Button size="lg" className="glow-effect group">
-            Explore Our Solutions
-            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+          <Button size="lg" className="glow-effect group" asChild>
+            <a href="/auth">
+              Get Started
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </a>
           </Button>
         </div>
       </div>

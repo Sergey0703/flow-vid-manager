@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,8 +60,11 @@ const Admin = () => {
   const [videos, setVideos] = useState<Video[]>(mockVideos);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Mock auth
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     title: "",
@@ -67,21 +73,49 @@ const Admin = () => {
     sort_order: videos.length + 1
   });
 
-  const handleLogin = () => {
-    // Mock login - integrate with Supabase Auth
-    setIsAuthenticated(true);
-    toast({
-      title: "Login Successful",
-      description: "Welcome to AI MediaFlow Admin Panel",
-    });
-  };
+  // Authentication state management
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    );
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out",
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
     });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !session) {
+      navigate("/auth");
+    }
+  }, [session, isLoading, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully.",
+      });
+      navigate("/auth");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,33 +193,21 @@ const Admin = () => {
     });
   };
 
-  if (!isAuthenticated) {
+  // Show loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-hero">
-        <Card className="w-full max-w-md card-gradient glow-effect">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Shield className="h-6 w-6 text-primary" />
-            </div>
-            <CardTitle className="text-2xl">Admin Access</CardTitle>
-            <p className="text-muted-foreground">Sign in to manage your video content</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" placeholder="admin@aimediaflow.com" />
-            </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <Input type="password" placeholder="••••••••" />
-            </div>
-            <Button onClick={handleLogin} className="w-full glow-effect">
-              Sign In
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
+  }
+
+  // Redirect will happen via useEffect if not authenticated
+  if (!session || !user) {
+    return null;
   }
 
   return (
@@ -198,6 +220,10 @@ const Admin = () => {
             <p className="text-muted-foreground">Manage your AI MediaFlow content</p>
           </div>
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Shield className="h-4 w-4" />
+              {user.email}
+            </div>
             <Button variant="outline" onClick={() => setShowUploadForm(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Video

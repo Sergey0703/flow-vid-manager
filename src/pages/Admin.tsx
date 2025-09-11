@@ -24,45 +24,29 @@ import {
   Shield
 } from "lucide-react";
 
-// Mock data - replace with Supabase integration
-const mockVideos = [
-  {
-    id: "1",
-    title: "AI Document Processing Demo",
-    description: "Learn how our AI solution automates document processing workflows, reducing manual effort by 90% while improving accuracy.",
-    url: "https://example.com/video1.mp4",
-    is_published: true,
-    sort_order: 1,
-    created_at: "2024-01-15"
-  },
-  {
-    id: "2", 
-    title: "Intelligent Customer Support System",
-    description: "See our virtual team in action - handling customer inquiries 24/7 with human-like understanding and response quality.",
-    url: "https://example.com/video2.mp4",
-    is_published: false,
-    sort_order: 2,
-    created_at: "2024-01-16"
-  }
-];
-
 interface Video {
   id: string;
   title: string;
-  description: string;
-  url: string;
+  description: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
   is_published: boolean;
   sort_order: number;
+  user_id: string;
+  duration: number | null;
+  file_size: number | null;
   created_at: string;
+  updated_at: string;
 }
 
 const Admin = () => {
-  const [videos, setVideos] = useState<Video[]>(mockVideos);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -70,7 +54,7 @@ const Admin = () => {
     title: "",
     description: "",
     file: null as File | null,
-    sort_order: videos.length + 1
+    sort_order: 1
   });
 
   // Authentication state management
@@ -94,12 +78,39 @@ const Admin = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Load videos from database
+  useEffect(() => {
+    if (session?.user) {
+      fetchVideos();
+    }
+  }, [session?.user]);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
       navigate("/auth");
     }
   }, [session, isLoading, navigate]);
+
+  const fetchVideos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('user_id', session?.user?.id)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setVideos(data || []);
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load videos. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -136,7 +147,7 @@ const Admin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.description) {
+    if (!formData.title || !formData.description || !formData.file || !session?.user) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -145,52 +156,135 @@ const Admin = () => {
       return;
     }
 
-    // Mock upload process - integrate with Supabase Storage & Database
-    const newVideo: Video = {
-      id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description,
-      url: formData.file ? URL.createObjectURL(formData.file) : "",
-      is_published: true,
-      sort_order: formData.sort_order,
-      created_at: new Date().toISOString().split('T')[0]
-    };
+    setUploading(true);
 
-    setVideos(prev => [...prev, newVideo]);
-    setFormData({ title: "", description: "", file: null, sort_order: videos.length + 2 });
-    setShowUploadForm(false);
-    
-    toast({
-      title: "Video Uploaded Successfully",
-      description: `"${newVideo.title}" has been added to your media library`,
-    });
+    try {
+      // Upload video file to storage
+      const fileName = `${session.user.id}/${Date.now()}-${formData.file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(fileName, formData.file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL for the uploaded video
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(fileName);
+
+      // Save video metadata to database
+      const { data: videoData, error: dbError } = await supabase
+        .from('videos')
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          video_url: publicUrl,
+          user_id: session.user.id,
+          sort_order: formData.sort_order,
+          file_size: formData.file.size,
+          is_published: false
+        })
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      // Refresh videos list
+      await fetchVideos();
+      
+      setFormData({ title: "", description: "", file: null, sort_order: videos.length + 1 });
+      setShowUploadForm(false);
+      
+      toast({
+        title: "Video Uploaded Successfully",
+        description: `"${formData.title}" has been added to your media library`,
+      });
+    } catch (error) {
+      console.error('Error uploading video:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const togglePublished = (id: string) => {
-    setVideos(prev => prev.map(video => 
-      video.id === id 
-        ? { ...video, is_published: !video.is_published }
-        : video
-    ));
-    
+  const togglePublished = async (id: string) => {
     const video = videos.find(v => v.id === id);
-    toast({
-      title: video?.is_published ? "Video Unpublished" : "Video Published",
-      description: video?.is_published 
-        ? "Video is now hidden from public view"
-        : "Video is now visible to all users",
-    });
+    if (!video) return;
+
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({ is_published: !video.is_published })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setVideos(prev => prev.map(v => 
+        v.id === id 
+          ? { ...v, is_published: !v.is_published }
+          : v
+      ));
+      
+      toast({
+        title: !video.is_published ? "Video Published" : "Video Unpublished",
+        description: !video.is_published 
+          ? "Video is now visible to all users"
+          : "Video is now hidden from public view",
+      });
+    } catch (error) {
+      console.error('Error updating video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update video status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const video = videos.find(v => v.id === id);
-    setVideos(prev => prev.filter(v => v.id !== id));
-    
-    toast({
-      title: "Video Deleted",
-      description: `"${video?.title}" has been removed from your library`,
-      variant: "destructive"
-    });
+    if (!video) return;
+
+    try {
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', id);
+
+      if (dbError) throw dbError;
+
+      // Delete file from storage if it exists
+      if (video.video_url) {
+        const fileName = video.video_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from('videos')
+            .remove([`${video.user_id}/${fileName}`]);
+        }
+      }
+
+      // Update local state
+      setVideos(prev => prev.filter(v => v.id !== id));
+      
+      toast({
+        title: "Video Deleted",
+        description: `"${video.title}" has been removed from your library`,
+        variant: "destructive"
+      });
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete video. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Show loading state
@@ -299,9 +393,9 @@ const Admin = () => {
                     </p>
                   )}
                 </div>
-                <Button type="submit" className="glow-effect">
+                <Button type="submit" className="glow-effect" disabled={uploading}>
                   <Save className="mr-2 h-4 w-4" />
-                  Upload Video
+                  {uploading ? "Uploading..." : "Upload Video"}
                 </Button>
               </form>
             </CardContent>
@@ -338,12 +432,15 @@ const Admin = () => {
                           {video.is_published ? "Published" : "Draft"}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {video.description}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Order: {video.sort_order}</span>
-                        <span>Created: {video.created_at}</span>
+                        <span>Created: {new Date(video.created_at).toLocaleDateString()}</span>
+                        {video.file_size && (
+                          <span>Size: {(video.file_size / 1024 / 1024).toFixed(1)} MB</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

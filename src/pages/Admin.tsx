@@ -57,6 +57,12 @@ const Admin = () => {
     sort_order: 1
   });
 
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    description: "",
+    sort_order: 1
+  });
+
   // Authentication state management
   useEffect(() => {
     // Set up auth state listener
@@ -287,6 +293,67 @@ const Admin = () => {
     }
   };
 
+  const handleEditStart = (video: Video) => {
+    setEditingVideo(video);
+    setEditFormData({
+      title: video.title,
+      description: video.description || "",
+      sort_order: video.sort_order
+    });
+  };
+
+  const handleEditCancel = () => {
+    setEditingVideo(null);
+    setEditFormData({ title: "", description: "", sort_order: 1 });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingVideo || !editFormData.title || !editFormData.description) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .update({
+          title: editFormData.title,
+          description: editFormData.description,
+          sort_order: editFormData.sort_order
+        })
+        .eq('id', editingVideo.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setVideos(prev => prev.map(v => 
+        v.id === editingVideo.id 
+          ? { ...v, title: editFormData.title, description: editFormData.description, sort_order: editFormData.sort_order }
+          : v
+      ));
+      
+      handleEditCancel();
+      
+      toast({
+        title: "Video Updated",
+        description: `"${editFormData.title}" has been updated successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating video:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update video. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Show loading state
   if (isLoading) {
     return (
@@ -402,6 +469,70 @@ const Admin = () => {
           </Card>
         )}
 
+        {/* Edit Form */}
+        {editingVideo && (
+          <Card className="mb-8 card-gradient glow-effect">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Edit className="h-5 w-5 text-primary" />
+                  Edit Video: {editingVideo.title}
+                </CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleEditCancel}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Video Title *</Label>
+                    <Input
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Enter video title"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sort Order</Label>
+                    <Input
+                      type="number"
+                      value={editFormData.sort_order}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
+                      min="1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Description *</Label>
+                  <Textarea
+                    value={editFormData.description}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Enter video description"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="glow-effect">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleEditCancel}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Videos List */}
         <Card className="card-gradient glow-effect">
           <CardHeader>
@@ -455,7 +586,11 @@ const Admin = () => {
                           <EyeOff className="h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditStart(video)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 

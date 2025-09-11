@@ -1,40 +1,79 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Hero from "@/components/Hero";
 import VideoGrid from "@/components/VideoGrid";
 import Footer from "@/components/Footer";
 
-// Mock video data - replace with Supabase integration
-const mockVideos = [
-  {
-    id: "1",
-    title: "AI Document Processing Revolution",
-    description: "Discover how our intelligent document processing system transforms paper-based workflows into digital excellence. Watch as our AI handles complex documents with 99.9% accuracy, extracting key data points and routing information automatically.",
-    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    is_published: true,
-    sort_order: 1
-  },
-  {
-    id: "2", 
-    title: "Virtual Customer Support Excellence",
-    description: "Meet your new 24/7 customer support team that never sleeps. Our AI-powered virtual assistants understand context, emotion, and intent to provide human-quality support at any scale. See real customer interactions and satisfaction scores.",
-    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    is_published: true,
-    sort_order: 2
-  },
-  {
-    id: "3",
-    title: "Automated Workflow Intelligence",
-    description: "Experience the future of business process automation. Our AI team monitors, learns, and optimizes your workflows in real-time, identifying bottlenecks and implementing solutions faster than any human team could achieve.",
-    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", 
-    is_published: true,
-    sort_order: 3
-  }
-];
+interface Video {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  is_published: boolean;
+  sort_order: number;
+}
 
 const Index = () => {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('videos')
+          .select('id, title, description, video_url, is_published, sort_order')
+          .eq('is_published', true)
+          .order('sort_order', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching videos:', error);
+          return;
+        }
+
+        const formattedVideos: Video[] = data.map(video => ({
+          id: video.id,
+          title: video.title,
+          description: video.description || '',
+          url: video.video_url || '',
+          is_published: video.is_published,
+          sort_order: video.sort_order
+        }));
+
+        setVideos(formattedVideos);
+      } catch (error) {
+        console.error('Error fetching videos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen">
+        <Hero />
+        <section className="py-16">
+          <div className="container mx-auto px-4 text-center">
+            <div className="mx-auto max-w-md">
+              <div className="mb-4 rounded-full bg-muted/50 p-4 inline-block">
+                <div className="h-12 w-12 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+              </div>
+              <p className="text-muted-foreground">Loading videos...</p>
+            </div>
+          </div>
+        </section>
+        <Footer />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen">
       <Hero />
-      <VideoGrid videos={mockVideos} />
+      <VideoGrid videos={videos} />
       <Footer />
     </main>
   );

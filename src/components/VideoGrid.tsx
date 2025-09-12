@@ -7,6 +7,7 @@ interface Video {
   url: string;
   is_published: boolean;
   sort_order: number;
+  thumbnail_url?: string;
 }
 
 interface VideoGridProps {
@@ -58,6 +59,7 @@ const VideoGrid = ({ videos }: VideoGridProps) => {
               src={video.url}
               title={video.title}
               description={video.description}
+              posterUrl={video.thumbnail_url}
             />
           ))}
         </div>

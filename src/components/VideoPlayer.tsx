@@ -4,9 +4,10 @@ interface VideoPlayerProps {
   src: string;
   title: string;
   description: string;
+  posterUrl?: string;
 }
 
-const VideoPlayer = ({ src, title, description }: VideoPlayerProps) => {
+const VideoPlayer = ({ src, title, description, posterUrl }: VideoPlayerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -46,7 +47,7 @@ const VideoPlayer = ({ src, title, description }: VideoPlayerProps) => {
             setIsLoading(false);
             setHasError(true);
           }}
-          poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiBmaWxsPSJoc2woMjIwIDI1JSAxMiUpIi8+CjxjaXJjbGUgY3g9Ijk2MCIgY3k9IjU0MCIgcj0iNjAiIGZpbGw9ImhzbCgxOTAgMTAwJSA1MCUpIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8cGF0aCBkPSJNOTMwIDUwNUw5OTAgNTQwTDkzMCA1NzVWNTA1WiIgZmlsbD0iaHNsKDIyMCAyMCUgOCUpIi8+Cjwvc3ZnPgo="
+          poster={posterUrl || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiBmaWxsPSJoc2woMjIwIDI1JSAxMiUpIi8+CjxjaXJjbGUgY3g9Ijk2MCIgY3k9IjU0MCIgcj0iNjAiIGZpbGw9ImhzbCgxOTAgMTAwJSA1MCUpIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8cGF0aCBkPSJNOTMwIDUwNUw5OTAgNTQwTDkzMCA1NzVWNTA1WiIgZmlsbD0iaHNsKDIyMCAyMCUgOCUpIi8+Cjwvc3ZnPgo="}
         />
       </div>
       

@@ -11,6 +11,7 @@ interface Video {
   url: string;
   is_published: boolean;
   sort_order: number;
+  thumbnail_url?: string;
 }
 
 const Index = () => {
@@ -22,7 +23,7 @@ const Index = () => {
       try {
         const { data, error } = await supabase
           .from('videos')
-          .select('id, title, description, video_url, is_published, sort_order')
+          .select('id, title, description, video_url, is_published, sort_order, thumbnail_url')
           .eq('is_published', true)
           .order('sort_order', { ascending: true });
 
@@ -37,7 +38,8 @@ const Index = () => {
           description: video.description || '',
           url: video.video_url || '',
           is_published: video.is_published,
-          sort_order: video.sort_order
+          sort_order: video.sort_order,
+          thumbnail_url: video.thumbnail_url || undefined
         }));
 
         setVideos(formattedVideos);

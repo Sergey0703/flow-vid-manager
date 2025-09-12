@@ -61,7 +61,9 @@ const Admin = () => {
   const [editFormData, setEditFormData] = useState({
     title: "",
     description: "",
-    sort_order: 1
+    sort_order: 1,
+    file: null as File | null,
+    thumbnail: null as File | null
   });
 
   // Authentication state management
@@ -156,6 +158,36 @@ const Admin = () => {
     if (file) {
       if (file.type.startsWith("image/")) {
         setFormData(prev => ({ ...prev, thumbnail: file }));
+      } else {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select an image file (JPG, PNG, etc.)",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const handleEditFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith("video/")) {
+        setEditFormData(prev => ({ ...prev, file }));
+      } else {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select a video file (MP4, MOV, AVI, etc.)",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const handleEditThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith("image/")) {
+        setEditFormData(prev => ({ ...prev, thumbnail: file }));
       } else {
         toast({
           title: "Invalid File Type",
@@ -333,19 +365,21 @@ const Admin = () => {
     setEditFormData({
       title: video.title,
       description: video.description || "",
-      sort_order: video.sort_order
+      sort_order: video.sort_order,
+      file: null,
+      thumbnail: null
     });
   };
 
   const handleEditCancel = () => {
     setEditingVideo(null);
-    setEditFormData({ title: "", description: "", sort_order: 1 });
+    setEditFormData({ title: "", description: "", sort_order: 1, file: null, thumbnail: null });
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!editingVideo || !editFormData.title || !editFormData.description) {
+    if (!editingVideo || !editFormData.title || !editFormData.description || !session?.user) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -354,14 +388,75 @@ const Admin = () => {
       return;
     }
 
+    setUploading(true);
+
     try {
+      let updatedData: any = {
+        title: editFormData.title,
+        description: editFormData.description,
+        sort_order: editFormData.sort_order
+      };
+
+      // Handle video file upload if new file is selected
+      if (editFormData.file) {
+        // Delete old video file if exists
+        if (editingVideo.video_url) {
+          const oldFileName = editingVideo.video_url.split('/').pop();
+          if (oldFileName) {
+            await supabase.storage
+              .from('videos')
+              .remove([`${editingVideo.user_id}/${oldFileName}`]);
+          }
+        }
+
+        // Upload new video file
+        const fileName = `${session.user.id}/${Date.now()}-${editFormData.file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('videos')
+          .upload(fileName, editFormData.file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL for the uploaded video
+        const { data: { publicUrl } } = supabase.storage
+          .from('videos')
+          .getPublicUrl(fileName);
+
+        updatedData.video_url = publicUrl;
+        updatedData.file_size = editFormData.file.size;
+      }
+
+      // Handle thumbnail upload if new thumbnail is selected
+      if (editFormData.thumbnail) {
+        // Delete old thumbnail if exists
+        if (editingVideo.thumbnail_url) {
+          const oldThumbnailFileName = editingVideo.thumbnail_url.split('/').pop();
+          if (oldThumbnailFileName) {
+            await supabase.storage
+              .from('thumbnails')
+              .remove([`${editingVideo.user_id}/${oldThumbnailFileName}`]);
+          }
+        }
+
+        // Upload new thumbnail
+        const thumbnailFileName = `${session.user.id}/${Date.now()}-${editFormData.thumbnail.name}`;
+        const { data: thumbnailUploadData, error: thumbnailUploadError } = await supabase.storage
+          .from('thumbnails')
+          .upload(thumbnailFileName, editFormData.thumbnail);
+
+        if (thumbnailUploadError) throw thumbnailUploadError;
+
+        // Get public URL for the uploaded thumbnail
+        const { data: { publicUrl: thumbnailPublicUrl } } = supabase.storage
+          .from('thumbnails')
+          .getPublicUrl(thumbnailFileName);
+
+        updatedData.thumbnail_url = thumbnailPublicUrl;
+      }
+
       const { error } = await supabase
         .from('videos')
-        .update({
-          title: editFormData.title,
-          description: editFormData.description,
-          sort_order: editFormData.sort_order
-        })
+        .update(updatedData)
         .eq('id', editingVideo.id);
 
       if (error) throw error;
@@ -369,7 +464,7 @@ const Admin = () => {
       // Update local state
       setVideos(prev => prev.map(v => 
         v.id === editingVideo.id 
-          ? { ...v, title: editFormData.title, description: editFormData.description, sort_order: editFormData.sort_order }
+          ? { ...v, ...updatedData }
           : v
       ));
       
@@ -386,6 +481,8 @@ const Admin = () => {
         description: "Failed to update video. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -557,21 +654,47 @@ const Admin = () => {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Description *</Label>
-                  <Textarea
-                    value={editFormData.description}
-                    onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter video description"
-                    rows={3}
-                    required
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" className="glow-effect">
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </Button>
+                 <div className="space-y-2">
+                   <Label>Description *</Label>
+                   <Textarea
+                     value={editFormData.description}
+                     onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                     placeholder="Enter video description"
+                     rows={3}
+                     required
+                   />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Replace Video File (Optional)</Label>
+                   <Input
+                     type="file"
+                     accept="video/*"
+                     onChange={handleEditFileUpload}
+                   />
+                   {editFormData.file && (
+                     <p className="text-sm text-muted-foreground">
+                       Selected: {editFormData.file.name} ({(editFormData.file.size / 1024 / 1024).toFixed(2)} MB)
+                     </p>
+                   )}
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Replace Thumbnail/Poster (Optional)</Label>
+                   <Input
+                     type="file"
+                     accept="image/*"
+                     onChange={handleEditThumbnailUpload}
+                   />
+                   {editFormData.thumbnail && (
+                     <p className="text-sm text-muted-foreground">
+                       Selected: {editFormData.thumbnail.name} ({(editFormData.thumbnail.size / 1024 / 1024).toFixed(2)} MB)
+                     </p>
+                   )}
+                 </div>
+                 <div className="flex gap-2">
+                   <Button type="submit" className="glow-effect" disabled={uploading}>
+                     <Save className="mr-2 h-4 w-4" />
+                     {uploading ? "Updating..." : "Save Changes"}
+                   </Button>
                   <Button type="button" variant="outline" onClick={handleEditCancel}>
                     Cancel
                   </Button>

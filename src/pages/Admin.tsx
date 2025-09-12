@@ -54,6 +54,7 @@ const Admin = () => {
     title: "",
     description: "",
     file: null as File | null,
+    thumbnail: null as File | null,
     sort_order: 1
   });
 
@@ -150,6 +151,21 @@ const Admin = () => {
     }
   };
 
+  const handleThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith("image/")) {
+        setFormData(prev => ({ ...prev, thumbnail: file }));
+      } else {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select an image file (JPG, PNG, etc.)",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -178,6 +194,24 @@ const Admin = () => {
         .from('videos')
         .getPublicUrl(fileName);
 
+      // Upload thumbnail if provided
+      let thumbnailUrl = null;
+      if (formData.thumbnail) {
+        const thumbnailFileName = `${session.user.id}/${Date.now()}-${formData.thumbnail.name}`;
+        const { data: thumbnailUploadData, error: thumbnailUploadError } = await supabase.storage
+          .from('thumbnails')
+          .upload(thumbnailFileName, formData.thumbnail);
+
+        if (thumbnailUploadError) throw thumbnailUploadError;
+
+        // Get public URL for the uploaded thumbnail
+        const { data: { publicUrl: thumbnailPublicUrl } } = supabase.storage
+          .from('thumbnails')
+          .getPublicUrl(thumbnailFileName);
+
+        thumbnailUrl = thumbnailPublicUrl;
+      }
+
       // Save video metadata to database
       const { data: videoData, error: dbError } = await supabase
         .from('videos')
@@ -185,6 +219,7 @@ const Admin = () => {
           title: formData.title,
           description: formData.description,
           video_url: publicUrl,
+          thumbnail_url: thumbnailUrl,
           user_id: session.user.id,
           sort_order: formData.sort_order,
           file_size: formData.file.size,
@@ -198,7 +233,7 @@ const Admin = () => {
       // Refresh videos list
       await fetchVideos();
       
-      setFormData({ title: "", description: "", file: null, sort_order: videos.length + 1 });
+      setFormData({ title: "", description: "", file: null, thumbnail: null, sort_order: videos.length + 1 });
       setShowUploadForm(false);
       
       toast({
@@ -457,6 +492,19 @@ const Admin = () => {
                   {formData.file && (
                     <p className="text-sm text-muted-foreground">
                       Selected: {formData.file.name} ({(formData.file.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Thumbnail/Poster (Optional)</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailUpload}
+                  />
+                  {formData.thumbnail && (
+                    <p className="text-sm text-muted-foreground">
+                      Selected: {formData.thumbnail.name} ({(formData.thumbnail.size / 1024 / 1024).toFixed(2)} MB)
                     </p>
                   )}
                 </div>

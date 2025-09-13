@@ -21,6 +21,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_admin: boolean
+          is_approved: boolean
           updated_at: string
         }
         Insert: {
@@ -29,6 +31,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          is_admin?: boolean
+          is_approved?: boolean
           updated_at?: string
         }
         Update: {
@@ -37,6 +41,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_admin?: boolean
+          is_approved?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -91,7 +97,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_approved_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      is_approved_user: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -9,7 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import UserManagement from "@/components/UserManagement";
 import { 
   Upload, 
   Edit, 
@@ -47,6 +49,7 @@ const Admin = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -68,24 +71,58 @@ const Admin = () => {
 
   // Authentication state management
   useEffect(() => {
-    // Set up auth state listener
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      // Check user approval and admin status
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("is_approved, is_admin, email, full_name")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        navigate("/auth");
+        return;
+      }
+
+      if (!profile.is_approved) {
+        navigate("/pending-approval");
+        return;
+      }
+
+      if (!profile.is_admin) {
+        navigate("/");
+        return;
+      }
+
+      setUser(session.user);
+      setSession(session);
+      setUserProfile(profile);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
+        if (!session) {
+          navigate("/auth");
+        } else {
+          // Re-check permissions on auth state change
+          setTimeout(() => checkAuth(), 0);
+        }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   // Load videos from database
   useEffect(() => {
@@ -510,7 +547,7 @@ const Admin = () => {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold gradient-text">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage your AI MediaFlow content</p>
+            <p className="text-muted-foreground">Welcome, {userProfile?.full_name || user?.email}</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -528,257 +565,270 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Upload Form */}
-        {showUploadForm && (
-          <Card className="mb-8 card-gradient glow-effect">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-primary" />
-                  Upload New Video
-                </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowUploadForm(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Video Title *</Label>
-                    <Input
-                      value={formData.title}
-                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Enter video title"
-                      required
-                    />
+        <Tabs defaultValue="videos" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="videos">Video Management</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="videos" className="space-y-6">
+            {/* Upload Form */}
+            {showUploadForm && (
+              <Card className="card-gradient glow-effect">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Upload className="h-5 w-5 text-primary" />
+                      Upload New Video
+                    </CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowUploadForm(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Sort Order</Label>
-                    <Input
-                      type="number"
-                      value={formData.sort_order}
-                      onChange={(e) => setFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
-                      min="1"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Description *</Label>
-                  <Textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter video description"
-                    rows={3}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Video File *</Label>
-                  <Input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleFileUpload}
-                    required
-                  />
-                  {formData.file && (
-                    <p className="text-sm text-muted-foreground">
-                      Selected: {formData.file.name} ({(formData.file.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Thumbnail/Poster (Optional)</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleThumbnailUpload}
-                  />
-                  {formData.thumbnail && (
-                    <p className="text-sm text-muted-foreground">
-                      Selected: {formData.thumbnail.name} ({(formData.thumbnail.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  )}
-                </div>
-                <Button type="submit" className="glow-effect" disabled={uploading}>
-                  <Save className="mr-2 h-4 w-4" />
-                  {uploading ? "Uploading..." : "Upload Video"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Edit Form */}
-        {editingVideo && (
-          <Card className="mb-8 card-gradient glow-effect">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Edit className="h-5 w-5 text-primary" />
-                  Edit Video: {editingVideo.title}
-                </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={handleEditCancel}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleEditSubmit} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Video Title *</Label>
-                    <Input
-                      value={editFormData.title}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Enter video title"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Sort Order</Label>
-                    <Input
-                      type="number"
-                      value={editFormData.sort_order}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
-                      min="1"
-                    />
-                  </div>
-                </div>
-                 <div className="space-y-2">
-                   <Label>Description *</Label>
-                   <Textarea
-                     value={editFormData.description}
-                     onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
-                     placeholder="Enter video description"
-                     rows={3}
-                     required
-                   />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Replace Video File (Optional)</Label>
-                   <Input
-                     type="file"
-                     accept="video/*"
-                     onChange={handleEditFileUpload}
-                   />
-                   {editFormData.file && (
-                     <p className="text-sm text-muted-foreground">
-                       Selected: {editFormData.file.name} ({(editFormData.file.size / 1024 / 1024).toFixed(2)} MB)
-                     </p>
-                   )}
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Replace Thumbnail/Poster (Optional)</Label>
-                   <Input
-                     type="file"
-                     accept="image/*"
-                     onChange={handleEditThumbnailUpload}
-                   />
-                   {editFormData.thumbnail && (
-                     <p className="text-sm text-muted-foreground">
-                       Selected: {editFormData.thumbnail.name} ({(editFormData.thumbnail.size / 1024 / 1024).toFixed(2)} MB)
-                     </p>
-                   )}
-                 </div>
-                 <div className="flex gap-2">
-                   <Button type="submit" className="glow-effect" disabled={uploading}>
-                     <Save className="mr-2 h-4 w-4" />
-                     {uploading ? "Updating..." : "Save Changes"}
-                   </Button>
-                  <Button type="button" variant="outline" onClick={handleEditCancel}>
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Videos List */}
-        <Card className="card-gradient glow-effect">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Video className="h-5 w-5 text-primary" />
-              Video Library ({videos.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {videos.length === 0 ? (
-              <div className="text-center py-12">
-                <Video className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No videos uploaded yet</h3>
-                <p className="text-muted-foreground mb-4">Start building your content library by uploading your first video.</p>
-                <Button onClick={() => setShowUploadForm(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Upload First Video
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {videos.map((video) => (
-                  <div key={video.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{video.title}</h3>
-                        <Badge variant={video.is_published ? "default" : "secondary"}>
-                          {video.is_published ? "Published" : "Draft"}
-                        </Badge>
-                      </div>
-                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {video.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Order: {video.sort_order}</span>
-                        <span>Created: {new Date(video.created_at).toLocaleDateString()}</span>
-                        {video.file_size && (
-                          <span>Size: {(video.file_size / 1024 / 1024).toFixed(1)} MB</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={video.is_published}
-                          onCheckedChange={() => togglePublished(video.id)}
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Video Title *</Label>
+                        <Input
+                          value={formData.title}
+                          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                          placeholder="Enter video title"
+                          required
                         />
-                        {video.is_published ? (
-                          <Eye className="h-4 w-4 text-success" />
-                        ) : (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        )}
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEditStart(video)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDelete(video.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
+                      <div className="space-y-2">
+                        <Label>Sort Order</Label>
+                        <Input
+                          type="number"
+                          value={formData.sort_order}
+                          onChange={(e) => setFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description *</Label>
+                      <Textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Enter video description"
+                        rows={3}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Video File *</Label>
+                      <Input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleFileUpload}
+                        required
+                      />
+                      {formData.file && (
+                        <p className="text-sm text-muted-foreground">
+                          Selected: {formData.file.name} ({(formData.file.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Thumbnail/Poster (Optional)</Label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleThumbnailUpload}
+                      />
+                      {formData.thumbnail && (
+                        <p className="text-sm text-muted-foreground">
+                          Selected: {formData.thumbnail.name} ({(formData.thumbnail.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      )}
+                    </div>
+                    <Button type="submit" className="glow-effect" disabled={uploading}>
+                      <Save className="mr-2 h-4 w-4" />
+                      {uploading ? "Uploading..." : "Upload Video"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Edit Form */}
+            {editingVideo && (
+              <Card className="card-gradient glow-effect">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Edit className="h-5 w-5 text-primary" />
+                      Edit Video: {editingVideo.title}
+                    </CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={handleEditCancel}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleEditSubmit} className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Video Title *</Label>
+                        <Input
+                          value={editFormData.title}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                          placeholder="Enter video title"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Sort Order</Label>
+                        <Input
+                          type="number"
+                          value={editFormData.sort_order}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                     <div className="space-y-2">
+                       <Label>Description *</Label>
+                       <Textarea
+                         value={editFormData.description}
+                         onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                         placeholder="Enter video description"
+                         rows={3}
+                         required
+                       />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Replace Video File (Optional)</Label>
+                       <Input
+                         type="file"
+                         accept="video/*"
+                         onChange={handleEditFileUpload}
+                       />
+                       {editFormData.file && (
+                         <p className="text-sm text-muted-foreground">
+                           Selected: {editFormData.file.name} ({(editFormData.file.size / 1024 / 1024).toFixed(2)} MB)
+                         </p>
+                       )}
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Replace Thumbnail/Poster (Optional)</Label>
+                       <Input
+                         type="file"
+                         accept="image/*"
+                         onChange={handleEditThumbnailUpload}
+                       />
+                       {editFormData.thumbnail && (
+                         <p className="text-sm text-muted-foreground">
+                           Selected: {editFormData.thumbnail.name} ({(editFormData.thumbnail.size / 1024 / 1024).toFixed(2)} MB)
+                         </p>
+                       )}
+                     </div>
+                     <div className="flex gap-2">
+                       <Button type="submit" className="glow-effect" disabled={uploading}>
+                         <Save className="mr-2 h-4 w-4" />
+                         {uploading ? "Updating..." : "Save Changes"}
+                       </Button>
+                      <Button type="button" variant="outline" onClick={handleEditCancel}>
+                        Cancel
                       </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  </form>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+
+            {/* Videos List */}
+            <Card className="card-gradient glow-effect">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Video className="h-5 w-5 text-primary" />
+                  Video Library ({videos.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {videos.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Video className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No videos uploaded yet</h3>
+                    <p className="text-muted-foreground mb-4">Start building your content library by uploading your first video.</p>
+                    <Button onClick={() => setShowUploadForm(true)}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Upload First Video
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {videos.map((video) => (
+                      <div key={video.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold">{video.title}</h3>
+                            <Badge variant={video.is_published ? "default" : "secondary"}>
+                              {video.is_published ? "Published" : "Draft"}
+                            </Badge>
+                          </div>
+                           <p className="text-sm text-muted-foreground line-clamp-2">
+                            {video.description}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Order: {video.sort_order}</span>
+                            <span>Created: {new Date(video.created_at).toLocaleDateString()}</span>
+                            {video.file_size && (
+                              <span>Size: {(video.file_size / 1024 / 1024).toFixed(1)} MB</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={video.is_published}
+                              onCheckedChange={() => togglePublished(video.id)}
+                            />
+                            {video.is_published ? (
+                              <Eye className="h-4 w-4 text-success" />
+                            ) : (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditStart(video)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDelete(video.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="users">
+            <UserManagement />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

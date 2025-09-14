@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import sri from "vite-plugin-sri"; // ИЗМЕНЕНИЕ ЗДЕСЬ: Теперь импорт без фигурных скобок
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -34,7 +33,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    sri(), // Используем плагин
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
@@ -43,26 +41,24 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Simplified build configuration for better compatibility
+  // Build optimizations for security
   build: {
-    // Use default minifier (esbuild) instead of terser
-    minify: mode === 'production' ? 'esbuild' : false,
-    // Generate source maps only in development
+    // Remove console logs in production
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: mode === 'production',
+        drop_debugger: mode === 'production',
+      },
+    },
+    // Enable source maps for debugging (but consider security implications)
     sourcemap: mode === 'development',
-    // Optimize dependencies
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js'],
-        }
-      }
-    }
   },
   
   // Environment variable validation
   define: {
     // Validate required environment variables at build time
+    __SUPABASE_URL__: JSON.stringify(process.env.VITE_SUPABASE_URL || ''),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
 }));

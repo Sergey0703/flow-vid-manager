@@ -914,16 +914,29 @@ const Admin = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleEditSubmit} className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>Video Title *</Label>
-                        <Input
-                          value={editFormData.title}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
-                          min="1"
-                        />
-                      </div>
-                    </div>
+                    {/* ЗАМЕНИТЕ СТАРЫЙ БЛОК НА ЭТОТ */}
+<div className="grid gap-4 md:grid-cols-2">
+  <div className="space-y-2">
+    <Label htmlFor="edit-title">Video Title *</Label>
+    <Input
+      id="edit-title"
+      value={editFormData.title}
+      onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+      placeholder="Enter video title"
+      required
+    />
+  </div>
+  <div className="space-y-2">
+    <Label htmlFor="edit-sort-order">Sort Order</Label>
+    <Input
+      id="edit-sort-order"
+      type="number"
+      value={editFormData.sort_order}
+      onChange={(e) => setEditFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 1 }))}
+      min="1"
+    />
+  </div>
+</div>
                      <div className="space-y-2">
                        <Label>Description *</Label>
                        <Textarea

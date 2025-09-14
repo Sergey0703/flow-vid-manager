@@ -29,7 +29,7 @@ const Hero = () => {
         </div>
       </div>
       {/* Spacer to accommodate overlapping text */}
-      <div className="h-16 md:h-8 lg:h-12 bg-background"></div>
+      <div className="h-16 md:h-20 lg:h-8 xl:h-12 bg-background"></div>
     </section>
   );
 };

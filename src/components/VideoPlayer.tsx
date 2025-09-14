@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { sanitizeContent } from "@/lib/security";
 
 interface VideoPlayerProps {
   src: string;
@@ -10,6 +11,14 @@ interface VideoPlayerProps {
 const VideoPlayer = ({ src, title, description, posterUrl }: VideoPlayerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+
+  // Sanitize content to prevent XSS
+  const sanitizedTitle = sanitizeContent(title);
+  const sanitizedDescription = sanitizeContent(description);
+
+  // Validate that we have valid content after sanitization
+  const displayTitle = sanitizedTitle || "Untitled Video";
+  const displayDescription = sanitizedDescription || "No description available";
 
   return (
     <div className="group relative overflow-hidden rounded-xl card-gradient shadow-card glow-effect">
@@ -48,16 +57,30 @@ const VideoPlayer = ({ src, title, description, posterUrl }: VideoPlayerProps) =
             setHasError(true);
           }}
           poster={posterUrl || "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiBmaWxsPSJoc2woMjIwIDI1JSAxMiUpIi8+CjxjaXJjbGUgY3g9Ijk2MCIgY3k9IjU0MCIgcj0iNjAiIGZpbGw9ImhzbCgxOTAgMTAwJSA1MCUpIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8cGF0aCBkPSJNOTMwIDUwNUw5OTAgNTQwTDkzMCA1NzVWNTA1WiIgZmlsbD0iaHNsKDIyMCAyMCUgOCUpIi8+Cjwvc3ZnPgo="}
+          // Security attributes
+          controlsList="nodownload"
+          disablePictureInPicture={false}
+          crossOrigin="anonymous"
         />
       </div>
       
       {/* Content */}
       <div className="p-6">
-        <h3 className="mb-3 text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-          {title}
+        <h3 
+          className="mb-3 text-xl font-bold text-foreground group-hover:text-primary transition-colors"
+          // Use dangerouslySetInnerHTML only after sanitization, or better - just text content
+          title={displayTitle} // Tooltip shows full title
+        >
+          {/* Safe text rendering - no HTML interpretation */}
+          {displayTitle.length > 60 ? `${displayTitle.substring(0, 60)}...` : displayTitle}
         </h3>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {description}
+        
+        <p 
+          className="text-sm leading-relaxed text-muted-foreground"
+          title={displayDescription} // Tooltip shows full description
+        >
+          {/* Safe text rendering - no HTML interpretation */}
+          {displayDescription.length > 150 ? `${displayDescription.substring(0, 150)}...` : displayDescription}
         </p>
       </div>
     </div>

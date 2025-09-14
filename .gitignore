@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Environment variables - CRITICAL SECURITY
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +30,31 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Security and sensitive files
+*.pem
+*.key
+*.cert
+.secrets/
+
+# OS generated files
+Thumbs.db
+.DS_Store?
+ehthumbs.db
+Icon?
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# IDE and editor files
+.vscode/settings.json
+.idea/
+*.sublime-*
+
+# Build artifacts
+build/
+dist/
+out/

@@ -64,21 +64,14 @@ const VideoGrid = ({ videos }: VideoGridProps) => {
   }
 
   return (
-    <section className="py-16">
+    <section className="py-8">
       <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
+        <div className="mb-8 text-center">
           <h2 className="mb-4 text-3xl font-bold lg:text-4xl">
             Our <span className="gradient-text">AI Solutions</span> in Action
           </h2>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             Discover how our AI-powered solutions transform business processes and drive efficiency.
-          </p>
-        </div>
-        
-        {/* Video Count for transparency */}
-        <div className="mb-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Showing {publishedVideos.length} published video{publishedVideos.length !== 1 ? 's' : ''}
           </p>
         </div>
         

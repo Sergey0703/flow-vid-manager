@@ -41,24 +41,26 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Build optimizations for security
+  // Simplified build configuration for better compatibility
   build: {
-    // Remove console logs in production
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: mode === 'production',
-        drop_debugger: mode === 'production',
-      },
-    },
-    // Enable source maps for debugging (but consider security implications)
+    // Use default minifier (esbuild) instead of terser
+    minify: mode === 'production' ? 'esbuild' : false,
+    // Generate source maps only in development
     sourcemap: mode === 'development',
+    // Optimize dependencies
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+        }
+      }
+    }
   },
   
   // Environment variable validation
   define: {
     // Validate required environment variables at build time
-    __SUPABASE_URL__: JSON.stringify(process.env.VITE_SUPABASE_URL || ''),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
 }));

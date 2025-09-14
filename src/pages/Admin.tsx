@@ -151,7 +151,7 @@ const Admin = () => {
       const { data, error } = await supabase
         .from('videos')
         .select('*')
-        .eq('user_id', session?.user?.id)
+        //.eq('user_id', session?.user?.id)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;

@@ -2,16 +2,26 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://jfxxtyfuccwmfeyltype.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmeHh0eWZ1Y2N3bWZleWx0eXBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0MjY3NTUsImV4cCI6MjA3MzAwMjc1NX0.K99his38ymmt1VGNldyD69rIPvl0DztMH7gMdQXDmus";
+// Get environment variables with fallbacks and validation
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// Validate required environment variables
+if (!SUPABASE_URL) {
+  throw new Error('Missing VITE_SUPABASE_URL environment variable');
+}
+
+if (!SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error('Missing VITE_SUPABASE_PUBLISHABLE_KEY environment variable');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: localStorage, // Note: Consider using sessionStorage or httpOnly cookies for better security
     persistSession: true,
     autoRefreshToken: true,
   }
-});
+})

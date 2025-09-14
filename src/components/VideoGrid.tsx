@@ -1,4 +1,5 @@
 import VideoPlayer from "./VideoPlayer";
+import { sanitizeContent } from "@/lib/security";
 
 interface Video {
   id: string;
@@ -15,9 +16,20 @@ interface VideoGridProps {
 }
 
 const VideoGrid = ({ videos }: VideoGridProps) => {
-  // Filter and sort videos
+  // Filter, sanitize and sort videos
   const publishedVideos = videos
-    .filter(video => video.is_published)
+    .filter(video => video.is_published) // Only published videos
+    .map(video => ({
+      // Create sanitized copy without exposing internal data
+      id: video.id,
+      title: sanitizeContent(video.title) || "Untitled Video",
+      description: sanitizeContent(video.description) || "No description available",
+      url: video.url,
+      sort_order: video.sort_order,
+      thumbnail_url: video.thumbnail_url,
+      // Explicitly exclude is_published and other internal fields
+    }))
+    .filter(video => video.title && video.description) // Remove videos with empty content after sanitization
     .sort((a, b) => a.sort_order - b.sort_order);
 
   if (publishedVideos.length === 0) {
@@ -26,8 +38,19 @@ const VideoGrid = ({ videos }: VideoGridProps) => {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-md text-center">
             <div className="mb-4 rounded-full bg-muted/50 p-4 inline-block">
-              <svg className="h-12 w-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <svg 
+                className="h-12 w-12 text-muted-foreground" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                aria-label="No videos available"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={1.5} 
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" 
+                />
               </svg>
             </div>
             <h3 className="mb-2 text-xl font-semibold text-foreground">No Videos Available</h3>
@@ -52,6 +75,13 @@ const VideoGrid = ({ videos }: VideoGridProps) => {
           </p>
         </div>
         
+        {/* Video Count for transparency */}
+        <div className="mb-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Showing {publishedVideos.length} published video{publishedVideos.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        
         <div className="grid gap-8 md:grid-cols-2">
           {publishedVideos.map((video) => (
             <VideoPlayer
@@ -62,6 +92,13 @@ const VideoGrid = ({ videos }: VideoGridProps) => {
               posterUrl={video.thumbnail_url}
             />
           ))}
+        </div>
+        
+        {/* Additional safety notice */}
+        <div className="mt-12 text-center">
+          <p className="text-xs text-muted-foreground">
+            All content is moderated and approved before publication
+          </p>
         </div>
       </div>
     </section>

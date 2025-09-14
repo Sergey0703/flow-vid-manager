@@ -17,6 +17,7 @@ import {
   logUploadAudit, 
   logAdminAction, 
   sanitizeFileName, 
+  sanitizeContent,
   getUserAgent 
 } from "@/lib/security";
 import { 
@@ -182,114 +183,190 @@ const Admin = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validation = validateFile(file, 'video');
-      if (validation.isValid) {
-        setFormData(prev => ({ ...prev, file }));
-      } else {
+      try {
+        const validation = await validateFile(file, 'video');
+        if (validation.isValid) {
+          setFormData(prev => ({ ...prev, file }));
+          
+          // Show warnings if any
+          if (validation.warnings && validation.warnings.length > 0) {
+            toast({
+              title: "File uploaded with warnings",
+              description: validation.warnings.join(', '),
+              variant: "default",
+            });
+          }
+        } else {
+          toast({
+            title: "Invalid File",
+            description: validation.error,
+            variant: "destructive"
+          });
+          e.target.value = '';
+          // Log failed upload attempt
+          if (session?.user) {
+            logUploadAudit({
+              user_id: session.user.id,
+              file_name: file.name,
+              file_size: file.size,
+              file_type: file.type,
+              upload_type: 'video',
+              status: 'rejected',
+              user_agent: getUserAgent()
+            });
+          }
+        }
+      } catch (error) {
         toast({
-          title: "Invalid File",
-          description: validation.error,
+          title: "Validation Error",
+          description: "Could not validate file. Please try again.",
           variant: "destructive"
         });
-        // Log failed upload attempt
-        if (session?.user) {
-          logUploadAudit({
-            user_id: session.user.id,
-            file_name: file.name,
-            file_size: file.size,
-            file_type: file.type,
-            upload_type: 'video',
-            status: 'rejected',
-            user_agent: getUserAgent()
-          });
-        }
+        e.target.value = '';
       }
     }
   };
 
-  const handleThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validation = validateFile(file, 'image');
-      if (validation.isValid) {
-        setFormData(prev => ({ ...prev, thumbnail: file }));
-      } else {
+      try {
+        const validation = await validateFile(file, 'image');
+        if (validation.isValid) {
+          setFormData(prev => ({ ...prev, thumbnail: file }));
+          
+          // Show warnings if any
+          if (validation.warnings && validation.warnings.length > 0) {
+            toast({
+              title: "Thumbnail uploaded with warnings",
+              description: validation.warnings.join(', '),
+              variant: "default",
+            });
+          }
+        } else {
+          toast({
+            title: "Invalid File",
+            description: validation.error,
+            variant: "destructive"
+          });
+          e.target.value = '';
+          // Log failed upload attempt
+          if (session?.user) {
+            logUploadAudit({
+              user_id: session.user.id,
+              file_name: file.name,
+              file_size: file.size,
+              file_type: file.type,
+              upload_type: 'thumbnail',
+              status: 'rejected',
+              user_agent: getUserAgent()
+            });
+          }
+        }
+      } catch (error) {
         toast({
-          title: "Invalid File",
-          description: validation.error,
+          title: "Validation Error",
+          description: "Could not validate thumbnail. Please try again.",
           variant: "destructive"
         });
-        // Log failed upload attempt
-        if (session?.user) {
-          logUploadAudit({
-            user_id: session.user.id,
-            file_name: file.name,
-            file_size: file.size,
-            file_type: file.type,
-            upload_type: 'thumbnail',
-            status: 'rejected',
-            user_agent: getUserAgent()
-          });
-        }
+        e.target.value = '';
       }
     }
   };
 
-  const handleEditFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validation = validateFile(file, 'video');
-      if (validation.isValid) {
-        setEditFormData(prev => ({ ...prev, file }));
-      } else {
+      try {
+        const validation = await validateFile(file, 'video');
+        if (validation.isValid) {
+          setEditFormData(prev => ({ ...prev, file }));
+          
+          // Show warnings if any
+          if (validation.warnings && validation.warnings.length > 0) {
+            toast({
+              title: "File uploaded with warnings",
+              description: validation.warnings.join(', '),
+              variant: "default",
+            });
+          }
+        } else {
+          toast({
+            title: "Invalid File",
+            description: validation.error,
+            variant: "destructive"
+          });
+          e.target.value = '';
+          // Log failed upload attempt
+          if (session?.user) {
+            logUploadAudit({
+              user_id: session.user.id,
+              file_name: file.name,
+              file_size: file.size,
+              file_type: file.type,
+              upload_type: 'video',
+              status: 'rejected',
+              user_agent: getUserAgent()
+            });
+          }
+        }
+      } catch (error) {
         toast({
-          title: "Invalid File",
-          description: validation.error,
+          title: "Validation Error",
+          description: "Could not validate file. Please try again.",
           variant: "destructive"
         });
-        // Log failed upload attempt
-        if (session?.user) {
-          logUploadAudit({
-            user_id: session.user.id,
-            file_name: file.name,
-            file_size: file.size,
-            file_type: file.type,
-            upload_type: 'video',
-            status: 'rejected',
-            user_agent: getUserAgent()
-          });
-        }
+        e.target.value = '';
       }
     }
   };
 
-  const handleEditThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validation = validateFile(file, 'image');
-      if (validation.isValid) {
-        setEditFormData(prev => ({ ...prev, thumbnail: file }));
-      } else {
+      try {
+        const validation = await validateFile(file, 'image');
+        if (validation.isValid) {
+          setEditFormData(prev => ({ ...prev, thumbnail: file }));
+          
+          // Show warnings if any
+          if (validation.warnings && validation.warnings.length > 0) {
+            toast({
+              title: "Thumbnail uploaded with warnings",
+              description: validation.warnings.join(', '),
+              variant: "default",
+            });
+          }
+        } else {
+          toast({
+            title: "Invalid File",
+            description: validation.error,
+            variant: "destructive"
+          });
+          e.target.value = '';
+          // Log failed upload attempt
+          if (session?.user) {
+            logUploadAudit({
+              user_id: session.user.id,
+              file_name: file.name,
+              file_size: file.size,
+              file_type: file.type,
+              upload_type: 'thumbnail',
+              status: 'rejected',
+              user_agent: getUserAgent()
+            });
+          }
+        }
+      } catch (error) {
         toast({
-          title: "Invalid File",
-          description: validation.error,
+          title: "Validation Error",
+          description: "Could not validate thumbnail. Please try again.",
           variant: "destructive"
         });
-        // Log failed upload attempt
-        if (session?.user) {
-          logUploadAudit({
-            user_id: session.user.id,
-            file_name: file.name,
-            file_size: file.size,
-            file_type: file.type,
-            upload_type: 'thumbnail',
-            status: 'rejected',
-            user_agent: getUserAgent()
-          });
-        }
+        e.target.value = '';
       }
     }
   };
@@ -309,6 +386,20 @@ const Admin = () => {
     setUploading(true);
 
     try {
+      // Sanitize user content
+      const sanitizedTitle = sanitizeContent(formData.title);
+      const sanitizedDescription = sanitizeContent(formData.description);
+      
+      // Check that content is not empty after sanitization
+      if (!sanitizedTitle.trim() || !sanitizedDescription.trim()) {
+        toast({
+          title: "Invalid Content",
+          description: "Title and description contain invalid characters",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Upload video file to storage with sanitized filename
       const sanitizedFileName = sanitizeFileName(formData.file.name);
       const fileName = `${session.user.id}/${Date.now()}-${sanitizedFileName}`;
@@ -368,8 +459,8 @@ const Admin = () => {
       const { data: videoData, error: dbError } = await supabase
         .from('videos')
         .insert({
-          title: formData.title,
-          description: formData.description,
+          title: sanitizedTitle,
+          description: sanitizedDescription,
           video_url: publicUrl,
           thumbnail_url: thumbnailUrl,
           user_id: session.user.id,
@@ -394,7 +485,7 @@ const Admin = () => {
         action_type: 'video_upload',
         target_resource_id: videoData.id,
         details: { 
-          title: formData.title, 
+          title: sanitizedTitle, 
           file_size: formData.file.size,
           has_thumbnail: !!formData.thumbnail
         }
@@ -402,7 +493,7 @@ const Admin = () => {
 
       toast({
         title: "Video Uploaded Successfully",
-        description: `"${formData.title}" has been added to your media library`,
+        description: `"${sanitizedTitle}" has been added to your media library`,
       });
     } catch (error) {
       console.error('Error uploading video:', error);
@@ -557,9 +648,23 @@ const Admin = () => {
     setUploading(true);
 
     try {
+      // Sanitize user content
+      const sanitizedTitle = sanitizeContent(editFormData.title);
+      const sanitizedDescription = sanitizeContent(editFormData.description);
+      
+      // Check that content is not empty after sanitization
+      if (!sanitizedTitle.trim() || !sanitizedDescription.trim()) {
+        toast({
+          title: "Invalid Content",
+          description: "Title and description contain invalid characters",
+          variant: "destructive"
+        });
+        return;
+      }
+
       let updatedData: any = {
-        title: editFormData.title,
-        description: editFormData.description,
+        title: sanitizedTitle,
+        description: sanitizedDescription,
         sort_order: editFormData.sort_order
       };
 
@@ -576,7 +681,8 @@ const Admin = () => {
         }
 
         // Upload new video file
-        const fileName = `${session.user.id}/${Date.now()}-${editFormData.file.name}`;
+        const sanitizedFileName = sanitizeFileName(editFormData.file.name);
+        const fileName = `${session.user.id}/${Date.now()}-${sanitizedFileName}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('videos')
           .upload(fileName, editFormData.file);
@@ -605,7 +711,8 @@ const Admin = () => {
         }
 
         // Upload new thumbnail
-        const thumbnailFileName = `${session.user.id}/${Date.now()}-${editFormData.thumbnail.name}`;
+        const sanitizedThumbnailName = sanitizeFileName(editFormData.thumbnail.name);
+        const thumbnailFileName = `${session.user.id}/${Date.now()}-${sanitizedThumbnailName}`;
         const { data: thumbnailUploadData, error: thumbnailUploadError } = await supabase.storage
           .from('thumbnails')
           .upload(thumbnailFileName, editFormData.thumbnail);
@@ -638,7 +745,7 @@ const Admin = () => {
       
       toast({
         title: "Video Updated",
-        description: `"${editFormData.title}" has been updated successfully`,
+        description: `"${sanitizedTitle}" has been updated successfully`,
       });
     } catch (error) {
       console.error('Error updating video:', error);
@@ -812,16 +919,6 @@ const Admin = () => {
                         <Label>Video Title *</Label>
                         <Input
                           value={editFormData.title}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
-                          placeholder="Enter video title"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Sort Order</Label>
-                        <Input
-                          type="number"
-                          value={editFormData.sort_order}
                           onChange={(e) => setEditFormData(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
                           min="1"
                         />

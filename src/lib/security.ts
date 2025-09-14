@@ -20,9 +20,39 @@ export const ALLOWED_IMAGE_TYPES = [
   'image/gif'
 ];
 
+// Magic bytes for file type validation
+const FILE_SIGNATURES = {
+  // Video signatures
+  'video/mp4': [
+    [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], // ftyp
+    [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70], // ftyp variant
+  ],
+  'video/webm': [[0x1A, 0x45, 0xDF, 0xA3]], // EBML
+  'video/avi': [[0x52, 0x49, 0x46, 0x46]], // RIFF
+  
+  // Image signatures
+  'image/jpeg': [[0xFF, 0xD8, 0xFF]], // JPEG
+  'image/png': [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]], // PNG
+  'image/webp': [[0x52, 0x49, 0x46, 0x46]], // RIFF (WebP)
+  'image/gif': [
+    [0x47, 0x49, 0x46, 0x38, 0x37, 0x61], // GIF87a
+    [0x47, 0x49, 0x46, 0x38, 0x39, 0x61], // GIF89a
+  ],
+};
+
+// Dangerous file signatures to explicitly reject
+const DANGEROUS_SIGNATURES = [
+  [0x4D, 0x5A], // PE executable (Windows .exe)
+  [0x7F, 0x45, 0x4C, 0x46], // ELF executable (Linux)
+  [0xCA, 0xFE, 0xBA, 0xBE], // Mach-O executable (macOS)
+  [0x50, 0x4B, 0x03, 0x04], // ZIP archive (could contain executable)
+  [0x52, 0x61, 0x72, 0x21], // RAR archive
+];
+
 export interface FileValidationResult {
   isValid: boolean;
   error?: string;
+  warnings?: string[];
 }
 
 export interface UploadAuditData {
@@ -45,14 +75,81 @@ export interface AdminActionData {
 }
 
 /**
- * Validates file type and size for security
+ * Check file signature (magic bytes) against expected types
  */
-export const validateFile = (
+const validateFileSignature = async (file: File, expectedType: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const buffer = e.target?.result as ArrayBuffer;
+      if (!buffer) {
+        resolve(false);
+        return;
+      }
+
+      const bytes = new Uint8Array(buffer);
+      const signatures = FILE_SIGNATURES[expectedType as keyof typeof FILE_SIGNATURES];
+      
+      if (!signatures) {
+        resolve(true); // No signature defined, allow
+        return;
+      }
+
+      // Check if any signature matches
+      const matches = signatures.some(signature => {
+        return signature.every((byte, index) => bytes[index] === byte);
+      });
+
+      resolve(matches);
+    };
+    reader.onerror = () => resolve(false);
+    
+    // Read first 32 bytes to check signature
+    const blob = file.slice(0, 32);
+    reader.readAsArrayBuffer(blob);
+  });
+};
+
+/**
+ * Check for dangerous file signatures
+ */
+const checkForDangerousSignature = async (file: File): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const buffer = e.target?.result as ArrayBuffer;
+      if (!buffer) {
+        resolve(false);
+        return;
+      }
+
+      const bytes = new Uint8Array(buffer);
+      
+      // Check against dangerous signatures
+      const isDangerous = DANGEROUS_SIGNATURES.some(signature => {
+        return signature.every((byte, index) => bytes[index] === byte);
+      });
+
+      resolve(isDangerous);
+    };
+    reader.onerror = () => resolve(false);
+    
+    // Read first 32 bytes to check signature
+    const blob = file.slice(0, 32);
+    reader.readAsArrayBuffer(blob);
+  });
+};
+
+/**
+ * Enhanced file validation with magic byte checking
+ */
+export const validateFile = async (
   file: File, 
   type: 'video' | 'image'
-): FileValidationResult => {
+): Promise<FileValidationResult> => {
   const allowedTypes = type === 'video' ? ALLOWED_VIDEO_TYPES : ALLOWED_IMAGE_TYPES;
   const maxSize = type === 'video' ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+  const warnings: string[] = [];
 
   // Check file type
   if (!allowedTypes.includes(file.type.toLowerCase())) {
@@ -80,7 +177,7 @@ export const validateFile = (
   }
 
   // Check for executable extensions in file name
-  const suspiciousExtensions = ['.exe', '.bat', '.cmd', '.com', '.scr', '.pif', '.js', '.vbs'];
+  const suspiciousExtensions = ['.exe', '.bat', '.cmd', '.com', '.scr', '.pif', '.js', '.vbs', '.php', '.asp', '.jsp'];
   const lowerFileName = file.name.toLowerCase();
   if (suspiciousExtensions.some(ext => lowerFileName.includes(ext))) {
     return {
@@ -89,7 +186,50 @@ export const validateFile = (
     };
   }
 
-  return { isValid: true };
+  // Check for dangerous file signatures
+  try {
+    const isDangerous = await checkForDangerousSignature(file);
+    if (isDangerous) {
+      return {
+        isValid: false,
+        error: 'File contains dangerous executable signature.'
+      };
+    }
+  } catch (error) {
+    warnings.push('Could not verify file signature');
+  }
+
+  // Validate file signature matches MIME type
+  try {
+    const signatureValid = await validateFileSignature(file, file.type);
+    if (!signatureValid) {
+      warnings.push('File signature does not match MIME type - possible file type spoofing');
+      // Still allow but warn
+    }
+  } catch (error) {
+    warnings.push('Could not validate file signature');
+  }
+
+  // Additional checks for very small files (possible malformed)
+  if (file.size < 100) {
+    warnings.push('File is very small and may be malformed');
+  }
+
+  // Check for suspicious file names
+  const suspiciousPatterns = [
+    /^\./, // Hidden files
+    /script/i, // Contains 'script'
+    /\.(php|asp|jsp|exe|bat)$/i, // Server-side or executable extensions
+  ];
+  
+  if (suspiciousPatterns.some(pattern => pattern.test(file.name))) {
+    warnings.push('File name contains suspicious patterns');
+  }
+
+  return { 
+    isValid: true, 
+    warnings: warnings.length > 0 ? warnings : undefined 
+  };
 };
 
 /**
@@ -142,14 +282,40 @@ export const logAdminAction = async (data: AdminActionData): Promise<void> => {
 };
 
 /**
- * Sanitizes file name for safe storage
+ * Enhanced file name sanitization
  */
 export const sanitizeFileName = (fileName: string): string => {
   return fileName
-    .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace special chars with underscore
-    .replace(/_{2,}/g, '_') // Replace multiple underscores with single
-    .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
-    .toLowerCase();
+    // Remove or replace dangerous characters
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
+    // Remove Unicode control characters
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g, '_')
+    // Replace multiple spaces/underscores with single underscore
+    .replace(/[\s_]{2,}/g, '_')
+    // Remove leading/trailing dots, spaces, underscores
+    .replace(/^[.\s_]+|[.\s_]+$/g, '')
+    // Limit length
+    .substring(0, 255)
+    // Ensure not empty
+    || 'unnamed_file';
+};
+
+/**
+ * Content sanitization for user input (XSS prevention)
+ */
+export const sanitizeContent = (content: string): string => {
+  return content
+    // Remove HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Remove JavaScript protocols
+    .replace(/javascript:/gi, '')
+    // Remove data: URLs
+    .replace(/data:/gi, '')
+    // Remove other dangerous protocols
+    .replace(/(vbscript|mocha|livescript):/gi, '')
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 /**
@@ -162,8 +328,8 @@ export const getClientIP = (): string | undefined => {
 };
 
 /**
- * Gets user agent string
+ * Gets user agent string (sanitized)
  */
 export const getUserAgent = (): string => {
-  return navigator.userAgent;
+  return navigator.userAgent.substring(0, 500); // Limit length
 };

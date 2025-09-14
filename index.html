@@ -2,22 +2,76 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    
+    <!-- Security Meta Tags (fallback if HTTP headers don't work) -->
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    
+    <!-- Content Security Policy (basic fallback) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://jfxxtyfuccwmfeyltype.supabase.co wss://realtime.supabase.com; media-src 'self' blob: https:; font-src 'self' data:;" />
+    
+    <!-- Permissions Policy (limit browser APIs) -->
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()" />
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" href="/vite.svg" />
+    
+    <!-- Viewport and responsive design -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>flow-vid-manager</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-
-    <meta property="og:title" content="flow-vid-manager" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    
+    <!-- App Information -->
+    <title>AI MediaFlow - Intelligent Media Platform</title>
+    <meta name="description" content="AI MediaFlow - an intelligent media platform for business content and training. Empowering organizations with cutting-edge AI solutions." />
+    <meta name="keywords" content="AI, media, platform, business, training, automation, video management" />
+    <meta name="author" content="AI MediaFlow" />
+    
+    <!-- Open Graph / Social Media Meta Tags -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
+    <meta property="og:title" content="AI MediaFlow - Intelligent Media Platform" />
+    <meta property="og:description" content="AI MediaFlow - an intelligent media platform for business content and training. Empowering organizations with cutting-edge AI solutions." />
+    <meta property="og:site_name" content="AI MediaFlow" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="AI MediaFlow - Intelligent Media Platform" />
+    <meta name="twitter:description" content="AI MediaFlow - an intelligent media platform for business content and training." />
+    
+    <!-- Theme and App Appearance -->
+    <meta name="theme-color" content="#44C8F5" />
+    <meta name="color-scheme" content="dark light" />
+    
+    <!-- Prevent indexing of admin routes by search engines -->
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Preconnect to external domains for performance -->
+    <link rel="preconnect" href="https://jfxxtyfuccwmfeyltype.supabase.co" />
+    <link rel="dns-prefetch" href="https://realtime.supabase.com" />
+    
+    <!-- Security: Prevent loading in frames (additional to X-Frame-Options) -->
+    <style>
+      /* Framebuster - prevents loading in iframe */
+      html { display: none; }
+    </style>
+    <script>
+      if (self == top) {
+        document.documentElement.style.display = 'block';
+      } else {
+        top.location = self.location;
+      }
+    </script>
   </head>
-
   <body>
+    <noscript>
+      <div style="text-align: center; padding: 2rem; font-family: sans-serif;">
+        <h1>JavaScript Required</h1>
+        <p>AI MediaFlow requires JavaScript to function properly. Please enable JavaScript in your browser settings.</p>
+      </div>
+    </noscript>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

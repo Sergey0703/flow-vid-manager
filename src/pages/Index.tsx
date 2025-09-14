@@ -58,9 +58,8 @@ const Index = () => {
       <main className="min-h-screen bg-background">
         {/* Hero Section with Loading State */}
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          {/* Fallback gradient background while loading */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30"></div>
+          {/* Use same background as the main site */}
+          <div className="absolute inset-0 bg-background"></div>
           
           <div className="relative z-10 container mx-auto px-4 text-center">
             <div className="max-w-5xl mx-auto space-y-8">

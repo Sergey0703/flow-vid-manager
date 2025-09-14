@@ -1,37 +1,30 @@
 const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
+    <section className="relative overflow-hidden">
+      {/* Banner Image - показывает всех персонажей */}
+      <div className="w-full">
         <img 
           src="/lovable-uploads/futuristic-team-banner.png" 
-          alt="AI Team Background" 
-          className="w-full h-full object-cover object-center"
+          alt="AI MediaFlow Team - Virtual AI Professionals" 
+          className="w-full h-auto object-contain max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh]"
           loading="eager"
           decoding="async"
         />
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/80 via-blue-800/70 to-blue-900/80"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/30"></div>
       </div>
       
-      {/* Content - Only Title */}
-      <div className="relative z-10 container mx-auto px-4 text-center">
-        <div className="max-w-5xl mx-auto">
-          {/* Main Headline Only */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight">
-            <span className="text-red-500 drop-shadow-2xl">AI</span>{" "}
-            <span className="text-white drop-shadow-2xl">MediaFlow:</span>
-            <br className="block md:hidden" />
-            <span className="block mt-2 md:mt-0 text-2xl md:text-4xl lg:text-5xl xl:text-6xl text-white/90 font-medium">
+      {/* Text Section под баннером */}
+      <div className="bg-background py-12 md:py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight max-w-4xl mx-auto">
+            <span className="text-red-500">AI</span>{" "}
+            <span className="text-foreground">MediaFlow:</span>
+            <br className="block sm:hidden" />
+            <span className="block mt-2 sm:mt-0 text-xl md:text-3xl lg:text-4xl text-muted-foreground font-medium">
               Your Partner in AI Business Integration
             </span>
           </h1>
         </div>
       </div>
-      
-      {/* Bottom fade effect */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-5"></div>
     </section>
   );
 };

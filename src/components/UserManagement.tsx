@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, CheckCircle, XCircle, Crown, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { logAdminAction } from "@/lib/security";
 
 interface UserProfile {
   id: string;
@@ -47,6 +48,9 @@ const UserManagement = () => {
 
   const updateUserStatus = async (userId: string, updates: Partial<UserProfile>) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
       const { error } = await supabase
         .from("profiles")
         .update(updates)
@@ -57,6 +61,21 @@ const UserManagement = () => {
       setUsers(users.map(user => 
         user.id === userId ? { ...user, ...updates } : user
       ));
+
+      // Log admin action
+      const actionType = 'is_approved' in updates 
+        ? (updates.is_approved ? 'user_approve' : 'user_revoke') 
+        : (updates.is_admin ? 'user_promote_admin' : 'user_demote_admin');
+      
+      await logAdminAction({
+        admin_id: session.user.id,
+        action_type: actionType,
+        target_user_id: userId,
+        details: { 
+          updates,
+          target_email: users.find(u => u.id === userId)?.email 
+        }
+      });
 
       toast({
         title: "Success",

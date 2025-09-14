@@ -13,6 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import UserManagement from "@/components/UserManagement";
 import { 
+  validateFile, 
+  logUploadAudit, 
+  logAdminAction, 
+  sanitizeFileName, 
+  getUserAgent 
+} from "@/lib/security";
+import { 
   Upload, 
   Edit, 
   Trash2, 
@@ -178,14 +185,27 @@ const Admin = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type.startsWith("video/")) {
+      const validation = validateFile(file, 'video');
+      if (validation.isValid) {
         setFormData(prev => ({ ...prev, file }));
       } else {
         toast({
-          title: "Invalid File Type",
-          description: "Please select a video file (MP4, MOV, AVI, etc.)",
+          title: "Invalid File",
+          description: validation.error,
           variant: "destructive"
         });
+        // Log failed upload attempt
+        if (session?.user) {
+          logUploadAudit({
+            user_id: session.user.id,
+            file_name: file.name,
+            file_size: file.size,
+            file_type: file.type,
+            upload_type: 'video',
+            status: 'rejected',
+            user_agent: getUserAgent()
+          });
+        }
       }
     }
   };
@@ -193,14 +213,27 @@ const Admin = () => {
   const handleThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type.startsWith("image/")) {
+      const validation = validateFile(file, 'image');
+      if (validation.isValid) {
         setFormData(prev => ({ ...prev, thumbnail: file }));
       } else {
         toast({
-          title: "Invalid File Type",
-          description: "Please select an image file (JPG, PNG, etc.)",
+          title: "Invalid File",
+          description: validation.error,
           variant: "destructive"
         });
+        // Log failed upload attempt
+        if (session?.user) {
+          logUploadAudit({
+            user_id: session.user.id,
+            file_name: file.name,
+            file_size: file.size,
+            file_type: file.type,
+            upload_type: 'thumbnail',
+            status: 'rejected',
+            user_agent: getUserAgent()
+          });
+        }
       }
     }
   };
@@ -208,14 +241,27 @@ const Admin = () => {
   const handleEditFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type.startsWith("video/")) {
+      const validation = validateFile(file, 'video');
+      if (validation.isValid) {
         setEditFormData(prev => ({ ...prev, file }));
       } else {
         toast({
-          title: "Invalid File Type",
-          description: "Please select a video file (MP4, MOV, AVI, etc.)",
+          title: "Invalid File",
+          description: validation.error,
           variant: "destructive"
         });
+        // Log failed upload attempt
+        if (session?.user) {
+          logUploadAudit({
+            user_id: session.user.id,
+            file_name: file.name,
+            file_size: file.size,
+            file_type: file.type,
+            upload_type: 'video',
+            status: 'rejected',
+            user_agent: getUserAgent()
+          });
+        }
       }
     }
   };
@@ -223,14 +269,27 @@ const Admin = () => {
   const handleEditThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type.startsWith("image/")) {
+      const validation = validateFile(file, 'image');
+      if (validation.isValid) {
         setEditFormData(prev => ({ ...prev, thumbnail: file }));
       } else {
         toast({
-          title: "Invalid File Type",
-          description: "Please select an image file (JPG, PNG, etc.)",
+          title: "Invalid File",
+          description: validation.error,
           variant: "destructive"
         });
+        // Log failed upload attempt
+        if (session?.user) {
+          logUploadAudit({
+            user_id: session.user.id,
+            file_name: file.name,
+            file_size: file.size,
+            file_type: file.type,
+            upload_type: 'thumbnail',
+            status: 'rejected',
+            user_agent: getUserAgent()
+          });
+        }
       }
     }
   };
@@ -250,13 +309,25 @@ const Admin = () => {
     setUploading(true);
 
     try {
-      // Upload video file to storage
-      const fileName = `${session.user.id}/${Date.now()}-${formData.file.name}`;
+      // Upload video file to storage with sanitized filename
+      const sanitizedFileName = sanitizeFileName(formData.file.name);
+      const fileName = `${session.user.id}/${Date.now()}-${sanitizedFileName}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('videos')
         .upload(fileName, formData.file);
 
       if (uploadError) throw uploadError;
+
+      // Log successful video upload
+      await logUploadAudit({
+        user_id: session.user.id,
+        file_name: formData.file.name,
+        file_size: formData.file.size,
+        file_type: formData.file.type,
+        upload_type: 'video',
+        status: 'success',
+        user_agent: getUserAgent()
+      });
 
       // Get public URL for the uploaded video
       const { data: { publicUrl } } = supabase.storage
@@ -266,12 +337,24 @@ const Admin = () => {
       // Upload thumbnail if provided
       let thumbnailUrl = null;
       if (formData.thumbnail) {
-        const thumbnailFileName = `${session.user.id}/${Date.now()}-${formData.thumbnail.name}`;
+        const sanitizedThumbnailName = sanitizeFileName(formData.thumbnail.name);
+        const thumbnailFileName = `${session.user.id}/${Date.now()}-${sanitizedThumbnailName}`;
         const { data: thumbnailUploadData, error: thumbnailUploadError } = await supabase.storage
           .from('thumbnails')
           .upload(thumbnailFileName, formData.thumbnail);
 
         if (thumbnailUploadError) throw thumbnailUploadError;
+
+        // Log successful thumbnail upload
+        await logUploadAudit({
+          user_id: session.user.id,
+          file_name: formData.thumbnail.name,
+          file_size: formData.thumbnail.size,
+          file_type: formData.thumbnail.type,
+          upload_type: 'thumbnail',
+          status: 'success',
+          user_agent: getUserAgent()
+        });
 
         // Get public URL for the uploaded thumbnail
         const { data: { publicUrl: thumbnailPublicUrl } } = supabase.storage
@@ -305,12 +388,38 @@ const Admin = () => {
       setFormData({ title: "", description: "", file: null, thumbnail: null, sort_order: videos.length + 1 });
       setShowUploadForm(false);
       
+      // Log admin action
+      await logAdminAction({
+        admin_id: session.user.id,
+        action_type: 'video_upload',
+        target_resource_id: videoData.id,
+        details: { 
+          title: formData.title, 
+          file_size: formData.file.size,
+          has_thumbnail: !!formData.thumbnail
+        }
+      });
+
       toast({
         title: "Video Uploaded Successfully",
         description: `"${formData.title}" has been added to your media library`,
       });
     } catch (error) {
       console.error('Error uploading video:', error);
+      
+      // Log failed upload
+      if (session?.user && formData.file) {
+        await logUploadAudit({
+          user_id: session.user.id,
+          file_name: formData.file.name,
+          file_size: formData.file.size,
+          file_type: formData.file.type,
+          upload_type: 'video',
+          status: 'failed',
+          user_agent: getUserAgent()
+        });
+      }
+
       toast({
         title: "Upload Failed",
         description: "Failed to upload video. Please try again.",
@@ -339,6 +448,16 @@ const Admin = () => {
           ? { ...v, is_published: !v.is_published }
           : v
       ));
+
+      // Log admin action
+      if (session?.user) {
+        await logAdminAction({
+          admin_id: session.user.id,
+          action_type: !video.is_published ? 'video_publish' : 'video_unpublish',
+          target_resource_id: id,
+          details: { title: video.title }
+        });
+      }
       
       toast({
         title: !video.is_published ? "Video Published" : "Video Unpublished",
@@ -381,6 +500,16 @@ const Admin = () => {
 
       // Update local state
       setVideos(prev => prev.filter(v => v.id !== id));
+
+      // Log admin action
+      if (session?.user) {
+        await logAdminAction({
+          admin_id: session.user.id,
+          action_type: 'video_delete',
+          target_resource_id: id,
+          details: { title: video.title }
+        });
+      }
       
       toast({
         title: "Video Deleted",

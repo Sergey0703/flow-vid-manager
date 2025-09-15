@@ -1,7 +1,7 @@
 const Hero = () => {
   return (
     <section className="relative overflow-hidden">
-      {/* Banner Image - показывает всех персонажей */}
+      {/* Banner Image */}
       <div className="w-full relative">
         <img
           src="/lovable-uploads/futuristic-team-banner.png"
@@ -10,16 +10,17 @@ const Hero = () => {
           loading="eager"
           decoding="async"
         />
-        {/* Overlapping Text Section с градиентным фоном */}
-        <div className="absolute bottom-0 left-0 right-0">
+
+        {/* Gradient Overlay with Text */}
+        <div className="absolute bottom-0 left-0 right-0 transform translate-y-1/2">
           <div className="container mx-auto px-4">
-            <div className="bg-gradient-to-t from-black/90 via-black/60 to-transparent backdrop-blur-sm rounded-t-3xl md:rounded-t-[2rem] mx-4 md:mx-8 lg:mx-16 py-4 md:py-8 lg:py-12 border border-white/10">
-              <div className="text-center max-w-4xl mx-auto px-4">
-                <h1 className="text-lg md:text-2xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold leading-tight">
+            <div className="bg-gradient-to-t from-black/90 via-black/60 to-transparent rounded-xl shadow-lg mx-4 md:mx-8 lg:mx-16 py-3 md:py-4 border border-white/10">
+              <div className="text-center max-w-3xl mx-auto px-4">
+                <h1 className="text-lg md:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight">
                   <span className="text-red-500 drop-shadow-lg">AI</span>{" "}
                   <span className="text-white drop-shadow-lg">MediaFlow:</span>
                   <br className="block sm:hidden" />
-                  <span className="block mt-1 sm:mt-0 text-base md:text-lg lg:text-2xl xl:text-3xl 2xl:text-4xl text-white/90 font-medium">
+                  <span className="block mt-1 sm:mt-0 text-sm md:text-xl lg:text-2xl xl:text-3xl text-white/90 font-medium">
                     Your Partner in AI Business Integration
                   </span>
                 </h1>
@@ -28,11 +29,11 @@ const Hero = () => {
           </div>
         </div>
       </div>
-      {/* Spacer to accommodate overlapping text */}
-      <div className="h-16 md:h-20 lg:h-8 xl:h-12 bg-background"></div>
+
+      {/* Spacer чтобы секции ниже не наезжали */}
+      <div className="h-10 md:h-12 lg:h-16 bg-background"></div>
     </section>
   );
 };
-
 
 export default Hero;

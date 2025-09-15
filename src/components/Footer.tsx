@@ -9,7 +9,7 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-xl font-bold gradient-text">AI MediaFlow</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              AI MediaFlow — an intelligent media platform for business content and training. 
+              AI MediaFlow — an intelligent media agency for business content and training. 
               Empowering organizations with cutting-edge AI solutions.
             </p>
           </div>
@@ -39,7 +39,7 @@ const Footer = () => {
             <div className="space-y-3 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>contact@aimediaflow.com</span>
+                <span>auto2025system@gmail.com</span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />
@@ -56,7 +56,7 @@ const Footer = () => {
         {/* Bottom bar */}
         <div className="mt-8 border-t border-border/50 pt-8 text-center">
           <p className="text-xs text-muted-foreground">
-            © 2024 AI MediaFlow. All rights reserved. Powered by intelligent automation.
+            © 2025 AI MediaFlow. All rights reserved. Powered by intelligent automation.
           </p>
         </div>
       </div>

@@ -67,9 +67,7 @@ const VideoGrid = ({ videos }: VideoGridProps) => {
     <section className="py-8">
       <div className="container mx-auto px-4">
         <div className="mb-8 text-center">
-          <h2 className="mb-4 text-3xl font-bold lg:text-4xl">
-            Our <span className="gradient-text">AI Solutions</span> in Action
-          </h2>
+          
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             Discover how our AI-powered solutions transform business processes and drive efficiency.
           </p>
@@ -89,9 +87,7 @@ const VideoGrid = ({ videos }: VideoGridProps) => {
         
         {/* Additional safety notice */}
         <div className="mt-12 text-center">
-          <p className="text-xs text-muted-foreground">
-            All content is moderated and approved before publication
-          </p>
+          
         </div>
       </div>
     </section>

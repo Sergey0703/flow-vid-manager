@@ -65,9 +65,9 @@ const VideoPlayer = ({ src, title, description, posterUrl }: VideoPlayerProps) =
       </div>
       
       {/* Content */}
-      <div className="p-6">
+      <div className="p-3">
         <h3 
-          className="mb-3 text-xl font-bold text-foreground group-hover:text-primary transition-colors"
+          className="mb-2 text-xl font-bold text-foreground group-hover:text-primary transition-colors"
           // Use dangerouslySetInnerHTML only after sanitization, or better - just text content
           title={displayTitle} // Tooltip shows full title
         >
@@ -76,11 +76,11 @@ const VideoPlayer = ({ src, title, description, posterUrl }: VideoPlayerProps) =
         </h3>
         
         <p 
-          className="text-sm leading-relaxed text-muted-foreground"
+          className="text-sm leading-relaxed text-muted-foreground min-h-[120px]"
           title={displayDescription} // Tooltip shows full description
         >
           {/* Safe text rendering - no HTML interpretation */}
-          {displayDescription.length > 150 ? `${displayDescription.substring(0, 150)}...` : displayDescription}
+          {displayDescription.length > 800 ? `${displayDescription.substring(0, 800)}...` : displayDescription}
         </p>
       </div>
     </div>

@@ -1,0 +1,15 @@
+name: Supabase Ping
+
+on:
+  schedule:
+    # Запуск каждый день в 8:00 утра UTC
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Позволяет запустить кнопку вручную для проверки
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Vercel App
+        # Замените https://aimediaflow.vercel.app на адрес вашего сайта
+        run: curl -I https://aimediaflow.vercel.app

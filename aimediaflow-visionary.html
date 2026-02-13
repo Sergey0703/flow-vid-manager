@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI MediaFlow — The Autonomous Enterprise</title>
+    <!-- Using a bold, geometric font for headlines and clean sans for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* 
+           VISIONARY VARIANT (Concept: "Fluid Intelligence")
+           - No rigid grids. Fluid shapes.
+           - Deep noise textures.
+           - Massive typography.
+           - "Glass & Light" aesthetic but darker/moodier.
+        */
+
+        :root {
+            --bg: #030303;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+            --accent: #2bff88;
+            /* Cyber Green */
+            --accent-glow: rgba(43, 255, 136, 0.4);
+            --secondary: #6e44ff;
+            /* Electric Purple */
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --font-head: 'Outfit', sans-serif;
+            --font-body: 'Space Grotesk', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            font-size: 16px;
+            /* Noise texture overlay */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        /* ─── TYPOGRAPHY ─────────────────────────────── */
+        h1,
+        h2,
+        h3 {
+            font-family: var(--font-head);
+            line-height: 0.9;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+        }
+
+        .mega-text {
+            font-size: clamp(4rem, 15vw, 12rem);
+            font-weight: 800;
+            background: linear-gradient(to right, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            animation: slide-up 1s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            border-left: 4px solid var(--accent);
+            padding-left: 20px;
+            margin-bottom: 2rem;
+        }
+
+        p {
+            line-height: 1.7;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 60ch;
+        }
+
+        /* ─── LAYOUT ─────────────────────────────────── */
+        .wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 4vw;
+        }
+
+        section {
+            padding: 10vh 0;
+            position: relative;
+        }
+
+        /* ─── UI ELEMENTS ────────────────────────────── */
+        .btn-glow {
+            display: inline-block;
+            padding: 1.2rem 2.5rem;
+            background: var(--text-main);
+            color: var(--bg);
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: var(--font-head);
+            letter-spacing: 0.05em;
+            border-radius: 100px;
+            transition: 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-glow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            transition: 0.4s;
+        }
+
+        .btn-glow:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px var(--accent-glow);
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .btn-glow:hover::before {
+            left: 100%;
+        }
+
+        /* ─── HERO ───────────────────────────────────── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 10s ease-in-out infinite alternate;
+        }
+
+        .orb-1 {
+            width: 40vw;
+            height: 40vw;
+            background: var(--secondary);
+            top: -10%;
+            left: -10%;
+        }
+
+        .orb-2 {
+            width: 30vw;
+            height: 30vw;
+            background: var(--accent);
+            bottom: 10%;
+            right: -5%;
+            animation-delay: -5s;
+        }
+
+        .hero-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .badge {
+            border: 1px solid var(--glass-border);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            backdrop-filter: blur(10px);
+            color: var(--accent);
+            animation: fade-in 1s 0.5s backwards;
+        }
+
+        /* ─── TICKER ─────────────────────────────────── */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background: var(--text-main);
+            color: var(--bg);
+            padding: 1rem 0;
+            transform: rotate(-2deg) scale(1.05);
+            margin: 4rem 0;
+            border-top: 2px solid var(--accent);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 20s linear infinite;
+            font-family: var(--font-head);
+            font-weight: 900;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .ticker-item {
+            margin-right: 4rem;
+        }
+
+        /* ─── CARDS (Glass) ──────────────────────────── */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            border: 1px solid var(--glass-border);
+            padding: 2.5rem;
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            transition: 0.3s;
+        }
+
+        .glass-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .glass-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .num {
+            font-size: 4rem;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 1px var(--glass-border);
+            opacity: 0.3;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .glass-card:hover .num {
+            -webkit-text-stroke-color: var(--accent);
+            opacity: 1;
+        }
+
+        /* ─── SHOWCASE (Parallax) ────────────────────── */
+        .showcase-item {
+            display: flex;
+            align-items: center;
+            gap: 4rem;
+            margin-bottom: 8rem;
+        }
+
+        .showcase-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .showcase-img {
+            flex: 1;
+            aspect-ratio: 16/9;
+            background: #111;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .showcase-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.5s;
+            filter: grayscale(100%);
+        }
+
+        .showcase-item:hover img {
+            filter: grayscale(0%);
+            transform: scale(1.05);
+        }
+
+        .showcase-text {
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .showcase-item {
+                flex-direction: column !important;
+                gap: 2rem;
+            }
+
+            .mega-text {
+                font-size: 15vw;
+            }
+        }
+
+        /* ─── ANIMATIONS ─────────────────────────────── */
+        @keyframes float {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(20px, -50px);
+            }
+        }
+
+        @keyframes slide-up {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes ticker {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav
+        style="position:fixed; top:0; width:100%; padding:2rem 4vw; display:flex; justify-content:space-between; align-items:center; z-index:100; mix-blend-mode: difference;">
+        <div style="font-weight:900; font-family:var(--font-head); font-size:1.5rem; letter-spacing:-0.05em;">AI
+            MEDIAFLOW</div>
+        <a href="#contact"
+            style="color:white; text-decoration:none; text-transform:uppercase; font-size:0.9rem; letter-spacing:0.1em; border-bottom:1px solid white;">Menu</a>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+
+        <div class="hero-content">
+            <div class="badge">Autonomy Is Here</div>
+            <h1 class="mega-text">Build<br>The Future</h1>
+            <p>We deploy digital workforces. Intelligent agents that talk, think, and execute business processes
+                autonomously. Welcome to the post-manual era.</p>
+            <div style="margin-top:2rem">
+                <a href="#contact" class="btn-glow">Deploy Agents</a>
+                <a href="#work"
+                    style="margin-left:20px; color:var(--text-muted); text-decoration:none; border-bottom:1px solid var(--text-muted);">Watch
+                    Demo</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- TICKER -->
+    <div class="ticker-wrap">
+        <div class="ticker">
+            <span class="ticker-item">Autonomous Revenue Systems</span>
+            <span class="ticker-item">///</span>
+            <span class="ticker-item">24/7 Availability</span>
+            <span class="ticker-item">///</span>
+            <span class="ticker-item">Zero Latency</span>
+            <span class="ticker-item">///</span>
+            <span class="ticker-item">Scale Infinitely</span>
+            <span class="ticker-item">///</span>
+            <span class="ticker-item">Autonomous Revenue Systems</span>
+            <span class="ticker-item">///</span>
+            <span class="ticker-item">24/7 Availability</span>
+            <span class="ticker-item">///</span>
+            <span class="ticker-item">Zero Latency</span>
+        </div>
+    </div>
+
+    <!-- SERVICES (BENTO) -->
+    <section class="wrapper">
+        <h2 class="section-title">Core Modules</h2>
+        <div class="bento-grid">
+            <div class="glass-card">
+                <span class="num">01</span>
+                <h3>Neural Voice</h3>
+                <p>Hyper-realistic voice agents that handle inbound sales and support calls with human-like latency and
+                    emotion. They never sleep, never churn.</p>
+            </div>
+            <div class="glass-card">
+                <span class="num">02</span>
+                <h3>Visual Intelligence</h3>
+                <p>Computer vision systems that analyze video content, extract data from documents, and automate quality
+                    control workflows.</p>
+            </div>
+            <div class="glass-card">
+                <span class="num">03</span>
+                <h3>Cognitive Chat</h3>
+                <p>Context-aware RAG chatbots trained on your entire proprietary knowledge base. Instant answers, zero
+                    hallucinations.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- WORK SHOWCASE -->
+    <section class="wrapper" id="work">
+        <h2 class="section-title">Deployed Systems</h2>
+
+        <div class="showcase-item">
+            <div class="showcase-img">
+                <img src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=1600&auto=format&fit=crop"
+                    alt="Crypto Dashboard layer">
+            </div>
+            <div class="showcase-text">
+                <div class="badge" style="display:inline-block; margin-bottom:1rem">Fintech</div>
+                <h3>Autonomous Trading Desk</h3>
+                <p>We built a system that aggregates news, analyzes sentiment, and executes trades automatically.
+                    Reduced manual analysis time by 99%.</p>
+                <br>
+                <a href="#" class="btn-glow" style="padding:0.8rem 1.5rem; font-size:0.8rem">View Case Study</a>
+            </div>
+        </div>
+
+        <div class="showcase-item">
+            <div class="showcase-img">
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1600&auto=format&fit=crop"
+                    alt="Server Room">
+            </div>
+            <div class="showcase-text">
+                <div class="badge" style="display:inline-block; margin-bottom:1rem">Healthcare</div>
+                <h3>Patient Triage AI</h3>
+                <p>A voice-first agent that screens patients, updates EMRs, and schedules appointments based on urgency
+                    protocols.</p>
+                <br>
+                <a href="#" class="btn-glow" style="padding:0.8rem 1.5rem; font-size:0.8rem">View Case Study</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT CTA -->
+    <section style="text-align:center; padding: 15vh 0;">
+        <div class="orb"
+            style="width:60vw; height:60vw; background:var(--accent); top:50%; left:50%; transform:translate(-50%, -50%); opacity:0.1; filter:blur(100px)">
+        </div>
+        <div class="wrapper" style="position:relative; z-index:2">
+            <h2 style="font-size:clamp(3rem, 10vw, 8rem); margin-bottom:2rem;">Ready to<br>Automate?</h2>
+            <p style="margin:0 auto 3rem;">Schedule a strategy session. We map your workflows and build the prototype.
+            </p>
+            <a href="#" class="btn-glow" style="font-size:1.5rem; padding:1.5rem 4rem;">Initialize Protocol</a>
+        </div>
+    </section>
+
+    <footer
+        style="border-top:1px solid var(--glass-border); padding:3rem 0; text-align:center; color:var(--text-muted); font-size:0.9rem;">
+        <p>AI MEDIAFLOW &copy; 2026. ENGINEERED FOR AUTONOMY.</p>
+    </footer>
+
+</body>
+
+</html>

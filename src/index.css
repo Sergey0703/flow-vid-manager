@@ -47,22 +47,24 @@
     --ring: 190 100% 50%;
 
     /* AI Theme Brand Colors */
-    --brand-red: 0 84% 60%; /* For AI text */
-    --brand-blue: 220 45% 15%; /* For background overlays */
+    --brand-red: 0 84% 60%;
+    /* For AI text */
+    --brand-blue: 220 45% 15%;
+    /* For background overlays */
 
     /* AI Theme Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-hero: linear-gradient(180deg, hsl(var(--background)), hsl(220 25% 15%));
     --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(220 30% 18%));
     --gradient-hero-overlay: linear-gradient(135deg, hsl(220 45% 15% / 0.8), hsl(240 45% 20% / 0.7));
-    
+
     /* AI Theme Shadows & Glows */
     --shadow-glow: 0 0 40px hsl(var(--primary) / 0.3);
     --shadow-card: 0 8px 32px hsl(var(--primary) / 0.15);
     --shadow-elegant: 0 10px 30px -10px hsl(220 25% 5% / 0.8);
     --shadow-text: 0 4px 20px hsl(0 0% 0% / 0.5);
     --shadow-red-glow: 0 8px 32px hsl(0 84% 60% / 0.3);
-    
+
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-glow: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -95,22 +97,22 @@
     box-shadow: var(--shadow-glow);
     transition: var(--transition-glow);
   }
-  
+
   .glow-effect:hover {
     box-shadow: 0 0 60px hsl(var(--primary) / 0.5);
   }
-  
+
   .gradient-text {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
+
   .hero-gradient {
     background: var(--gradient-hero);
   }
-  
+
   .card-gradient {
     background: var(--gradient-card);
   }
@@ -169,7 +171,7 @@
     .hero-title {
       line-height: 1.2;
     }
-    
+
     .hero-subtitle {
       line-height: 1.4;
     }
@@ -192,21 +194,17 @@
 
   /* Overlay gradients for better text readability */
   .hero-overlay-primary {
-    background: linear-gradient(
-      135deg, 
-      hsl(220 45% 15% / 0.85) 0%, 
-      hsl(240 45% 20% / 0.75) 50%, 
-      hsl(220 45% 15% / 0.85) 100%
-    );
+    background: linear-gradient(135deg,
+        hsl(220 45% 15% / 0.85) 0%,
+        hsl(240 45% 20% / 0.75) 50%,
+        hsl(220 45% 15% / 0.85) 100%);
   }
 
   .hero-overlay-secondary {
-    background: linear-gradient(
-      to top, 
-      hsl(0 0% 0% / 0.6) 0%, 
-      transparent 50%, 
-      hsl(0 0% 0% / 0.3) 100%
-    );
+    background: linear-gradient(to top,
+        hsl(0 0% 0% / 0.6) 0%,
+        transparent 50%,
+        hsl(0 0% 0% / 0.3) 100%);
   }
 
   /* Quote box styling */
@@ -225,4 +223,89 @@
   .text-glow-red {
     text-shadow: 0 0 20px hsl(var(--brand-red) / 0.6);
   }
+}
+
+/* ─── V2 THEME VARIABLES (Corrected from aimediaflow-landing-v2.html) ─── */
+:root {
+  --v2-bg: #0d1117;
+  --v2-bg-card: #161b27;
+  --v2-bg-card-alt: #1a2035;
+  --v2-border: rgba(255, 255, 255, 0.07);
+  --v2-cyan: #00c8e0;
+  --v2-cyan-light: #4de0f4;
+  --v2-cyan-glow: rgba(0, 200, 224, 0.25);
+  --v2-red: #ef4444;
+  --v2-red-glow: rgba(239, 68, 68, 0.3);
+  --v2-purple: #a855f7;
+  --v2-text: #f0f6fc;
+  --v2-muted: #8b949e;
+  --v2-subtle: #6e7681;
+  --v2-radius: 12px;
+}
+
+/* ─── V2 ANIMATIONS ─── */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-orb {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(30px, -40px) scale(1.05);
+  }
+
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--v2-cyan-glow);
+  }
+
+  70% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.8s ease-out both;
+}
+
+.animate-float-orb {
+  animation: float-orb 12s ease-in-out infinite;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease infinite;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
 }

@@ -9,7 +9,7 @@ const HeroV2 = () => {
             </div>
 
             <div className="v2-hero-img">
-                <img src="/lovable-uploads/futuristic-team-banner.png" alt="" aria-hidden="true" />
+                <img src="/lovable-uploads/futuristic-team-banner.webp" alt="" aria-hidden="true" />
             </div>
 
             <div className="v2-hero-overlay"></div>
@@ -25,17 +25,17 @@ const HeroV2 = () => {
                 </h1>
 
                 <p className="v2-hero-tagline">
-                    Transform Your Business with <span className="highlight">Intelligent Automation</span>
+                    AI-Staff for Your Operations: <span className="highlight">Automate Invoicing, Scheduling and Support Instantly</span>
                 </p>
 
                 <p className="v2-hero-desc">
-                    We build AI-powered phone assistants, chatbots, and automation systems
-                    that eliminate manual work and give your business an unfair advantage.
+                    Stop manual work. We deploy intelligent AI systems that handle your repetitive tasks,
+                    so your team can focus on growth.
                 </p>
 
                 <div className="v2-hero-actions">
                     <a href="#contact" className="v2-btn v2-btn-primary">
-                        Book Free Discovery Call
+                        Book a Demo
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                     </a>
                     <a href="#work" className="v2-btn v2-btn-ghost">

@@ -30,7 +30,7 @@ const Navigation = () => {
                     </ul>
 
                     <div className="v2-nav-cta">
-                        <a href="#contact" className="v2-btn v2-btn-primary">Book Free Call</a>
+                        <a href="#contact" className="v2-btn v2-btn-primary">Book a Demo</a>
                     </div>
 
                     <div className="v2-hamburger" onClick={toggleMobileMenu}>
@@ -45,7 +45,7 @@ const Navigation = () => {
                 <a href="#how" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
                 <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
                 <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
-                <a href="#contact" className="v2-btn v2-btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileMenuOpen(false)}>Book Free Call</a>
+                <a href="#contact" className="v2-btn v2-btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileMenuOpen(false)}>Book a Demo</a>
             </nav>
         </>
     );

@@ -108,7 +108,7 @@
 
 @media (max-width: 560px) {
     .v2-container {
-        padding: 0 0.75rem;
+        padding: 0;
     }
 
     .v2-hero,
@@ -120,6 +120,13 @@
     .v2-contact {
         padding-left: 0;
         padding-right: 0;
+    }
+
+    .v2-work-card,
+    .v2-service-card {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
     }
 }
 

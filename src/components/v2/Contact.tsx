@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 
 const Contact = () => {
     const [form, setForm] = useState({
-        firstName: '', lastName: '', email: '', phone: '', message: ''
+        firstName: '', lastName: '', email: '', phone: '', message: '', website: ''
     });
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
@@ -24,7 +24,7 @@ const Contact = () => {
 
             if (res.ok) {
                 setStatus('success');
-                setForm({ firstName: '', lastName: '', email: '', phone: '', message: '' });
+                setForm({ firstName: '', lastName: '', email: '', phone: '', message: '', website: '' });
             } else {
                 setStatus('error');
             }
@@ -119,6 +119,11 @@ const Contact = () => {
                                 <label>Phone</label>
                                 <input name="phone" type="tel" placeholder="+1 234..." value={form.phone} onChange={handleChange} />
                             </div>
+                        </div>
+
+                        {/* Honeypot — hidden from real users, bots fill it in */}
+                        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }} aria-hidden="true">
+                            <input name="website" type="text" tabIndex={-1} autoComplete="off" value={form.website} onChange={handleChange} />
                         </div>
 
                         <div className="v2-form-field">

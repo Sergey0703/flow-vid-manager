@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import UserManagement from "@/components/UserManagement";
+import KnowledgeBase from "@/components/KnowledgeBase";
 import { 
   validateFile, 
   logUploadAudit, 
@@ -802,9 +803,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="videos" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="videos">Video Management</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="kb">Knowledge Base</TabsTrigger>
           </TabsList>
           
           <TabsContent value="videos" className="space-y-6">
@@ -1066,6 +1068,10 @@ const Admin = () => {
           
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="kb">
+            <KnowledgeBase />
           </TabsContent>
         </Tabs>
       </div>

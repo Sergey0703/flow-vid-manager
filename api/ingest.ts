@@ -34,14 +34,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Upsert with integrated embedding (Pinecone embeds the text automatically)
-    const vectors = entries.map(entry => ({
-      id: entry.id,
-      text: entry.text,           // Pinecone Inference API embeds this field (field map = "text")
-      metadata: {
-        category: entry.category,
-        text: entry.text,         // store text in metadata for retrieval
-      },
+    // Pinecone Integrated Embedding — /records/upsert format
+    // Each record: _id (string) + source field for embedding + any extra metadata fields
+    const records = entries.map(entry => ({
+      _id: entry.id,
+      text: entry.text,       // source field to embed (must match index field map)
+      category: entry.category,
     }));
 
     const upsertRes = await fetch(`${PINECONE_INDEX_HOST}/records/upsert`, {
@@ -51,13 +49,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Content-Type': 'application/json',
         'X-Pinecone-API-Version': '2025-01',
       },
-      body: JSON.stringify({ records: vectors }),
+      body: JSON.stringify({ records }),
     });
 
     if (!upsertRes.ok) {
-      const err = await upsertRes.text();
-      console.error('Pinecone upsert error:', err);
-      return res.status(500).json({ error: 'Pinecone upsert failed', detail: err });
+      const errText = await upsertRes.text();
+      console.error('Pinecone upsert error status:', upsertRes.status, errText);
+      return res.status(500).json({ error: 'Pinecone upsert failed', detail: errText });
     }
 
     return res.status(200).json({ indexed: entries.length });

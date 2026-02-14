@@ -1181,6 +1181,34 @@
     color: var(--v2-subtle);
 }
 
+@media (max-width: 900px) {
+    .v2-footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .v2-footer {
+        padding: 3rem 1.25rem 1.5rem;
+    }
+
+    .v2-footer-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .v2-footer-brand p {
+        max-width: 100%;
+    }
+
+    .v2-footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
 /* ─── MOCK CHATBOT ─── */
 
 /* ── BOT BUBBLE ── */
@@ -1701,4 +1729,202 @@
 
 .hover-link:hover {
     color: var(--v2-cyan) !important;
+}
+
+/* ── CHATBOT AI SPHERE ── */
+
+.chatbot-sphere-scene {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatbot-sphere-ring {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 200, 224, 0.3);
+    animation: chatbot-ring-expand 2.5s ease-out infinite;
+}
+
+.chatbot-sphere-ring:nth-child(2) {
+    animation-delay: 1.2s;
+}
+
+@keyframes chatbot-ring-expand {
+    0%   { transform: scale(1);   opacity: 0.6; }
+    100% { transform: scale(1.9); opacity: 0; }
+}
+
+.chatbot-sphere {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    background: radial-gradient(circle at 35% 35%,
+        rgba(77, 224, 244, 0.95) 0%,
+        rgba(0, 200, 224, 0.85) 40%,
+        rgba(0, 80, 100, 0.7) 100%
+    );
+    box-shadow:
+        0 0 12px rgba(0, 200, 224, 0.7),
+        0 0 24px rgba(0, 200, 224, 0.25),
+        inset 0 0 8px rgba(77, 224, 244, 0.2);
+    transition:
+        border-radius 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.5s ease,
+        box-shadow 0.5s ease;
+    animation: chatbot-sphere-breathe 3s ease-in-out infinite;
+}
+
+.chatbot-sphere::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 6px;
+    width: 7px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.45);
+    border-radius: 50%;
+    filter: blur(1px);
+    transform: rotate(-30deg);
+}
+
+@keyframes chatbot-sphere-breathe {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.07); }
+}
+
+/* THINKING — amber */
+.chatbot-sphere.thinking {
+    animation: chatbot-sphere-think 0.55s ease-in-out infinite alternate;
+    background: radial-gradient(circle at 35% 35%,
+        rgba(255, 200, 80, 0.95) 0%,
+        rgba(245, 158, 11, 0.85) 40%,
+        rgba(120, 70, 0, 0.65) 100%
+    );
+    box-shadow:
+        0 0 12px rgba(245, 158, 11, 0.8),
+        0 0 24px rgba(245, 158, 11, 0.3),
+        inset 0 0 8px rgba(255, 220, 120, 0.2);
+}
+
+@keyframes chatbot-sphere-think {
+    from { transform: scale(0.88) scaleX(1.1); border-radius: 55% 45% 50% 50%; }
+    to   { transform: scale(1.0)  scaleX(0.96); border-radius: 50% 50% 45% 55%; }
+}
+
+/* SPEAKING — green */
+.chatbot-sphere.speaking {
+    animation: chatbot-sphere-speak 0.25s ease-in-out infinite alternate;
+    background: radial-gradient(circle at 35% 35%,
+        rgba(134, 239, 172, 0.95) 0%,
+        rgba(34, 197, 94, 0.88) 40%,
+        rgba(10, 80, 30, 0.7) 100%
+    );
+    box-shadow:
+        0 0 16px rgba(34, 197, 94, 0.85),
+        0 0 32px rgba(34, 197, 94, 0.3),
+        inset 0 0 8px rgba(134, 239, 172, 0.25);
+}
+
+@keyframes chatbot-sphere-speak {
+    from {
+        transform: scale(0.94) scaleY(1.08);
+        border-radius: 48% 52% 46% 54% / 52% 48% 54% 46%;
+    }
+    to {
+        transform: scale(1.04) scaleY(0.95);
+        border-radius: 54% 46% 52% 48% / 46% 54% 48% 52%;
+    }
+}
+
+/* Mini sphere in header (right side) */
+.chatbot-mini-sphere {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%,
+        rgba(77, 224, 244, 0.95) 0%,
+        rgba(0, 200, 224, 0.85) 40%,
+        rgba(0, 80, 100, 0.7) 100%
+    );
+    box-shadow: 0 0 6px rgba(0, 200, 224, 0.8);
+    transition: background 0.5s ease, box-shadow 0.5s ease;
+    animation: chatbot-sphere-breathe 3s ease-in-out infinite;
+}
+
+.chatbot-mini-sphere.thinking {
+    animation: chatbot-sphere-think 0.55s ease-in-out infinite alternate;
+    background: radial-gradient(circle at 35% 35%,
+        rgba(255, 200, 80, 0.95) 0%,
+        rgba(245, 158, 11, 0.85) 40%,
+        rgba(120, 70, 0, 0.65) 100%
+    );
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.9);
+}
+
+.chatbot-mini-sphere.speaking {
+    animation: chatbot-sphere-speak 0.25s ease-in-out infinite alternate;
+    background: radial-gradient(circle at 35% 35%,
+        rgba(134, 239, 172, 0.95) 0%,
+        rgba(34, 197, 94, 0.88) 40%,
+        rgba(10, 80, 30, 0.7) 100%
+    );
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
+}
+
+/* State label under sphere */
+.chatbot-sphere-label {
+    font-size: 0.68rem;
+    color: rgba(0, 200, 224, 0.85);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.05em;
+    transition: color 0.4s;
+}
+
+.chatbot-sphere-label.thinking {
+    color: rgba(245, 158, 11, 0.9);
+}
+
+.chatbot-sphere-label.speaking {
+    color: rgba(34, 197, 94, 0.9);
+}
+
+.chatbot-sphere-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(0, 200, 224, 1);
+    display: inline-block;
+    transition: background 0.4s;
+    flex-shrink: 0;
+}
+
+.chatbot-sphere-label.thinking .chatbot-sphere-dot {
+    background: rgba(245, 158, 11, 1);
+}
+
+.chatbot-sphere-label.speaking .chatbot-sphere-dot {
+    background: rgba(34, 197, 94, 1);
+}
+
+/* Disabled input state while AI is typing */
+#chat-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#chat-send:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
 }

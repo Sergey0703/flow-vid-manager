@@ -143,6 +143,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing message' });
   }
 
+  // Spam / abuse limits
+  if (message.length > 500) {
+    return res.status(400).json({ error: 'Message too long (max 500 characters)' });
+  }
+  if (Array.isArray(history) && history.length > 40) {
+    return res.status(400).json({ error: 'Conversation too long' });
+  }
+
   try {
     // 1. RAG — search knowledge base
     const context = await searchKnowledge(message);

@@ -136,9 +136,13 @@ const KnowledgeBase = () => {
 
     setIngesting(true);
     try {
+      const ingestSecret = import.meta.env.VITE_INGEST_SECRET as string | undefined;
       const res = await fetch("/api/ingest", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(ingestSecret ? { authorization: `Bearer ${ingestSecret}` } : {}),
+        },
         body: JSON.stringify({ entries: pending }),
       });
 

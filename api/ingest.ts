@@ -11,6 +11,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Auth check — require Bearer token matching INGEST_SECRET env var
+  const INGEST_SECRET = process.env.INGEST_SECRET;
+  if (INGEST_SECRET) {
+    const auth = req.headers['authorization'] ?? '';
+    if (auth !== `Bearer ${INGEST_SECRET}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
   const PINECONE_API_KEY = process.env.PINECONE_API_KEY;
   const PINECONE_INDEX_HOST = process.env.PINECONE_INDEX_HOST;
 

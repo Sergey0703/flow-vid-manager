@@ -80,7 +80,7 @@ const Index = () => {
       </main>
 
       <FooterV2 />
-      {/* <Chatbot /> */}
+      <Chatbot />
     </div>
   );
 };

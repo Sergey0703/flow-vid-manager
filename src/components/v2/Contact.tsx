@@ -1,7 +1,38 @@
-
+import { useState } from "react";
 import { Mail, Phone, MapPin } from "lucide-react";
 
 const Contact = () => {
+    const [form, setForm] = useState({
+        firstName: '', lastName: '', email: '', phone: '', message: ''
+    });
+    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStatus('sending');
+
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form),
+            });
+
+            if (res.ok) {
+                setStatus('success');
+                setForm({ firstName: '', lastName: '', email: '', phone: '', message: '' });
+            } else {
+                setStatus('error');
+            }
+        } catch {
+            setStatus('error');
+        }
+    };
+
     return (
         <section className="v2-contact" id="contact">
             <div className="v2-contact-inner">
@@ -67,37 +98,48 @@ const Contact = () => {
                     <h3>Tell us about your project</h3>
                     <p className="form-sub">Fill in the form and we'll be in touch within one business day.</p>
 
-                    <form onSubmit={(e) => { e.preventDefault(); alert('Message sent!'); }}>
+                    <form onSubmit={handleSubmit}>
                         <div className="v2-form-row">
                             <div className="v2-form-field">
                                 <label>First Name *</label>
-                                <input type="text" placeholder="John" required />
+                                <input name="firstName" type="text" placeholder="John" required value={form.firstName} onChange={handleChange} />
                             </div>
                             <div className="v2-form-field">
                                 <label>Last Name</label>
-                                <input type="text" placeholder="Doe" />
+                                <input name="lastName" type="text" placeholder="Doe" value={form.lastName} onChange={handleChange} />
                             </div>
                         </div>
 
                         <div className="v2-form-row">
                             <div className="v2-form-field">
                                 <label>Email *</label>
-                                <input type="email" placeholder="john@company.com" required />
+                                <input name="email" type="email" placeholder="john@company.com" required value={form.email} onChange={handleChange} />
                             </div>
                             <div className="v2-form-field">
                                 <label>Phone</label>
-                                <input type="tel" placeholder="+1 234..." />
+                                <input name="phone" type="tel" placeholder="+1 234..." value={form.phone} onChange={handleChange} />
                             </div>
                         </div>
 
                         <div className="v2-form-field">
                             <label>Project Details *</label>
-                            <textarea rows={4} placeholder="I want to automate my customer support..." required></textarea>
+                            <textarea name="message" rows={4} placeholder="I want to automate my customer support..." required value={form.message} onChange={handleChange}></textarea>
                         </div>
 
-                        <button className="v2-form-submit">
-                            Send Message
+                        <button className="v2-form-submit" disabled={status === 'sending'}>
+                            {status === 'sending' ? 'Sending...' : 'Send Message'}
                         </button>
+
+                        {status === 'success' && (
+                            <p style={{ textAlign: 'center', color: '#22c55e', marginTop: '1rem', fontWeight: 500 }}>
+                                Message sent! We'll be in touch within 24 hours.
+                            </p>
+                        )}
+                        {status === 'error' && (
+                            <p style={{ textAlign: 'center', color: '#ef4444', marginTop: '1rem' }}>
+                                Something went wrong. Please try again or email us directly.
+                            </p>
+                        )}
 
                         <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--v2-subtle)', marginTop: '1rem' }}>
                             Your info is safe. We never spam.

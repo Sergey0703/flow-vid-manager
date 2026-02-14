@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Pinecone Integrated Embedding — /records/upsert format
     // Each record: _id (string) + source field for embedding + any extra metadata fields
     const records = entries.map(entry => ({
-      _id: entry.id,
+      id: entry.id,
       text: entry.text,       // source field to embed (must match index field map)
       category: entry.category,
     }));
@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       headers: {
         'Api-Key': PINECONE_API_KEY,
         'Content-Type': 'application/json',
-        'X-Pinecone-API-Version': '2025-01',
+        'X-Pinecone-API-Version': '2025-04',
       },
       body: JSON.stringify({ records }),
     });

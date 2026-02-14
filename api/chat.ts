@@ -48,7 +48,7 @@ async function searchKnowledge(query: string): Promise<string> {
       headers: {
         'Api-Key': PINECONE_API_KEY,
         'Content-Type': 'application/json',
-        'X-Pinecone-API-Version': '2025-01',
+        'X-Pinecone-API-Version': '2025-04',
       },
       body: JSON.stringify({
         query: { inputs: { text: query }, top_k: 4 },

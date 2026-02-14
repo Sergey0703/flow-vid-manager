@@ -125,6 +125,28 @@ async function callLLM(
     return data.choices?.[0]?.message?.content ?? '';
   }
 
+  if (LLM_PROVIDER === 'gemini') {
+    // Google Gemini — OpenAI-compatible endpoint (Google AI Studio)
+    const res = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LLM_API_KEY}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: LLM_MODEL,
+          max_tokens: 300,
+          messages: [{ role: 'system', content: systemPrompt }, ...messages],
+        }),
+      }
+    );
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json() as { choices: { message: { content: string } }[] };
+    return data.choices?.[0]?.message?.content ?? '';
+  }
+
   throw new Error(`Unknown LLM_PROVIDER: ${LLM_PROVIDER}`);
 }
 

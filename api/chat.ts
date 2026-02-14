@@ -43,12 +43,12 @@ async function searchKnowledge(query: string): Promise<string> {
   if (!PINECONE_API_KEY || !PINECONE_INDEX_HOST) return '';
 
   try {
-    const res = await fetch(`${PINECONE_INDEX_HOST}/records/search`, {
+    const res = await fetch(`${PINECONE_INDEX_HOST}/records/namespaces/__default__/search`, {
       method: 'POST',
       headers: {
         'Api-Key': PINECONE_API_KEY,
         'Content-Type': 'application/json',
-        'X-Pinecone-API-Version': '2025-04',
+        'X-Pinecone-Api-Version': '2025-10',
       },
       body: JSON.stringify({
         query: { inputs: { text: query }, top_k: 4 },

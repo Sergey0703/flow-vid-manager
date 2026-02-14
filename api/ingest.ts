@@ -36,20 +36,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Pinecone Integrated Embedding — /records/upsert format
     // Each record: _id (string) + source field for embedding + any extra metadata fields
-    const records = entries.map(entry => ({
-      id: entry.id,
-      text: entry.text,       // source field to embed (must match index field map)
-      category: entry.category,
-    }));
+    // NDJSON — one record per line (Pinecone Integrated Embedding requirement)
+    const ndjson = entries
+      .map(entry => JSON.stringify({ _id: entry.id, text: entry.text, category: entry.category }))
+      .join('\n');
 
-    const upsertRes = await fetch(`${PINECONE_INDEX_HOST}/records/upsert`, {
+    const upsertRes = await fetch(`${PINECONE_INDEX_HOST}/records/namespaces/__default__/upsert`, {
       method: 'POST',
       headers: {
         'Api-Key': PINECONE_API_KEY,
-        'Content-Type': 'application/json',
-        'X-Pinecone-API-Version': '2025-04',
+        'Content-Type': 'application/x-ndjson',
+        'X-Pinecone-Api-Version': '2025-10',
       },
-      body: JSON.stringify({ records }),
+      body: ndjson,
     });
 
     if (!upsertRes.ok) {

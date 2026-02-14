@@ -41,7 +41,7 @@ const FooterV2 = () => {
                                 </div>
                                 <div style={{ fontSize: '0.875rem' }}>
                                     <div style={{ color: 'var(--v2-cyan)', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.05em' }}>Email</div>
-                                    <a href="mailto:auto2025system@gmail.com" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-link">auto2025system@gmail.com</a>
+                                    <a href="mailto:info@aimediaflow.net" style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-link">info@aimediaflow.net</a>
                                 </div>
                             </div>
 

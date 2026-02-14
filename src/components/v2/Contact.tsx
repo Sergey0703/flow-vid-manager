@@ -61,7 +61,7 @@ const Contact = () => {
                             <div>
                                 <div className="v2-contact-card-label">Email</div>
                                 <div className="v2-contact-card-value">
-                                    <a href="mailto:auto2025system@gmail.com">auto2025system@gmail.com</a>
+                                    <a href="mailto:info@aimediaflow.net">info@aimediaflow.net</a>
                                 </div>
                             </div>
                         </div>

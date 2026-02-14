@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const BREVO_API_KEY = process.env.BREVO_API_KEY;
-  const TO_EMAIL = process.env.CONTACT_EMAIL || 'auto2025system@gmail.com';
+  const TO_EMAIL = process.env.CONTACT_EMAIL || 'info@aimediaflow.net';
 
   if (!BREVO_API_KEY) {
     return res.status(500).json({ error: 'Email service not configured' });

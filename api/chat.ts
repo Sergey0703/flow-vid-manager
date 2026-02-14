@@ -36,7 +36,7 @@ RULES:
 - Never invent specific prices, timelines, or client names
 - Always end with a natural next step: book a call, use the contact form, or ask a follow-up question
 
-CONTACT: auto2025system@gmail.com | WhatsApp: +353 85 2007 612 | Kerry, Ireland`;
+CONTACT: info@aimediaflow.net | WhatsApp: +353 85 2007 612 | Kerry, Ireland`;
 
 // ── RAG: search Pinecone ─────────────────────────────────────────────────────
 async function searchKnowledge(query: string): Promise<string> {

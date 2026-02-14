@@ -54,7 +54,7 @@ const Chatbot = () => {
             setIsTyping(false);
             setSphereState('idle');
             setMessages(prev => [...prev, {
-                text: "Something went wrong on my end. Please try again or email us at auto2025system@gmail.com",
+                text: "Something went wrong on my end. Please try again or email us at info@aimediaflow.net",
                 sender: 'bot',
                 time: now()
             }]);

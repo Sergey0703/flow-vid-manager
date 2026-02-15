@@ -39,45 +39,16 @@ const HeroV2Alt = () => {
                     </div>
                 </div>
 
-                {/* Right: graphic module */}
-                <div className="v2-hero-alt-graphic">
-                    <div className="v2-hero-alt-card v2-hero-alt-card-main">
-                        <div className="v2-hero-alt-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
-                                <path d="M12 6v6l4 2"/>
-                            </svg>
-                        </div>
-                        <div className="v2-hero-alt-card-label">24/7 AI Systems</div>
-                        <div className="v2-hero-alt-card-value">Always On</div>
-                    </div>
-
-                    <div className="v2-hero-alt-card v2-hero-alt-card-accent">
-                        <div className="v2-hero-alt-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <rect x="2" y="3" width="20" height="14" rx="2"/>
-                                <path d="M8 21h8M12 17v4"/>
-                            </svg>
-                        </div>
-                        <div className="v2-hero-alt-card-label">Workflow Automation</div>
-                        <div className="v2-hero-alt-card-value">Invoicing · Scheduling · Support</div>
-                    </div>
-
-                    <div className="v2-hero-alt-card v2-hero-alt-card-purple">
-                        <div className="v2-hero-alt-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                        </div>
-                        <div className="v2-hero-alt-card-label">AI Chatbots</div>
-                        <div className="v2-hero-alt-card-value">Custom-Built · No Templates</div>
-                    </div>
-
-                    <div className="v2-hero-alt-badge-row">
-                        <span className="v2-hero-alt-pill">Kerry, Ireland</span>
-                        <span className="v2-hero-alt-pill">Wild Atlantic Way</span>
-                        <span className="v2-hero-alt-pill">Global Clients</span>
-                    </div>
+                {/* Right: video */}
+                <div className="v2-hero-alt-video-wrap">
+                    <video
+                        src="/hero/ok2.mp4"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="v2-hero-alt-video"
+                    />
                 </div>
             </div>
 

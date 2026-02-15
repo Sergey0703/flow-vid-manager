@@ -72,9 +72,9 @@ const Index = () => {
       <main>
         <HeroV2 />
         <Stats />
+        <VideoShowcase videos={videos} />
         <Services />
         <HowItWorks />
-        <VideoShowcase videos={videos} />
         <FAQ />
         <Contact />
       </main>

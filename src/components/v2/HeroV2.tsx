@@ -30,7 +30,7 @@ const HeroV2 = () => {
 
                 <p className="v2-hero-desc">
                     Stop manual work. We deploy intelligent AI systems that handle your repetitive tasks,
-                    so your team can focus on growth.
+                    so your team can focus on growth. Serving businesses in Killarney, Kerry and across Ireland.
                 </p>
 
                 <div className="v2-hero-actions">

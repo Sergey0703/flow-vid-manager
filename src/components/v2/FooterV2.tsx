@@ -63,7 +63,7 @@ const FooterV2 = () => {
                                 </div>
                                 <div style={{ fontSize: '0.875rem' }}>
                                     <div style={{ color: 'var(--v2-cyan)', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: '2px', letterSpacing: '0.05em' }}>Location</div>
-                                    <span style={{ color: 'var(--v2-text)' }}>Kerry, Ireland</span>
+                                    <span style={{ color: 'var(--v2-text)' }}>Killarney, Kerry, Ireland</span>
                                 </div>
                             </div>
 

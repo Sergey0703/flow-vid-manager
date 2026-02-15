@@ -6,7 +6,7 @@ import "../styles/v2-styles.css";
 
 // Components
 import Navigation from "../components/v2/Navigation";
-import HeroV2 from "../components/v2/HeroV2";
+import HeroV2Alt from "../components/v2/HeroV2Alt";
 import Stats from "../components/v2/Stats";
 import Services from "../components/v2/Services";
 import HowItWorks from "../components/v2/HowItWorks";
@@ -70,7 +70,7 @@ const Index = () => {
       <Navigation />
 
       <main>
-        <HeroV2 />
+        <HeroV2Alt />
         <Stats />
         <VideoShowcase videos={videos} />
         {/* <Services /> */}

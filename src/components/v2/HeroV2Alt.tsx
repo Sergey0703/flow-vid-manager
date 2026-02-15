@@ -1,5 +1,31 @@
 
+import { useEffect, useRef } from "react";
+
 const HeroV2Alt = () => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        video.currentTime = 0;
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
+                });
+            },
+            { threshold: 0.3 }
+        );
+
+        observer.observe(video);
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <section className="v2-hero v2-hero-alt">
             <div className="v2-hero-bg">
@@ -42,10 +68,9 @@ const HeroV2Alt = () => {
                 {/* Right: video */}
                 <div className="v2-hero-alt-video-wrap">
                     <video
+                        ref={videoRef}
                         src="/hero/ok2.mp4"
-                        autoPlay
                         muted
-                        loop
                         playsInline
                         className="v2-hero-alt-video"
                     />

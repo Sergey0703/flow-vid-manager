@@ -2092,22 +2092,22 @@
 }
 
 .v2-hero-alt-video-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     border-radius: var(--v2-radius);
     overflow: hidden;
     border: 1px solid var(--v2-border);
-    background: var(--v2-bg-card);
+    background: #000;
     box-shadow: 0 0 60px rgba(0, 200, 224, 0.08);
+    min-height: 400px;
 }
 
 .v2-hero-alt-video {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-    border-radius: var(--v2-radius);
 }
 
 /* Mobile */

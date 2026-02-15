@@ -69,7 +69,7 @@ const HeroV2Alt = () => {
                 <div className="v2-hero-alt-video-wrap">
                     <video
                         ref={videoRef}
-                        src="/hero/ok2.mp4"
+                        src="/hero/hero3.mp4"
                         muted
                         playsInline
                         className="v2-hero-alt-video"

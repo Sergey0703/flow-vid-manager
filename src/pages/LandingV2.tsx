@@ -75,9 +75,9 @@ const LandingV2 = () => {
             <main>
                 <HeroV2 />
                 <Stats />
-                <Services />
-                <HowItWorks />
                 <VideoShowcase videos={videos} />
+                {/* <Services /> */}
+                <HowItWorks />
                 <FAQ />
                 <Contact />
             </main>

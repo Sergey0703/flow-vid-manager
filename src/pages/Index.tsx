@@ -73,7 +73,7 @@ const Index = () => {
         <HeroV2 />
         <Stats />
         <VideoShowcase videos={videos} />
-        <Services />
+        {/* <Services /> */}
         <HowItWorks />
         <FAQ />
         <Contact />

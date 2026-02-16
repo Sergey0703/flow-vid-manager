@@ -6,7 +6,7 @@ const VoiceAgent = () => {
   const [state, setState] = useState<State>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
-  const roomRef = useRef<Room | null>(null);
+  const roomRef = useRef<any>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -46,11 +46,11 @@ const VoiceAgent = () => {
 
       // Get token from our Vercel function
       const res = await fetch('/api/livekit-token', { method: 'POST' });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to get token');
       }
-      const { wsUrl, token } = await res.json();
+      const { wsUrl, token } = data;
 
       // Create room
       const room = new Room({ adaptiveStream: true, dynacast: true });

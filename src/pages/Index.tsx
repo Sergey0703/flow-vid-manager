@@ -15,6 +15,7 @@ import FAQ from "../components/v2/FAQ";
 import Contact from "../components/v2/Contact";
 import FooterV2 from "../components/v2/FooterV2";
 import Chatbot from "../components/v2/Chatbot";
+import VoiceAgent from "../components/v2/VoiceAgent";
 
 interface Video {
   id: string;
@@ -81,6 +82,7 @@ const Index = () => {
 
       <FooterV2 />
       <Chatbot />
+      <VoiceAgent />
     </div>
   );
 };

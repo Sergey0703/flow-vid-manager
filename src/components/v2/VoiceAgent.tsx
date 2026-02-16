@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Room, RoomEvent, Track, createLocalTracks } from 'livekit-client';
 
 type State = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -42,6 +41,9 @@ const VoiceAgent = () => {
     setError('');
 
     try {
+      // Dynamically import LiveKit only when user clicks — avoids auto-init
+      const { Room, RoomEvent, Track, createLocalTracks } = await import('livekit-client');
+
       // Get token from our Vercel function
       const res = await fetch('/api/livekit-token', { method: 'POST' });
       if (!res.ok) {

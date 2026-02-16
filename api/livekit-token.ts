@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
+import { AccessToken, RoomAgentDispatch, RoomConfiguration } from 'livekit-server-sdk';
 
 const LIVEKIT_API_KEY    = process.env.LIVEKIT_API_KEY!;
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET!;
@@ -65,11 +65,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     canSubscribe: true,
   });
 
-  // Dispatch agent to the room
-  token.roomConfig = {
-    agents: [{ agentName: AGENT_NAME }],
-    maxParticipantDuration: 5 * 60, // kick after 5 min
-  };
+  // Dispatch agent to the room using proper SDK classes
+  token.roomConfig = new RoomConfiguration({
+    agents: [new RoomAgentDispatch({ agentName: AGENT_NAME })],
+  });
 
   const jwt = await token.toJwt();
 

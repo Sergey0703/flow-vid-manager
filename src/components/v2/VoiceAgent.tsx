@@ -74,12 +74,9 @@ const VoiceAgent = () => {
         disconnect();
       });
 
-      // Connect and publish microphone
+      // Connect first, then request mic permission and publish
       await room.connect(wsUrl, token);
-      const tracks = await createLocalTracks({ audio: true, video: false });
-      for (const track of tracks) {
-        await room.localParticipant.publishTrack(track);
-      }
+      await room.localParticipant.setMicrophoneEnabled(true);
 
       setState('connected');
       startTimer();

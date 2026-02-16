@@ -41,13 +41,17 @@ const VoiceAgent = () => {
     setError('');
 
     try {
+      // Ask for mic permission immediately — must be in the user-gesture call stack
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+
       // Dynamically import LiveKit only when user clicks — avoids auto-init
-      const { Room, RoomEvent, Track, createLocalTracks } = await import('livekit-client');
+      const { Room, RoomEvent, Track } = await import('livekit-client');
 
       // Get token from our Vercel function
       const res = await fetch('/api/livekit-token', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
+        micStream.getTracks().forEach(t => t.stop());
         throw new Error(data.error || 'Failed to get token');
       }
       const { wsUrl, token } = data;
@@ -74,7 +78,10 @@ const VoiceAgent = () => {
         disconnect();
       });
 
-      // Connect first, then request mic permission and publish
+      // Release pre-check stream — LiveKit will open its own
+      micStream.getTracks().forEach(t => t.stop());
+
+      // Connect and enable mic (permission already granted above)
       await room.connect(wsUrl, token);
       await room.localParticipant.setMicrophoneEnabled(true);
 

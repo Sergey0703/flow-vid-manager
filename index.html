@@ -12,11 +12,11 @@
 
   <!-- Content Security Policy (basic fallback) -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://jfxxtyfuccwmfeyltype.supabase.co wss://realtime.supabase.com; media-src 'self' blob: https:; font-src 'self' data:;" />
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://jfxxtyfuccwmfeyltype.supabase.co wss://realtime.supabase.com https://*.livekit.cloud wss://*.livekit.cloud https://livekit.io; media-src 'self' blob: https:; font-src 'self' data:;" />
 
   <!-- Permissions Policy (limit browser APIs) -->
   <meta http-equiv="Permissions-Policy"
-    content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()" />
+    content="camera=(), microphone=(self), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()" />
 
   <!-- Favicon and App Icons -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

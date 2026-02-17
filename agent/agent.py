@@ -109,7 +109,7 @@ class AimediaflowAgent(Agent):
             instructions=SYSTEM_BASE,
             llm=openai.LLM(model="gpt-4.1-nano", api_key=OPENAI_API_KEY),
             stt=deepgram.STT(model="nova-3", api_key=DEEPGRAM_API_KEY),
-            tts=cartesia.TTS(voice="bf0a246a-8642-498a-9950-80c35e9276b5", api_key=CARTESIA_API_KEY),
+            tts=cartesia.TTS(voice="2f251ac3-89a9-4a77-a452-704b474ccd01", api_key=CARTESIA_API_KEY),  # Lucy - Capable Coordinator (British)
             tools=[EndCallTool(
                 end_instructions="Say a warm, brief Irish farewell — like 'It was lovely chatting, take care now!'",
                 delete_room=True,

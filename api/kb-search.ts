@@ -44,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const hits = data.result?.hits ?? [];
     const results = hits
-      .filter(h => (h.score ?? 0) >= 0.6)
+      .filter(h => (h.score ?? 0) >= 0.4)
       .map(h => h.fields?.text ?? '')
       .filter(Boolean);
 

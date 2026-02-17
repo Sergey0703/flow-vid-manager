@@ -70,12 +70,12 @@ async function searchKnowledge(query: string): Promise<string> {
     if (!res.ok) return '';
 
     const data = await res.json() as {
-      result?: { hits?: { fields?: { text?: string }; score?: number }[] };
+      result?: { hits?: { _score?: number; fields?: { text?: string } }[] };
     };
 
     const hits = data.result?.hits ?? [];
     const relevant = hits
-      .filter(h => (h.score ?? 0) >= 0.2)
+      .filter(h => (h._score ?? 0) >= 0.2)
       .map(h => h.fields?.text ?? '')
       .filter(Boolean);
 

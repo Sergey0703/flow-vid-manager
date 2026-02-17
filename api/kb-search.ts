@@ -39,16 +39,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await pineconeRes.json() as {
-      result?: { hits?: { fields?: { text?: string; category?: string }; score?: number }[] };
+      result?: { hits?: { _score?: number; fields?: { text?: string; category?: string } }[] };
     };
 
     const hits = data.result?.hits ?? [];
     const results = hits
-      .filter(h => (h.score ?? 0) >= 0.2)
+      .filter(h => (h._score ?? 0) >= 0.2)
       .map(h => h.fields?.text ?? '')
       .filter(Boolean);
 
-    return res.status(200).json({ results, debug_hits: hits.slice(0, 2) });
+    return res.status(200).json({ results });
 
   } catch (err: any) {
     console.error('kb-search error:', err);

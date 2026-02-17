@@ -1,0 +1,12 @@
+services:
+  aimediaflow-agent:
+    build: .
+    container_name: aimediaflow-agent
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - n8n_default
+
+networks:
+  n8n_default:
+    external: true

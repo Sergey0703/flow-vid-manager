@@ -46,7 +46,7 @@ const HeroV2Alt = () => {
             const res = await fetch('/api/livekit-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: useCloudAgent ? JSON.stringify({ agentName: 'Morgan-l940' }) : undefined,
+                body: useCloudAgent ? JSON.stringify({ agentName: 'Morgan-1940' }) : undefined,
             });
             const data = await res.json();
             if (!res.ok) {

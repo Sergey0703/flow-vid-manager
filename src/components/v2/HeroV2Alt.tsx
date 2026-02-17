@@ -1,7 +1,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 
-type VoiceState = 'idle' | 'connecting' | 'connected' | 'error';
+type VoiceState = 'idle' | 'connecting' | 'connected' | 'ending' | 'error';
 
 const HeroV2Alt = () => {
     const [state, setState] = useState<VoiceState>('idle');
@@ -68,11 +68,16 @@ const HeroV2Alt = () => {
             room.on(RoomEvent.Disconnected, () => { disconnect(); });
             micStream.getTracks().forEach(t => t.stop());
             await room.connect(wsUrl, token);
+
             // Register RPC so agent can hang up via Client Tool "end_call"
-            room.localParticipant.registerRpcMethod('end_call', async () => {
-                setTimeout(() => disconnect(), 1500); // delay: let agent receive response + finish speaking
+            room.localParticipant.registerRpcMethod('end_call', async (data: any) => {
+                console.log('[end_call RPC] received from agent, payload:', data?.payload);
+                setState('ending');
+                stopTimer();
+                setTimeout(() => disconnect(), 2000); // let agent finish speaking
                 return JSON.stringify({ success: true });
             });
+
             await room.localParticipant.setMicrophoneEnabled(true);
             setState('connected');
             startTimer();
@@ -157,6 +162,15 @@ const HeroV2Alt = () => {
                                     <div key={i} className="hvc-bar" style={{ animationDelay: `${i * 0.15}s` }} />
                                 ))}
                             </div>
+                        ) : state === 'ending' ? (
+                            <div className="hvc-idle-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e63946" strokeWidth="1.5" strokeLinecap="round" opacity="0.7">
+                                    <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+                                    <path d="M14.5 2.81a19.79 19.79 0 0 1 3.07 8.63"/>
+                                    <line x1="2" y1="2" x2="22" y2="22"/>
+                                    <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59"/>
+                                </svg>
+                            </div>
                         ) : (
                             <div className="hvc-idle-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.3">
@@ -179,6 +193,9 @@ const HeroV2Alt = () => {
                         )}
                         {state === 'connected' && (
                             <p>Connected · <span className="hvc-timer">{fmt(duration)}</span></p>
+                        )}
+                        {state === 'ending' && (
+                            <p style={{ color: '#e63946' }}>Aoife ended the call…</p>
                         )}
                         {state === 'error' && (
                             <p className="hvc-error">⚠ {error}</p>
@@ -212,6 +229,11 @@ const HeroV2Alt = () => {
                                     <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59"/>
                                 </svg>
                                 End call
+                            </button>
+                        )}
+                        {state === 'ending' && (
+                            <button className="hvc-btn hvc-btn--connecting" disabled>
+                                <HvcSpinner /> Ending…
                             </button>
                         )}
                         {state === 'error' && (

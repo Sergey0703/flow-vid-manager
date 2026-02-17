@@ -12,6 +12,7 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
+from livekit.agents.beta.tools import EndCallTool
 from livekit.plugins import openai, deepgram, cartesia, silero
 from session_logger import SessionLogger
 
@@ -60,7 +61,11 @@ RULES:
 - Never invent prices, timelines, or client names
 - If a question is outside the knowledge base, say you can cover it on the discovery call
 - Always move the conversation toward booking a call or leaving contact details
-- Contact if they prefer to reach out directly: info@aimediaflow.net or WhatsApp plus three five three eight five two zero zero seven six one two"""
+- Contact if they prefer to reach out directly: info@aimediaflow.net or WhatsApp plus three five three eight five two zero zero seven six one two
+
+ENDING THE CALL:
+When the user says goodbye, bye, thanks bye, that's all, or clearly indicates they are done,
+say a brief warm farewell and immediately call the end_call tool. Do not continue talking after calling it."""
 
 
 async def search_knowledge(query: str) -> str:
@@ -87,7 +92,7 @@ async def search_knowledge(query: str) -> str:
                 relevant = [
                     h["fields"]["text"]
                     for h in hits
-                    if (h.get("score", 0) >= 0.6 and h.get("fields", {}).get("text"))
+                    if (h.get("_score", 0) >= 0.2 and h.get("fields", {}).get("text"))
                 ]
                 if relevant:
                     context = "\n".join(f"{i+1}. {t}" for i, t in enumerate(relevant))
@@ -105,6 +110,10 @@ class AimediaflowAgent(Agent):
             llm=openai.LLM(model="gpt-4.1-nano", api_key=OPENAI_API_KEY),
             stt=deepgram.STT(model="nova-3", api_key=DEEPGRAM_API_KEY),
             tts=cartesia.TTS(voice="bf0a246a-8642-498a-9950-80c35e9276b5", api_key=CARTESIA_API_KEY),
+            tools=[EndCallTool(
+                end_instructions="Say a warm, brief Irish farewell — like 'It was lovely chatting, take care now!'",
+                delete_room=True,
+            )],
         )
         self.session_log = session_log
 

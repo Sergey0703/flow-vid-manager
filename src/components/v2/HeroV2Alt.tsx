@@ -10,6 +10,8 @@ const HeroV2Alt = () => {
     const roomRef = useRef<any>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const SILENCE_TIMEOUT_MS = 30_000; // auto-disconnect after 30s of no audio
 
     useEffect(() => {
         return () => { disconnect(); };
@@ -24,8 +26,21 @@ const HeroV2Alt = () => {
         setDuration(0);
     };
 
+    const resetSilenceTimer = useCallback((disc: () => void) => {
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(() => {
+            console.log('[silence-timeout] 30s of silence → auto disconnect');
+            disc();
+        }, SILENCE_TIMEOUT_MS);
+    }, []);
+
+    const clearSilenceTimer = () => {
+        if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    };
+
     const disconnect = useCallback(async () => {
         stopTimer();
+        clearSilenceTimer();
         if (roomRef.current) {
             await roomRef.current.disconnect();
             roomRef.current = null;
@@ -66,6 +81,10 @@ const HeroV2Alt = () => {
             });
             room.on(RoomEvent.TrackUnsubscribed, (track) => { track.detach(); });
             room.on(RoomEvent.Disconnected, () => { disconnect(); });
+            // Reset silence timer on any audio activity from agent
+            room.on(RoomEvent.ActiveSpeakersChanged, (speakers: any[]) => {
+                if (speakers.length > 0) resetSilenceTimer(disconnect);
+            });
             micStream.getTracks().forEach(t => t.stop());
             await room.connect(wsUrl, token);
 
@@ -81,6 +100,7 @@ const HeroV2Alt = () => {
             await room.localParticipant.setMicrophoneEnabled(true);
             setState('connected');
             startTimer();
+            resetSilenceTimer(disconnect); // start 30s silence watchdog
         } catch (err: any) {
             setError(err.message || 'Connection failed');
             setState('error');

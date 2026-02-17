@@ -3,6 +3,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 
 type VoiceState = 'idle' | 'connecting' | 'connected' | 'ending' | 'error';
 
+const SILENCE_TIMEOUT_MS = 30_000; // auto-disconnect after 30s of no audio
+const MAX_CALL_MS = 3 * 60_000;   // hard limit: 3 minutes per call
+
 const HeroV2Alt = () => {
     const [state, setState] = useState<VoiceState>('idle');
     const [error, setError] = useState('');
@@ -11,7 +14,7 @@ const HeroV2Alt = () => {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const SILENCE_TIMEOUT_MS = 30_000; // auto-disconnect after 30s of no audio
+    const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         return () => { disconnect(); };
@@ -36,6 +39,7 @@ const HeroV2Alt = () => {
 
     const clearSilenceTimer = () => {
         if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+        if (maxCallTimerRef.current) { clearTimeout(maxCallTimerRef.current); maxCallTimerRef.current = null; }
     };
 
     const disconnect = useCallback(async () => {
@@ -89,7 +93,7 @@ const HeroV2Alt = () => {
             await room.connect(wsUrl, token);
 
             // Register RPC so agent can hang up via Client Tool "end_call"
-            room.localParticipant.registerRpcMethod('end_call', async (data: any) => {
+            room.registerRpcMethod('end_call', async (data: any) => {
                 console.log('[end_call RPC] received from agent, payload:', data?.payload);
                 setState('ending');
                 stopTimer();
@@ -101,6 +105,11 @@ const HeroV2Alt = () => {
             setState('connected');
             startTimer();
             resetSilenceTimer(disconnect); // start 30s silence watchdog
+            // Hard 3-minute call limit
+            maxCallTimerRef.current = setTimeout(() => {
+                console.log('[max-call-limit] 3 min reached → auto disconnect');
+                disconnect();
+            }, MAX_CALL_MS);
         } catch (err: any) {
             setError(err.message || 'Connection failed');
             setState('error');

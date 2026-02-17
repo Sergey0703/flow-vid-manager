@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .map(h => h.fields?.text ?? '')
       .filter(Boolean);
 
-    return res.status(200).json({ results, debug_hits_count: hits.length, debug_top_score: hits[0]?.score ?? 0 });
+    return res.status(200).json({ results, debug_hits: hits.slice(0, 2) });
 
   } catch (err: any) {
     console.error('kb-search error:', err);

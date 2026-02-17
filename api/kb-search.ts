@@ -2,18 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const PINECONE_API_KEY    = process.env.PINECONE_API_KEY;
 const PINECONE_INDEX_HOST = process.env.PINECONE_INDEX_HOST;
-const INGEST_SECRET       = process.env.INGEST_SECRET;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  // Auth — Bearer token
-  const auth = req.headers['authorization'] ?? '';
-  if (INGEST_SECRET && auth !== `Bearer ${INGEST_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { query } = req.body;

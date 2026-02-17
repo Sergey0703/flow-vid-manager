@@ -8,7 +8,7 @@ const AGENT_NAME         = process.env.LIVEKIT_AGENT_NAME ?? 'aimediaflow-agent'
 
 // ── In-memory rate limit ──────────────────────────────────────────────────────
 // Max 3 sessions per IP per hour
-const RATE_LIMIT_MAX      = 3;
+const RATE_LIMIT_MAX      = 20;
 const RATE_LIMIT_WINDOW   = 60 * 60 * 1000; // 1 hour in ms
 const ipMap = new Map<string, { count: number; resetAt: number }>();
 

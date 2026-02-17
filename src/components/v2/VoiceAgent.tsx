@@ -2,6 +2,9 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 
 type State = 'idle' | 'connecting' | 'connected' | 'error';
 
+const SILENCE_TIMEOUT_MS = 30_000;
+const MAX_CALL_MS = 3 * 60_000;
+
 const VoiceAgent = () => {
   const [state, setState] = useState<State>('idle');
   const [error, setError] = useState('');
@@ -9,6 +12,8 @@ const VoiceAgent = () => {
   const roomRef = useRef<any>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -24,8 +29,22 @@ const VoiceAgent = () => {
     setDuration(0);
   };
 
+  const clearAllTimers = () => {
+    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    if (maxCallTimerRef.current) { clearTimeout(maxCallTimerRef.current); maxCallTimerRef.current = null; }
+  };
+
+  const resetSilenceTimer = useCallback((disc: () => void) => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    silenceTimerRef.current = setTimeout(() => {
+      console.log('[silence-timeout] 30s → auto disconnect');
+      disc();
+    }, SILENCE_TIMEOUT_MS);
+  }, []);
+
   const disconnect = useCallback(async () => {
     stopTimer();
+    clearAllTimers();
     if (roomRef.current) {
       await roomRef.current.disconnect();
       roomRef.current = null;
@@ -78,15 +97,32 @@ const VoiceAgent = () => {
         disconnect();
       });
 
+      room.on(RoomEvent.ActiveSpeakersChanged, (speakers: any[]) => {
+        if (speakers.length > 0) resetSilenceTimer(disconnect);
+      });
+
       // Release pre-check stream — LiveKit will open its own
       micStream.getTracks().forEach(t => t.stop());
 
       // Connect and enable mic (permission already granted above)
       await room.connect(wsUrl, token);
+
+      // RPC: agent can hang up via end_call tool
+      room.registerRpcMethod('end_call', async (data: any) => {
+        console.log('[end_call RPC] received, payload:', data?.payload);
+        setTimeout(() => disconnect(), 2000);
+        return JSON.stringify({ success: true });
+      });
+
       await room.localParticipant.setMicrophoneEnabled(true);
 
       setState('connected');
       startTimer();
+      resetSilenceTimer(disconnect);
+      maxCallTimerRef.current = setTimeout(() => {
+        console.log('[max-call-limit] 3 min → auto disconnect');
+        disconnect();
+      }, MAX_CALL_MS);
 
     } catch (err: any) {
       setError(err.message || 'Connection failed');

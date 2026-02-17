@@ -6,7 +6,11 @@ type VoiceState = 'idle' | 'connecting' | 'connected' | 'ending' | 'error';
 const SILENCE_TIMEOUT_MS = 30_000; // auto-disconnect after 30s of no audio
 const MAX_CALL_MS = 3 * 60_000;   // hard limit: 3 minutes per call
 
-const HeroV2Alt = () => {
+interface HeroV2AltProps {
+    agentName?: string; // undefined = use server default (aimediaflow-agent)
+}
+
+const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
     const [state, setState] = useState<VoiceState>('idle');
     const [error, setError] = useState('');
     const [duration, setDuration] = useState(0);
@@ -64,7 +68,7 @@ const HeroV2Alt = () => {
             const res = await fetch('/api/livekit-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ agentName: 'Morgan-1940' }),
+                body: agentName ? JSON.stringify({ agentName }) : undefined,
             });
             const data = await res.json();
             if (!res.ok) {

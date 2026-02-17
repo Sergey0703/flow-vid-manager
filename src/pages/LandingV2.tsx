@@ -73,7 +73,7 @@ const LandingV2 = () => {
             <Navigation />
 
             <main>
-                <HeroV2Alt />
+                <HeroV2Alt agentName="Morgan-1940" />
                 <Stats />
                 <VideoShowcase videos={videos} />
                 {/* <Services /> */}

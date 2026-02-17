@@ -48,6 +48,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(429).json({ error: 'Too many sessions. Please try again later.' });
   }
 
+  // Allow override of agent name via request body (for testing Cloud Agents)
+  const requestedAgent = typeof req.body?.agentName === 'string' ? req.body.agentName : null;
+  const agentName = requestedAgent ?? AGENT_NAME;
+
   // Generate unique room name per session
   const roomName = `aimediaflow-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -67,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Dispatch agent to the room using proper SDK classes
   token.roomConfig = new RoomConfiguration({
-    agents: [new RoomAgentDispatch({ agentName: AGENT_NAME })],
+    agents: [new RoomAgentDispatch({ agentName })],
   });
 
   const jwt = await token.toJwt();

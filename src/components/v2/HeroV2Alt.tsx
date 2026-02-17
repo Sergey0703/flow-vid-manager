@@ -42,7 +42,12 @@ const HeroV2Alt = () => {
         try {
             const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             const { Room, RoomEvent, Track } = await import('livekit-client');
-            const res = await fetch('/api/livekit-token', { method: 'POST' });
+            const useCloudAgent = new URLSearchParams(window.location.search).get('agent') === 'cloud';
+            const res = await fetch('/api/livekit-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: useCloudAgent ? JSON.stringify({ agentName: 'Morgan-l940' }) : undefined,
+            });
             const data = await res.json();
             if (!res.ok) {
                 micStream.getTracks().forEach(t => t.stop());

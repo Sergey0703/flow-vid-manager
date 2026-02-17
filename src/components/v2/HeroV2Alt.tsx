@@ -68,6 +68,11 @@ const HeroV2Alt = () => {
             room.on(RoomEvent.Disconnected, () => { disconnect(); });
             micStream.getTracks().forEach(t => t.stop());
             await room.connect(wsUrl, token);
+            // Register RPC so agent can hang up via Client Tool "end_call"
+            room.localParticipant.registerRpcMethod('end_call', async () => {
+                await disconnect();
+                return JSON.stringify({ success: true });
+            });
             await room.localParticipant.setMicrophoneEnabled(true);
             setState('connected');
             startTimer();

@@ -75,7 +75,7 @@ async function searchKnowledge(query: string): Promise<string> {
 
     const hits = data.result?.hits ?? [];
     const relevant = hits
-      .filter(h => (h.score ?? 0) >= 0.6)
+      .filter(h => (h.score ?? 0) >= 0.2)
       .map(h => h.fields?.text ?? '')
       .filter(Boolean);
 

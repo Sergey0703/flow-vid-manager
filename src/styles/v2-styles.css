@@ -864,16 +864,12 @@
         border-bottom: 1px solid var(--v2-border);
     }
 
-    /* Thumbnail full-width, keep top border visible above it */
+    /* Thumbnail full-width */
     .v2-work-thumb {
         border-radius: 0;
-        margin: 1px 0 0 0;
-        border-left: none;
-        border-right: none;
-        border-bottom: none;
-        border-top: none;
+        margin: 0;
+        border: none;
         aspect-ratio: 16/9;
-        order: -1;
     }
 
     /* Play button overlay on top of thumbnail */

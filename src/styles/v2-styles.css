@@ -2380,15 +2380,6 @@
     display: block;
 }
 
-.v2-scope .cat-avatar-mouth {
-    position: absolute;
-    /* cat2.png: mouth at ~68% from top, centered ~35-65% horizontally */
-    top: 45%;
-    left: 38%;
-    width: 42%;
-    height: 18%;
-    pointer-events: none;
-}
 
 .v2-scope .cat-avatar-label {
     position: absolute;

@@ -43,23 +43,28 @@ const CatAvatar = ({ volume, agentState }: CatAvatarProps) => {
         viewBox="0 0 100 100"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Cover original mouth */}
-        <ellipse cx="50" cy="50" rx="24" ry="14" fill="#c8855a" />
+        {/* Cover original mouth with fur color */}
+        <ellipse cx="50" cy="50" rx="30" ry="20" fill="#d4915f" />
 
-        {/* Animated mouth path */}
+        {/* Mouth interior when open */}
+        {volume > 14 && (
+          <ellipse cx="50" cy="54" rx="18" ry={Math.min(4 + (volume / 255) * 14, 18)} fill="#7a1a0a" />
+        )}
+
+        {/* Teeth */}
+        {volume > 14 && (
+          <ellipse cx="50" cy="50" rx="12" ry="4" fill="white" opacity={Math.min((volume - 14) / 80, 1)} />
+        )}
+
+        {/* Mouth outline — always visible */}
         <path
           ref={pathRef}
           d={getMouth(volume)}
-          stroke="#5a2510"
-          strokeWidth="3"
+          stroke="#4a1a08"
+          strokeWidth="2.5"
           strokeLinecap="round"
-          fill={volume > 14 ? "#a03020" : "none"}
+          fill="none"
         />
-
-        {/* Teeth — visible when mouth open */}
-        {volume > 14 && (
-          <ellipse cx="50" cy="55" rx="12" ry="5" fill="white" opacity={Math.min((volume - 14) / 66, 1)} />
-        )}
       </svg>
 
       {/* State indicator */}

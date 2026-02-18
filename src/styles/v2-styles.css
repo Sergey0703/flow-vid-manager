@@ -2358,24 +2358,22 @@
 .v2-scope .cat-avatar-wrap {
     position: relative;
     width: 200px;
-    height: 200px;
     flex-shrink: 0;
 }
 
 .v2-scope .cat-avatar-img {
     width: 100%;
-    height: 100%;
-    object-fit: contain;
+    height: auto;
     display: block;
 }
 
 .v2-scope .cat-avatar-mouth {
     position: absolute;
-    /* Mouth: cat's mouth is ~63% from top, centered horizontally */
-    top: 58%;
-    left: 25%;
-    width: 50%;
-    height: 22%;
+    /* cat2.png: mouth ~65% from top, horizontally centered */
+    top: 62%;
+    left: 30%;
+    width: 40%;
+    height: 16%;
     pointer-events: none;
 }
 

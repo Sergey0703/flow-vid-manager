@@ -54,6 +54,15 @@ const Services = () => {
                         <p>Not sure where to start? We assess your workflows, identify the highest-ROI opportunities, and build a custom AI roadmap — covering LLMs, RAG pipelines, AI agents, automation, and website AI integration.</p>
                         <a href="#contact" className="v2-service-link">Get started →</a>
                     </div>
+                    <div className="v2-service-card" style={{ animationDelay: "0.5s" }}>
+                        <div className="v2-service-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><circle cx="7" cy="10" r="1" fill="currentColor"/><circle cx="12" cy="10" r="1" fill="currentColor"/><circle cx="17" cy="10" r="1" fill="currentColor"/><path d="M7 10h1m3 0h1m3 0h1" strokeWidth="0"/></svg>
+                        </div>
+                        <span className="v2-service-tag">n8n · Make · Zapier</span>
+                        <h3>Workflow Automation</h3>
+                        <p>Connect your apps, automate repetitive processes, and eliminate manual handoffs — using n8n, Make or Zapier. From lead routing to invoice processing, we build flows that run themselves.</p>
+                        <a href="#contact" className="v2-service-link">Get started →</a>
+                    </div>
                 </div>
             </div>
         </section>

@@ -107,9 +107,9 @@ class AimediaflowAgent(Agent):
     def __init__(self, session_log: SessionLogger):
         super().__init__(
             instructions=SYSTEM_BASE,
-            llm=openai.LLM(model="gpt-4.1-nano", api_key=OPENAI_API_KEY),
-            stt=deepgram.STT(model="nova-3", api_key=DEEPGRAM_API_KEY),
-            tts=cartesia.TTS(voice="2f251ac3-89a9-4a77-a452-704b474ccd01", api_key=CARTESIA_API_KEY),  # Lucy - Capable Coordinator (British)
+            llm=openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
+            stt=deepgram.STTv2(model="flux-general-en", api_key=DEEPGRAM_API_KEY),
+            tts=cartesia.TTS(voice="9626c31c-bec5-4cca-baa8-f8ba9e84c8bc", api_key=CARTESIA_API_KEY),  # Jacqueline - Reassuring Agent
             tools=[EndCallTool(
                 end_instructions="Say a warm, brief Irish farewell — like 'It was lovely chatting, take care now!'",
                 delete_room=True,

@@ -1,4 +1,6 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
+import CatAvatar from './CatAvatar';
 
 type State = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -9,11 +11,15 @@ const VoiceAgent = () => {
   const [state, setState] = useState<State>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(0);
+
   const roomRef = useRef<any>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -34,6 +40,37 @@ const VoiceAgent = () => {
     if (maxCallTimerRef.current) { clearTimeout(maxCallTimerRef.current); maxCallTimerRef.current = null; }
   };
 
+  const stopAnalyser = () => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    analyserRef.current = null;
+    setVolume(0);
+  };
+
+  const startAnalyser = (audioEl: HTMLAudioElement) => {
+    try {
+      const ctx = new AudioContext();
+      const source = ctx.createMediaElementSource(audioEl);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      analyserRef.current = analyser;
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(data);
+        // Average of lower frequencies = voice range
+        const avg = data.slice(0, 16).reduce((a, b) => a + b, 0) / 16;
+        setVolume(Math.round(avg));
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    } catch (e) {
+      console.warn('[analyser] failed to start:', e);
+    }
+  };
+
   const resetSilenceTimer = useCallback((disc: () => void) => {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     silenceTimerRef.current = setTimeout(() => {
@@ -45,6 +82,7 @@ const VoiceAgent = () => {
   const disconnect = useCallback(async () => {
     stopTimer();
     clearAllTimers();
+    stopAnalyser();
     if (roomRef.current) {
       await roomRef.current.disconnect();
       roomRef.current = null;
@@ -79,18 +117,20 @@ const VoiceAgent = () => {
       const room = new Room({ adaptiveStream: true, dynacast: true });
       roomRef.current = room;
 
-      // Play agent audio
+      // Play agent audio + start lip-sync analyser
       room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) {
           const el = track.attach();
           el.autoplay = true;
           audioRef.current = el as HTMLAudioElement;
           document.body.appendChild(el);
+          startAnalyser(el as HTMLAudioElement);
         }
       });
 
       room.on(RoomEvent.TrackUnsubscribed, (track) => {
         track.detach();
+        stopAnalyser();
       });
 
       room.on(RoomEvent.Disconnected, () => {
@@ -135,7 +175,8 @@ const VoiceAgent = () => {
 
   return (
     <div className="voice-agent-widget">
-      {/* Main button */}
+
+      {/* Idle: simple button */}
       {state === 'idle' && (
         <button className="voice-agent-btn" onClick={connect} title="Talk to Aoife — AIMediaFlow AI">
           <MicIcon />
@@ -143,23 +184,27 @@ const VoiceAgent = () => {
         </button>
       )}
 
+      {/* Connecting: show avatar + spinner */}
       {state === 'connecting' && (
-        <button className="voice-agent-btn voice-agent-btn--connecting" disabled>
-          <SpinnerIcon />
-          <span>Connecting…</span>
-        </button>
+        <div className="voice-agent-panel">
+          <CatAvatar volume={0} agentState="connecting" />
+        </div>
       )}
 
+      {/* Connected: avatar with lip-sync + controls */}
       {state === 'connected' && (
-        <div className="voice-agent-active">
-          <div className="voice-agent-info">
-            <div className="voice-agent-pulse" />
-            <span className="voice-agent-name">Aoife · AIMediaFlow</span>
-            <span className="voice-agent-timer">{fmt(duration)}</span>
+        <div className="voice-agent-panel">
+          <CatAvatar volume={volume} agentState="connected" />
+          <div className="voice-agent-controls">
+            <div className="voice-agent-info">
+              <div className="voice-agent-pulse" />
+              <span className="voice-agent-name">Aoife · AIMediaFlow</span>
+              <span className="voice-agent-timer">{fmt(duration)}</span>
+            </div>
+            <button className="voice-agent-end" onClick={disconnect} title="End call">
+              <PhoneOffIcon />
+            </button>
           </div>
-          <button className="voice-agent-end" onClick={disconnect} title="End call">
-            <PhoneOffIcon />
-          </button>
         </div>
       )}
 

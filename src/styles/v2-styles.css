@@ -2332,6 +2332,81 @@
     to { transform: rotate(360deg); }
 }
 
+/* ── Voice Agent Panel (with avatar) ── */
+.v2-scope .voice-agent-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(13, 17, 23, 0.97);
+    border: 1px solid var(--v2-border);
+    border-radius: 20px;
+    padding: 0.75rem;
+    gap: 0.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px var(--v2-cyan-glow);
+    min-width: 180px;
+}
+
+.v2-scope .voice-agent-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: space-between;
+}
+
+/* ── Cat Avatar ── */
+.v2-scope .cat-avatar-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    flex-shrink: 0;
+}
+
+.v2-scope .cat-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    border-radius: 50%;
+}
+
+.v2-scope .cat-avatar-mouth {
+    position: absolute;
+    /* Mouth area: roughly lower-center of cat face */
+    top: 52%;
+    left: 18%;
+    width: 64%;
+    height: 30%;
+    pointer-events: none;
+}
+
+.v2-scope .cat-avatar-label {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+.v2-scope .cat-avatar-status {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.v2-scope .cat-avatar-status.connected {
+    color: var(--v2-cyan);
+    background: rgba(0,200,224,0.12);
+}
+
+.v2-scope .cat-avatar-status.connecting {
+    color: var(--v2-muted);
+    background: rgba(255,255,255,0.06);
+    animation: voice-pulse 1.2s ease infinite;
+}
+
 /* ── Hero Voice Card ────────────────────────────────────────────────────────── */
 .v2-scope .hero-voice-card {
     display: flex;

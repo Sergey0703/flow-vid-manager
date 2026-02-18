@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /auth
+Disallow: /pending-approval
 
 Sitemap: https://aimediaflow.net/sitemap.xml

@@ -8,10 +8,10 @@ interface CatAvatarProps {
   agentState: 'idle' | 'connecting' | 'connected';
 }
 
-// Mouth shapes: closed / small / open
-const MOUTH_CLOSED = "M 44 72 Q 50 74 56 72";
-const MOUTH_SMALL  = "M 43 71 Q 50 77 57 71";
-const MOUTH_OPEN   = "M 42 70 Q 50 82 58 70";
+// Mouth shapes in viewBox 0 0 100 100 (SVG covers mouth area)
+const MOUTH_CLOSED = "M 30 50 Q 50 55 70 50";
+const MOUTH_SMALL  = "M 30 47 Q 50 65 70 47";
+const MOUTH_OPEN   = "M 28 44 Q 50 78 72 44";
 
 const getMouth = (volume: number) => {
   if (volume < 15)  return MOUTH_CLOSED;
@@ -43,23 +43,22 @@ const CatAvatar = ({ volume, agentState }: CatAvatarProps) => {
         viewBox="0 0 100 100"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Cover original mouth with skin-tone ellipse */}
-        <ellipse cx="50" cy="73" rx="10" ry="6" fill="#d9956a" />
+        {/* Cover original mouth */}
+        <ellipse cx="50" cy="50" rx="24" ry="14" fill="#c8855a" />
 
         {/* Animated mouth path */}
         <path
           ref={pathRef}
           d={getMouth(volume)}
-          stroke="#7a3b1e"
-          strokeWidth="2.2"
+          stroke="#5a2510"
+          strokeWidth="3"
           strokeLinecap="round"
-          fill={volume > 14 ? "#c0503a" : "none"}
-          style={{ transition: 'd 0.08s ease' }}
+          fill={volume > 14 ? "#a03020" : "none"}
         />
 
         {/* Teeth — visible when mouth open */}
         {volume > 14 && (
-          <ellipse cx="50" cy="74" rx="5" ry="2.5" fill="white" opacity={Math.min((volume - 14) / 66, 1)} />
+          <ellipse cx="50" cy="55" rx="12" ry="5" fill="white" opacity={Math.min((volume - 14) / 66, 1)} />
         )}
       </svg>
 

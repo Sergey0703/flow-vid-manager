@@ -2357,8 +2357,8 @@
 /* ── Cat Avatar ── */
 .v2-scope .cat-avatar-wrap {
     position: relative;
-    width: 160px;
-    height: 160px;
+    width: 200px;
+    height: 200px;
     flex-shrink: 0;
 }
 
@@ -2367,16 +2367,15 @@
     height: 100%;
     object-fit: contain;
     display: block;
-    border-radius: 50%;
 }
 
 .v2-scope .cat-avatar-mouth {
     position: absolute;
-    /* Mouth area: roughly lower-center of cat face */
-    top: 52%;
-    left: 18%;
-    width: 64%;
-    height: 30%;
+    /* Mouth: cat's mouth is ~63% from top, centered horizontally */
+    top: 58%;
+    left: 25%;
+    width: 50%;
+    height: 22%;
     pointer-events: none;
 }
 

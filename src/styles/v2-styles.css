@@ -2383,9 +2383,9 @@
 .v2-scope .cat-avatar-mouth {
     position: absolute;
     /* cat2.png: mouth at ~68% from top, centered ~35-65% horizontally */
-    top: 65%;
-    left: 35%;
-    width: 30%;
+    top: 58%;
+    left: 40%;
+    width: 28%;
     height: 12%;
     pointer-events: none;
 }

@@ -45,6 +45,15 @@ const Services = () => {
                         <p>Professional, conversion-focused marketing videos produced using AI — at a fraction of traditional cost and time.</p>
                         <a href="#contact" className="v2-service-link">Get started →</a>
                     </div>
+                    <div className="v2-service-card" style={{ animationDelay: "0.4s" }}>
+                        <div className="v2-service-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
+                        </div>
+                        <span className="v2-service-tag">LLM · RAG · Generative AI</span>
+                        <h3>AI Strategy &amp; Consulting</h3>
+                        <p>Not sure where to start? We assess your workflows, identify the highest-ROI opportunities, and build a custom AI roadmap — covering LLMs, RAG pipelines, AI agents, automation, and website AI integration.</p>
+                        <a href="#contact" className="v2-service-link">Get started →</a>
+                    </div>
                 </div>
             </div>
         </section>

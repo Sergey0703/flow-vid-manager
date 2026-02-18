@@ -18,6 +18,7 @@ const FooterV2 = () => {
                             <li><a href="#services">Website Chatbots</a></li>
                             <li><a href="#services">Paperwork Automation</a></li>
                             <li><a href="#services">AI Marketing Videos</a></li>
+                            <li><a href="#services">AI Strategy &amp; Consulting</a></li>
                         </ul>
                     </div>
 

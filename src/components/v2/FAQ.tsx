@@ -11,6 +11,8 @@ const FAQ = () => {
         { q: "What's the typical ROI for businesses like mine?", a: "Most clients recover their investment within 60–90 days through saved staff hours, increased lead capture, and reduced errors. We discuss expected outcomes during the discovery call before you commit to anything." },
         { q: "Do you provide ongoing support after launch?", a: "Yes. Every solution includes an initial support period and we offer ongoing maintenance packages. Our AI systems also improve over time with usage data." },
         { q: "What industries do you work with?", a: "We've worked with healthcare, hospitality, retail, property management, professional services, and more. If your business deals with repetitive customer queries, bookings, or paperwork — AI can help." },
+        { q: "What AI technologies do you use — LLM, RAG, AI agents?", a: "We build solutions using the latest AI stack: Large Language Models (LLMs) for natural language understanding, Retrieval-Augmented Generation (RAG) for knowledge-grounded chatbots, AI voice agents for phone automation, and generative AI for content and video production. Every solution is custom-built for your business needs." },
+        { q: "Can you build a website with AI features or help with AI-powered SEO?", a: "Yes. We build and enhance websites with integrated AI features — live chatbots, voice assistants, lead capture automation, and AI-powered content. We also help businesses leverage AI tools for SEO optimisation, content generation, and digital marketing — keeping you ahead of the competition." },
     ];
 
     const toggle = (i: number) => setOpenIndex(openIndex === i ? null : i);

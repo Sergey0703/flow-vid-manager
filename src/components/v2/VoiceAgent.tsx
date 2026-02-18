@@ -46,29 +46,22 @@ const VoiceAgent = () => {
     setVolume(0);
   };
 
-  const startAnalyser = (audioEl: HTMLAudioElement) => {
-    try {
-      const ctx = new AudioContext();
-      const source = ctx.createMediaElementSource(audioEl);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyser.connect(ctx.destination);
-      analyserRef.current = analyser;
-
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const tick = () => {
-        if (!analyserRef.current) return;
-        analyserRef.current.getByteFrequencyData(data);
-        // Average of lower frequencies = voice range
-        const avg = data.slice(0, 16).reduce((a, b) => a + b, 0) / 16;
-        setVolume(Math.round(avg));
-        rafRef.current = requestAnimationFrame(tick);
-      };
+  // Start polling audioLevel from room participants via rAF
+  const startAnalyser = () => {
+    const tick = () => {
+      const room = roomRef.current;
+      if (!room) return;
+      let maxLevel = 0;
+      room.remoteParticipants.forEach((p: any) => {
+        if (typeof p.audioLevel === 'number' && p.audioLevel > maxLevel) {
+          maxLevel = p.audioLevel;
+        }
+      });
+      // audioLevel is 0.0–1.0, convert to 0–255
+      setVolume(Math.round(maxLevel * 255));
       rafRef.current = requestAnimationFrame(tick);
-    } catch (e) {
-      console.warn('[analyser] failed to start:', e);
-    }
+    };
+    rafRef.current = requestAnimationFrame(tick);
   };
 
   const resetSilenceTimer = useCallback((disc: () => void) => {
@@ -117,20 +110,18 @@ const VoiceAgent = () => {
       const room = new Room({ adaptiveStream: true, dynacast: true });
       roomRef.current = room;
 
-      // Play agent audio + start lip-sync analyser
+      // Play agent audio
       room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) {
           const el = track.attach();
           el.autoplay = true;
           audioRef.current = el as HTMLAudioElement;
           document.body.appendChild(el);
-          startAnalyser(el as HTMLAudioElement);
         }
       });
 
       room.on(RoomEvent.TrackUnsubscribed, (track) => {
         track.detach();
-        stopAnalyser();
       });
 
       room.on(RoomEvent.Disconnected, () => {
@@ -158,6 +149,7 @@ const VoiceAgent = () => {
 
       setState('connected');
       startTimer();
+      startAnalyser();
       resetSilenceTimer(disconnect);
       maxCallTimerRef.current = setTimeout(() => {
         console.log('[max-call-limit] 3 min → auto disconnect');

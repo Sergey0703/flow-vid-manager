@@ -31,14 +31,14 @@ const VideoShowcase = ({ videos }: VideoShowcaseProps) => {
                         <Dialog key={video.id}>
                             <DialogTrigger asChild>
                                 <div className="v2-work-card" style={{ animationDelay: `${index * 0.1}s` }}>
-                                    {video.thumbnail_url && (
-                                        <div className="v2-work-thumb">
-                                            <img src={video.thumbnail_url} alt={video.title} loading="lazy" />
-                                        </div>
-                                    )}
                                     <div className="v2-work-tag">AI Solution</div>
-                                    <div className="v2-work-play">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                                    <div className="v2-work-thumb">
+                                        {video.thumbnail_url && (
+                                            <img src={video.thumbnail_url} alt={video.title} loading="lazy" />
+                                        )}
+                                        <div className="v2-work-play">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                                        </div>
                                     </div>
                                     <div className="v2-work-title">{video.title}</div>
                                     <div className="v2-work-desc">{video.description}</div>

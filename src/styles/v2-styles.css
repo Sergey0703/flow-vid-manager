@@ -844,6 +844,12 @@
 }
 
 @media (max-width: 560px) {
+    /* Pull grid outside container padding to go full-width */
+    .v2-work-grid {
+        margin-left: -2rem;
+        margin-right: -2rem;
+    }
+
     .v2-work-card {
         border-radius: 0;
         border-left: none;
@@ -858,11 +864,13 @@
         border-bottom: 1px solid var(--v2-border);
     }
 
-    /* Thumbnail full-width, no rounding */
+    /* Thumbnail full-width, keep top border, no side rounding */
     .v2-work-thumb {
         border-radius: 0;
         margin: 0;
-        border: none;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
         aspect-ratio: 16/9;
         order: -1;
     }

@@ -2747,8 +2747,8 @@
 
 /* ─ Hero h1: lighter, more elegant in light theme ─ */
 .v2-scope.v2-light .v2-hero-alt-h1 {
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     /* "MediaFlow:" — softer dark, not pitch black */
     color: #2d3f55;
 }

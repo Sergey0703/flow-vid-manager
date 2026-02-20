@@ -39,6 +39,7 @@ if (typeof window !== 'undefined') {
 const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
   const [frame, setFrame] = useState('/catOk1.png');
   const engineRef = useRef<InstanceType<typeof LipSyncEngine> | null>(null);
+  const lastFrameRef = useRef('/catOk1.png');
 
   // Create engine once
   useEffect(() => {
@@ -55,7 +56,12 @@ const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
 
     engine.on('viseme', (f: any) => {
       const simple: SimpleViseme = f.simpleViseme || 'A';
-      setFrame(VISEME_TO_IMAGE[simple] || '/catOk1.png');
+      const next = VISEME_TO_IMAGE[simple] || '/catOk1.png';
+      // Only update React state when the image actually changes
+      if (next !== lastFrameRef.current) {
+        lastFrameRef.current = next;
+        setFrame(next);
+      }
     });
 
     engineRef.current = engine;

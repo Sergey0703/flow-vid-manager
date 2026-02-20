@@ -2749,11 +2749,14 @@
 .v2-scope.v2-light .v2-hero-alt-h1 {
     font-weight: 700;
     letter-spacing: -0.01em;
+    /* "MediaFlow:" — softer dark, not pitch black */
+    color: #2d3f55;
 }
 
-/* "AIMediaFlow:" — keep cyan accent */
+/* "AI" — keep red, slightly softer glow */
 .v2-scope.v2-light .v2-hero-alt-h1 .ai {
     color: var(--v2-red);
+    text-shadow: 0 0 20px rgba(220, 38, 38, 0.15);
 }
 
 /* "Rooted in Kerry.\nGlobal reach." — single smooth diagonal, no colour jump */

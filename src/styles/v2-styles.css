@@ -2632,10 +2632,10 @@
 
 .v2-scope.v2-light {
     /* ─ CSS Variables ─ */
-    --v2-bg: #f4f6f9;
-    --v2-bg-card: rgba(255, 255, 255, 0.75);
-    --v2-bg-card-alt: rgba(240, 244, 250, 0.7);
-    --v2-border: rgba(0, 0, 0, 0.08);
+    --v2-bg: transparent;
+    --v2-bg-card: rgba(255, 255, 255, 0.55);
+    --v2-bg-card-alt: rgba(240, 244, 250, 0.5);
+    --v2-border: rgba(255, 255, 255, 0.7);
     --v2-cyan: #0891b2;
     --v2-cyan-light: #22d3ee;
     --v2-cyan-glow: rgba(8, 145, 178, 0.15);
@@ -2645,7 +2645,15 @@
     --v2-text: #111827;
     --v2-muted: #6b7280;
     --v2-subtle: #9ca3af;
-    background: #f4f6f9;
+    /* Rich fixed background that shows through glass cards */
+    background:
+        radial-gradient(ellipse 80% 50% at 10% 15%, rgba(186, 230, 253, 0.6) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 10%, rgba(221, 214, 254, 0.55) 0%, transparent 50%),
+        radial-gradient(ellipse 70% 50% at 70% 60%, rgba(253, 216, 185, 0.45) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 20% 80%, rgba(187, 247, 208, 0.35) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 85%, rgba(196, 181, 253, 0.4) 0%, transparent 50%),
+        linear-gradient(135deg, #e8f4fd 0%, #f0ebff 30%, #fef3e8 60%, #ebf8ff 100%);
+    background-attachment: fixed;
 }
 
 /* ─ Ghost button ─ */
@@ -2684,13 +2692,9 @@
     background: rgba(247, 248, 250, 0.98);
 }
 
-/* ─ Hero background: rich warm gradient + subtle grid + pastel orbs ─ */
+/* ─ Hero background: transparent (global fixed bg shows through) + grid + orbs ─ */
 .v2-scope.v2-light .v2-hero-bg {
-    background:
-        radial-gradient(ellipse 90% 70% at 20% 10%, rgba(186, 230, 253, 0.45) 0%, transparent 55%),
-        radial-gradient(ellipse 70% 60% at 80% 20%, rgba(221, 214, 254, 0.35) 0%, transparent 55%),
-        radial-gradient(ellipse 60% 50% at 50% 90%, rgba(253, 216, 185, 0.3) 0%, transparent 60%),
-        linear-gradient(160deg, #eef4fb 0%, #f4f0fc 35%, #fdf4ee 65%, #eef6fb 100%);
+    background: transparent;
 }
 .v2-scope.v2-light .v2-hero-bg::before {
     background-image:
@@ -2747,97 +2751,109 @@
     border-color: rgba(8, 145, 178, 0.2);
 }
 
-/* ─ Sections: gradient backgrounds for alternating depth ─ */
-.v2-scope.v2-light .v2-services {
-    background: linear-gradient(160deg, #eef4fb 0%, #f4f0fc 100%);
+/* ─ Sections: transparent so global fixed gradient shows through ─ */
+.v2-scope.v2-light .v2-services,
+.v2-scope.v2-light .v2-work,
+.v2-scope.v2-light .v2-faq,
+.v2-scope.v2-light .v2-contact,
+.v2-scope.v2-light .v2-how,
+.v2-scope.v2-light .v2-hero-bg {
+    background: transparent;
 }
+/* Stats: frosted glass strip */
 .v2-scope.v2-light .v2-stats {
-    background: linear-gradient(90deg, rgba(255,255,255,0.6), rgba(240,244,250,0.8));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-color: rgba(0,0,0,0.07);
-}
-.v2-scope.v2-light .v2-work {
-    background: linear-gradient(160deg, #fdf4ee 0%, #eef4fb 100%);
-}
-.v2-scope.v2-light .v2-how {
-    background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(240,244,250,0.7) 100%);
-}
-.v2-scope.v2-light .v2-faq {
-    background: linear-gradient(160deg, #f4f0fc 0%, #fdf4ee 100%);
-}
-.v2-scope.v2-light .v2-contact {
-    background: linear-gradient(180deg, rgba(240,244,250,0.8) 0%, rgba(255,255,255,0.9) 100%);
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-color: rgba(255, 255, 255, 0.6);
 }
 
 /* ─ Service cards: glassmorphism ─ */
 .v2-scope.v2-light .v2-service-card {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.03);
 }
 .v2-scope.v2-light .v2-service-card:hover {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(8, 145, 178, 0.25);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(8,145,178,0.1), inset 0 1px 0 rgba(255,255,255,1);
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(8, 145, 178, 0.3);
+    box-shadow:
+        0 16px 48px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(8, 145, 178, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
     transform: translateY(-6px);
 }
 .v2-scope.v2-light .v2-service-icon {
     background: rgba(8, 145, 178, 0.08);
-    border-color: rgba(8, 145, 178, 0.18);
-    backdrop-filter: blur(8px);
+    border-color: rgba(8, 145, 178, 0.2);
 }
 
 /* ─ Work / video cards: glassmorphism ─ */
 .v2-scope.v2-light .v2-work-card {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 .v2-scope.v2-light .v2-work-card:hover {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(8, 145, 178, 0.2);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255,255,255,1);
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(8, 145, 178, 0.25);
+    box-shadow:
+        0 16px 48px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
-/* ─ How it works: glassmorphism step numbers ─ */
+/* ─ How it works: glass step numbers ─ */
 .v2-scope.v2-light .v2-how-step-num {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
     border-color: rgba(8, 145, 178, 0.35);
-    box-shadow: 0 4px 16px rgba(8, 145, 178, 0.12);
+    box-shadow: 0 4px 16px rgba(8, 145, 178, 0.15), inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
 /* ─ FAQ: glassmorphism items ─ */
 .v2-scope.v2-light .v2-faq-item {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+        0 2px 16px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 .v2-scope.v2-light .v2-faq-item.open {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(8, 145, 178, 0.25);
-    box-shadow: 0 4px 20px rgba(8, 145, 178, 0.08), inset 0 1px 0 rgba(255,255,255,1);
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(8, 145, 178, 0.3);
+    box-shadow:
+        0 6px 24px rgba(8, 145, 178, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 /* ─ Contact cards: glassmorphism ─ */
 .v2-scope.v2-light .v2-contact-card {
-    background: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 .v2-scope.v2-light .v2-contact-card:hover {
-    border-color: rgba(8, 145, 178, 0.25);
-    box-shadow: 0 8px 32px rgba(8, 145, 178, 0.1), inset 0 1px 0 rgba(255,255,255,1);
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(8, 145, 178, 0.3);
+    box-shadow:
+        0 10px 36px rgba(8, 145, 178, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 /* ─ Voice card on hero: rich glassmorphism ─ */

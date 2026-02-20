@@ -1,52 +1,133 @@
 import { useEffect, useRef, useState } from 'react';
 
 /**
- * Mouth states for the cartoon cat avatar (cat_0 … cat_3).
- *   0 – closed (silence / M,B,P)
- *   1 – slightly open (soft consonants, quiet speech)
- *   2 – open (vowels, normal speech)
- *   3 – wide open (loud / open vowels, laughing)
+ * Mouth states for the cartoon cat avatar.
+ *   0 – closed  (silence, rest)
+ *   1 – slightly open  (M/B/P, soft consonants, sibilants)
+ *   2 – open + teeth  (AH, wide vowels, plosives)
+ *   3 – wide open round  (OH, OO, loud speech)
+ *
+ * Thresholds and band logic adapted from lipsync-engine
+ * (github.com/Amoner/lipsync-engine — FrequencyAnalyzer.js)
  */
 export type MouthState = 0 | 1 | 2 | 3;
 
-const FFT_SIZE = 2048;
+const FFT_SIZE = 256; // Small FFT for low latency (like lipsync-engine)
+const SILENCE_THRESHOLD = 0.015; // RMS silence cutoff from lipsync-engine
+const HOLD_FRAMES = 2; // Min frames before switching (from lipsync-engine)
+const SMOOTHING = 0.5; // AnalyserNode smoothingTimeConstant
 
-/** Frequency bands (Hz) used for simple viseme detection */
-const BANDS = [
-  [50, 200],   // 0 – low energy
-  [200, 400],  // 1 – F1 lower
-  [400, 800],  // 2 – F1 mid (open vowels)
-  [800, 1500], // 3 – F2 front
-  [1500, 2500],// 4 – F2/F3
-  [2500, 4000],// 5 – fricatives
-  [4000, 8000],// 6 – high fricatives
-] as const;
+/**
+ * Extract 5 frequency band energies (sub, low, mid, high, veryHigh)
+ * matching lipsync-engine's FrequencyAnalyzer bands
+ */
+function extractBands(data: Uint8Array, binCount: number, sampleRate: number) {
+  const nyquist = sampleRate / 2;
+  const binHz = nyquist / binCount;
 
-function bandEnergy(data: Uint8Array, binWidth: number, lo: number, hi: number): number {
-  const startBin = Math.round(lo / binWidth);
-  const endBin = Math.min(Math.round(hi / binWidth), data.length - 1);
+  // Band boundaries matching lipsync-engine
+  const ranges = [
+    [80, 300],    // sub — fundamental, nasals
+    [300, 800],   // low — F1 region
+    [800, 2500],  // mid — F2, vowel formants
+    [2500, 5500], // high — fricatives, sibilants
+    [5500, 11000],// veryHigh — high fricatives
+  ];
+
+  return ranges.map(([lo, hi]) => {
+    const startBin = Math.max(0, Math.round(lo / binHz));
+    const endBin = Math.min(binCount - 1, Math.round(hi / binHz));
+    let sum = 0;
+    for (let i = startBin; i <= endBin; i++) sum += data[i];
+    const count = endBin - startBin + 1;
+    return count > 0 ? (sum / count) / 255 : 0;
+  });
+}
+
+/** Calculate RMS from frequency data (approximation) */
+function calcRMS(data: Uint8Array): number {
   let sum = 0;
-  let count = 0;
-  for (let i = startBin; i <= endBin; i++) {
-    sum += data[i];
-    count++;
+  for (let i = 0; i < data.length; i++) {
+    const v = data[i] / 255;
+    sum += v * v;
   }
-  return count > 0 ? sum / count / 255 : 0;
+  return Math.sqrt(sum / data.length);
 }
 
 /**
- * Analyse a MediaStream in real-time and return a MouthState (0–3)
- * suited for the 4-frame cat avatar.
+ * Classify bands into a simple viseme (A–F) using
+ * lipsync-engine thresholds, then map to MouthState 0–3.
+ *
+ * Simple viseme → MouthState mapping:
+ *   A (rest)        → 0  (catOk1 — closed)
+ *   B (M/B/P)       → 1  (catOk2 — slightly open)
+ *   C (EE/S)        → 1  (catOk2 — slightly open)
+ *   D (AH wide)     → 2  (cat3Ok — open + teeth)
+ *   E (OH round)    → 3  (cat4Ok — wide open)
+ *   F (OO/F/V)      → 3  (cat4Ok — wide open)
  */
+function classifyMouth(bands: number[], rms: number): MouthState {
+  // Silence gate (lipsync-engine: silenceThreshold = 0.015)
+  if (rms < SILENCE_THRESHOLD) return 0;
+
+  const [sub, low, mid, high, veryHigh] = bands;
+  const totalEnergy = sub + low + mid + high + veryHigh;
+  if (totalEnergy < 0.01) return 0;
+
+  // Intensity (overall loudness normalized)
+  const intensity = Math.min(1, rms / 0.3);
+
+  // === Sibilants / high fricatives (S, Z, SH) → C → state 1 ===
+  if (totalEnergy > 0 && (high + veryHigh) / totalEnergy > 0.55 && high > 0.15) {
+    return 1;
+  }
+
+  // === Fricatives (F, V, TH) → F → state 3 ===
+  if (totalEnergy > 0 && (mid + high) / totalEnergy > 0.5 && high > 0.1 && low < 0.15) {
+    return 3;
+  }
+
+  // === Nasals (M, N) → B → state 1 ===
+  if (sub > 0.2 && low > 0.15 && high < 0.08) {
+    return 1;
+  }
+
+  // === Plosives (P, B, T, D) → D → state 2 ===
+  if (intensity > 0.6) {
+    // Spectral flatness check (broad spectrum = plosive)
+    const minBand = Math.min(sub, low, mid, high);
+    const maxBand = Math.max(sub, low, mid, high);
+    if (maxBand > 0 && minBand / maxBand > 0.4) {
+      return 2;
+    }
+  }
+
+  // === Vowel classification by formant dominance ===
+  // Open vowels (AA, AE) — low+mid dominant → D → state 2
+  if (low > 0.15 && mid > 0.1 && low > high) {
+    return 2;
+  }
+
+  // Rounded vowels (O, OH) — sub+low dominant, round → E → state 3
+  if (sub > 0.15 && low > mid && high < 0.1) {
+    return 3;
+  }
+
+  // Front vowels (EE, I) — mid dominant → C → state 1
+  if (mid > low && mid > high) {
+    return 1;
+  }
+
+  // Default: slightly open for any detected speech
+  return 1;
+}
+
 export function useLipsync(stream: MediaStream | null): MouthState {
   const [mouth, setMouth] = useState<MouthState>(0);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const rafRef = useRef<number | null>(null);
-  const dataRef = useRef<Uint8Array | null>(null);
-  const prevMouthRef = useRef<MouthState>(0);
-  const holdCountRef = useRef(0);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const prevRef = useRef<MouthState>(0);
+  const holdRef = useRef(0);
 
   useEffect(() => {
     if (!stream) {
@@ -54,62 +135,35 @@ export function useLipsync(stream: MediaStream | null): MouthState {
       return;
     }
 
-    // Create AudioContext + AnalyserNode
     const ctx = new AudioContext();
     const analyser = ctx.createAnalyser();
     analyser.fftSize = FFT_SIZE;
-    analyser.smoothingTimeConstant = 0.4;
+    analyser.smoothingTimeConstant = SMOOTHING;
 
     const source = ctx.createMediaStreamSource(stream);
     source.connect(analyser);
-    // Don't connect analyser to destination — we only analyse, LiveKit plays audio separately
+    // Don't connect to destination — LiveKit plays audio separately
 
     const data = new Uint8Array(analyser.frequencyBinCount);
-    const binWidth = ctx.sampleRate / FFT_SIZE;
-
     ctxRef.current = ctx;
-    analyserRef.current = analyser;
-    sourceRef.current = source;
-    dataRef.current = data;
 
     const tick = () => {
       analyser.getByteFrequencyData(data);
 
-      // Compute energy per band
-      const bands = BANDS.map(([lo, hi]) => bandEnergy(data, binWidth, lo, hi));
+      const rms = calcRMS(data);
+      const bands = extractBands(data, analyser.frequencyBinCount, ctx.sampleRate);
+      const next = classifyMouth(bands, rms);
 
-      // Overall volume (average of all bands)
-      const volume = bands.reduce((s, v) => s + v, 0) / bands.length;
-
-      // Determine mouth state
-      // Thresholds tuned so most normal speech stays at 1–2,
-      // wide-open (3) is rare — only for loud vowels
-      let next: MouthState;
-
-      if (volume < 0.08) {
-        // Silence / very quiet
-        next = 0;
-      } else if (volume < 0.18) {
-        // Quiet speech → slightly open
-        next = 1;
-      } else if (volume < 0.40) {
-        // Normal speech → open
-        next = 2;
-      } else {
-        // Loud speech → wide open (rare)
-        next = 3;
-      }
-
-      // Hold each state for at least 5 frames (~80ms) to avoid jitter
-      if (next !== prevMouthRef.current) {
-        holdCountRef.current++;
-        if (holdCountRef.current >= 5) {
-          prevMouthRef.current = next;
-          holdCountRef.current = 0;
+      // Hold logic from lipsync-engine (holdFrames = 2)
+      if (next !== prevRef.current) {
+        holdRef.current++;
+        if (holdRef.current >= HOLD_FRAMES) {
+          prevRef.current = next;
+          holdRef.current = 0;
           setMouth(next);
         }
       } else {
-        holdCountRef.current = 0;
+        holdRef.current = 0;
       }
 
       rafRef.current = requestAnimationFrame(tick);
@@ -123,8 +177,6 @@ export function useLipsync(stream: MediaStream | null): MouthState {
       analyser.disconnect();
       ctx.close();
       ctxRef.current = null;
-      analyserRef.current = null;
-      sourceRef.current = null;
     };
   }, [stream]);
 

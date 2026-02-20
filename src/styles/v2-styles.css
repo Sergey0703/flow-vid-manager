@@ -2370,7 +2370,7 @@
 /* ── Cat Avatar ── */
 .v2-scope .cat-avatar-wrap {
     position: relative;
-    width: 400px;
+    width: 240px;
     flex-shrink: 0;
 }
 
@@ -2378,6 +2378,54 @@
     width: 100%;
     height: auto;
     display: block;
+}
+
+/* ── LipSync Face (SVG mouth demo style) ── */
+.v2-scope .lipsync-face {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: #d4a574;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
+.v2-scope .lipsync-eyes {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 8px;
+}
+
+.v2-scope .lipsync-eye {
+    width: 18px;
+    height: 22px;
+    background: #2c1810;
+    border-radius: 50%;
+    position: relative;
+}
+
+.v2-scope .lipsync-eye::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+}
+
+.v2-scope .lipsync-mouth {
+    width: 120px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 

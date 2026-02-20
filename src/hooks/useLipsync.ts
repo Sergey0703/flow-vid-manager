@@ -82,29 +82,22 @@ export function useLipsync(stream: MediaStream | null): MouthState {
       const volume = bands.reduce((s, v) => s + v, 0) / bands.length;
 
       // Determine mouth state
+      // Thresholds tuned so most normal speech stays at 1–2,
+      // wide-open (3) is rare — only for loud vowels
       let next: MouthState;
 
-      if (volume < 0.04) {
-        // Silence
+      if (volume < 0.08) {
+        // Silence / very quiet
         next = 0;
-      } else if (volume < 0.10) {
-        // Quiet — slightly open
+      } else if (volume < 0.18) {
+        // Quiet speech → slightly open
         next = 1;
+      } else if (volume < 0.40) {
+        // Normal speech → open
+        next = 2;
       } else {
-        // Speaking — check frequency profile
-        const lowMid = (bands[1] + bands[2]) / 2;   // F1 region (openness)
-        const highMid = (bands[4] + bands[5]) / 2;   // F2/fricative region
-
-        if (volume > 0.25 && lowMid > 0.15) {
-          // Loud open vowel → wide open
-          next = 3;
-        } else if (lowMid > highMid) {
-          // Open vowels dominate → open mouth
-          next = 2;
-        } else {
-          // Consonants / fricatives → slightly open
-          next = 1;
-        }
+        // Loud speech → wide open (rare)
+        next = 3;
       }
 
       // Hold each state for at least 5 frames (~80ms) to avoid jitter

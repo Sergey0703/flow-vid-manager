@@ -24,9 +24,22 @@ interface Video {
   thumbnail_url?: string;
 }
 
+const THEME_KEY = 'v2-theme';
+
 const Index = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLight, setIsLight] = useState<boolean>(() => {
+    return localStorage.getItem(THEME_KEY) === 'light';
+  });
+
+  const toggleTheme = () => {
+    setIsLight(prev => {
+      const next = !prev;
+      localStorage.setItem(THEME_KEY, next ? 'light' : 'dark');
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -59,15 +72,15 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="v2-scope" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className={`v2-scope${isLight ? ' v2-light' : ''}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: 'var(--v2-cyan)', fontSize: '1.25rem', fontWeight: 'bold' }}>Loading Experience...</div>
       </div>
     );
   }
 
   return (
-    <div className="v2-scope">
-      <Navigation />
+    <div className={`v2-scope${isLight ? ' v2-light' : ''}`}>
+      <Navigation isLight={isLight} onToggleTheme={toggleTheme} />
 
       <main>
         <HeroV2Alt />

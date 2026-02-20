@@ -1,4 +1,4 @@
-/* ─── V2 THEME VARIABLES (From aimediaflow-landing-v2.html) ─── */
+/* ─── V2 THEME VARIABLES (Dark — default) ─── */
 :root {
     --v2-bg: #0d1117;
     --v2-bg-card: #161b27;
@@ -2623,4 +2623,250 @@
 @keyframes hvc-ring-pulse {
     0%, 100% { opacity: 0.2; }
     50%       { opacity: 0.5; }
+}
+
+/* ═══════════════════════════════════════════════
+   LIGHT THEME — .v2-scope.v2-light
+   Overrides dark defaults with warm, bright palette
+   inspired by DigitalThrive.ai
+   ═══════════════════════════════════════════════ */
+
+.v2-scope.v2-light {
+    /* ─ CSS Variables ─ */
+    --v2-bg: #f7f8fa;
+    --v2-bg-card: #ffffff;
+    --v2-bg-card-alt: #eef0f4;
+    --v2-border: rgba(0, 0, 0, 0.09);
+    --v2-cyan: #0891b2;
+    --v2-cyan-light: #22d3ee;
+    --v2-cyan-glow: rgba(8, 145, 178, 0.18);
+    --v2-red: #dc2626;
+    --v2-red-glow: rgba(220, 38, 38, 0.2);
+    --v2-purple: #7c3aed;
+    --v2-text: #111827;
+    --v2-muted: #6b7280;
+    --v2-subtle: #9ca3af;
+}
+
+/* ─ Ghost button ─ */
+.v2-scope.v2-light .v2-btn-ghost {
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--v2-text);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+.v2-scope.v2-light .v2-btn-ghost:hover {
+    border-color: var(--v2-cyan);
+    color: var(--v2-cyan);
+    background: rgba(8, 145, 178, 0.08);
+}
+
+/* ─ Header ─ */
+.v2-scope.v2-light .v2-header {
+    background: rgba(247, 248, 250, 0.92);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.v2-scope.v2-light .v2-header.scrolled {
+    background: rgba(247, 248, 250, 0.98);
+    box-shadow: 0 1px 20px rgba(0, 0, 0, 0.08);
+}
+.v2-scope.v2-light .v2-nav-links a {
+    color: rgba(17, 24, 39, 0.8);
+}
+.v2-scope.v2-light .v2-nav-links a:hover {
+    color: var(--v2-cyan);
+}
+.v2-scope.v2-light .v2-logo .rest {
+    color: var(--v2-text);
+}
+
+/* ─ Mobile nav ─ */
+.v2-scope.v2-light .v2-mobile-nav {
+    background: rgba(247, 248, 250, 0.98);
+}
+
+/* ─ Hero background (warm gradient + light orbs, like DigitalThrive) ─ */
+.v2-scope.v2-light .v2-hero-bg {
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, #f0ebe3 0%, #f7f8fa 60%, #f7f8fa 100%);
+}
+.v2-scope.v2-light .v2-hero-bg::before {
+    background-image:
+        linear-gradient(rgba(8, 145, 178, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(8, 145, 178, 0.04) 1px, transparent 1px);
+}
+.v2-scope.v2-light .v2-orb-1 {
+    background: radial-gradient(circle, rgba(180, 210, 230, 0.35), transparent 70%);
+}
+.v2-scope.v2-light .v2-orb-2 {
+    background: radial-gradient(circle, rgba(220, 200, 255, 0.2), transparent 70%);
+}
+.v2-scope.v2-light .v2-orb-3 {
+    background: radial-gradient(circle, rgba(251, 191, 161, 0.25), transparent 70%);
+}
+
+/* ─ Hero text adjustments ─ */
+.v2-scope.v2-light .v2-hero h1 {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+.v2-scope.v2-light .v2-hero h1 .ai {
+    text-shadow: 0 0 20px var(--v2-red-glow), 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.v2-scope.v2-light .v2-hero-tagline {
+    color: rgba(17, 24, 39, 0.85);
+    text-shadow: none;
+}
+.v2-scope.v2-light .v2-hero-desc {
+    color: rgba(17, 24, 39, 0.65);
+    text-shadow: none;
+}
+.v2-scope.v2-light .v2-hero-overlay {
+    background: linear-gradient(to bottom,
+        rgba(247, 248, 250, 0.3) 0%,
+        transparent 30%,
+        transparent 70%,
+        rgba(247, 248, 250, 0.6) 100%);
+}
+.v2-scope.v2-light .v2-hero-badge {
+    background: rgba(8, 145, 178, 0.07);
+    border-color: rgba(8, 145, 178, 0.2);
+}
+
+/* ─ Hero alt text (HeroV2Alt) ─ */
+.v2-scope.v2-light .v2-hero-alt-text .v2-hero-desc {
+    color: rgba(17, 24, 39, 0.65);
+    text-shadow: none;
+}
+
+/* ─ Section tag ─ */
+.v2-scope.v2-light .v2-section-tag {
+    background: rgba(8, 145, 178, 0.07);
+    border-color: rgba(8, 145, 178, 0.2);
+}
+
+/* ─ Service cards ─ */
+.v2-scope.v2-light .v2-service-card {
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+.v2-scope.v2-light .v2-service-card:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* ─ Work / video cards ─ */
+.v2-scope.v2-light .v2-work-card {
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* ─ How it works steps ─ */
+.v2-scope.v2-light .v2-how-step {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* ─ FAQ ─ */
+.v2-scope.v2-light .v2-faq-item {
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* ─ Contact form ─ */
+.v2-scope.v2-light .v2-form-field input,
+.v2-scope.v2-light .v2-form-field textarea,
+.v2-scope.v2-light .v2-form-field select {
+    background: #f9fafb;
+    border-color: rgba(0, 0, 0, 0.12);
+    color: var(--v2-text);
+}
+.v2-scope.v2-light .v2-form-field input::placeholder,
+.v2-scope.v2-light .v2-form-field textarea::placeholder {
+    color: var(--v2-subtle);
+}
+.v2-scope.v2-light .v2-form-field input:focus,
+.v2-scope.v2-light .v2-form-field textarea:focus {
+    border-color: var(--v2-cyan);
+    background: #fff;
+}
+
+/* ─ Chatbot ─ */
+.v2-scope.v2-light #chat-window {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+.v2-scope.v2-light .chat-head {
+    background: linear-gradient(135deg, #0891b2, #0e7490);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.v2-scope.v2-light .chat-head .chat-agent-avatar {
+    border-color: #f7f8fa;
+}
+.v2-scope.v2-light .chat-messages {
+    background: #f7f8fa;
+}
+.v2-scope.v2-light .chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+}
+.v2-scope.v2-light .chat-foot {
+    background: #ffffff;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+.v2-scope.v2-light .chat-input {
+    background: #f3f4f6;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--v2-text);
+}
+.v2-scope.v2-light .chat-input::placeholder {
+    color: var(--v2-subtle);
+}
+.v2-scope.v2-light .msg-bot .msg-bubble {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--v2-text);
+}
+.v2-scope.v2-light .msg-user .msg-bubble {
+    background: linear-gradient(135deg, #0891b2, #0e7490);
+    color: #fff;
+}
+
+/* ─ Voice agent card ─ */
+.v2-scope.v2-light .hero-voice-card {
+    background: rgba(247, 248, 250, 0.97);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+.v2-scope.v2-light .hvc-header {
+    border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+.v2-scope.v2-light .hvc-role {
+    color: rgba(17, 24, 39, 0.45);
+}
+.v2-scope.v2-light .hvc-avatar {
+    background: rgba(8, 145, 178, 0.12);
+    color: var(--v2-cyan);
+    border-color: rgba(8, 145, 178, 0.2);
+}
+.v2-scope.v2-light .hvc-wave-area {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+.v2-scope.v2-light .hvc-message p {
+    color: rgba(17, 24, 39, 0.55);
+}
+.v2-scope.v2-light .hvc-foot {
+    border-top-color: rgba(0, 0, 0, 0.07);
+}
+
+/* ─ Theme toggle button ─ */
+.v2-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--v2-border);
+    background: transparent;
+    color: var(--v2-muted);
+    cursor: pointer;
+    transition: var(--v2-transition);
+    flex-shrink: 0;
+}
+.v2-theme-toggle:hover {
+    color: var(--v2-cyan);
+    border-color: var(--v2-cyan);
+    background: rgba(8, 145, 178, 0.08);
 }

@@ -1,22 +1,17 @@
 
-import { useLipsync, MouthState } from '../../hooks/useLipsync';
+import { useLipsync } from '../../hooks/useLipsync';
 
 interface CatAvatarProps {
   agentStream: MediaStream | null;
   agentState: 'idle' | 'connecting' | 'connected';
 }
 
-/** Maps mouth state (0–3) to cat face image */
-const MOUTH_FRAMES: Record<MouthState, string> = {
-  0: '/cat_0.png', // closed
-  1: '/cat_1.png', // slightly open
-  2: '/cat_2.png', // open
-  3: '/cat_3.png', // wide open / laughing
-};
+const FRAME_CLOSED = '/catOk1.png';
+const FRAME_OPEN   = '/catOk2.png';
 
-// Preload all 4 frames so transitions are instant
+// Preload both frames so transitions are instant
 if (typeof window !== 'undefined') {
-  Object.values(MOUTH_FRAMES).forEach((src) => {
+  [FRAME_CLOSED, FRAME_OPEN].forEach((src) => {
     const img = new Image();
     img.src = src;
   });
@@ -25,7 +20,8 @@ if (typeof window !== 'undefined') {
 const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
   const mouth = useLipsync(agentStream);
 
-  const src = agentState === 'connected' ? MOUTH_FRAMES[mouth] : MOUTH_FRAMES[0];
+  // mouth 0 = closed, 1+ = open
+  const src = agentState === 'connected' && mouth > 0 ? FRAME_OPEN : FRAME_CLOSED;
 
   return (
     <div className="cat-avatar-wrap">

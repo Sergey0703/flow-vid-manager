@@ -107,10 +107,10 @@ export function useLipsync(stream: MediaStream | null): MouthState {
         }
       }
 
-      // Hold each state for at least 3 frames (~50ms) to avoid jitter
+      // Hold each state for at least 5 frames (~80ms) to avoid jitter
       if (next !== prevMouthRef.current) {
         holdCountRef.current++;
-        if (holdCountRef.current >= 3) {
+        if (holdCountRef.current >= 5) {
           prevMouthRef.current = next;
           holdCountRef.current = 0;
           setMouth(next);

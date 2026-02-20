@@ -1,7 +1,6 @@
 
-import { useEffect, useRef, useState } from 'react';
-import { LipSyncEngine } from '../../lib/lipsync-engine/index.js';
-import type { SimpleViseme } from '../../lib/lipsync-engine/index.js';
+import { useEffect, useRef } from 'react';
+import { LipSyncEngine, CanvasRenderer } from '../../lib/lipsync-engine/index.js';
 
 interface CatAvatarProps {
   agentStream: MediaStream | null;
@@ -9,40 +8,31 @@ interface CatAvatarProps {
 }
 
 /**
- * Simple viseme (A–F) → cat image mapping.
- *   A (rest/sil)       → catOk1  closed
- *   B (M/B/P), C (EE/S) → catOk2  slightly open
- *   D (AH wide)        → cat3Ok  open + teeth
- *   E (OH round), F (OO/F/V) → cat4Ok  wide open
+ * Extended viseme → sprite frame index (4 frames).
+ *   0 = catOk1 (closed)       — sil
+ *   1 = catOk2 (slightly open) — PP, SS, nn, E, I
+ *   2 = cat3Ok (open + teeth)  — aa, DD, kk
+ *   3 = cat4Ok (wide open)     — O, FF, TH, U, CH, RR
  */
-const VISEME_TO_IMAGE: Record<SimpleViseme, string> = {
-  A: '/catOk1.png',
-  B: '/catOk2.png',
-  C: '/catOk2.png',
-  D: '/cat3Ok.png',
-  E: '/cat4Ok.png',
-  F: '/cat4Ok.png',
+const VISEME_MAP: Record<string, number> = {
+  sil: 0,
+  PP: 1, SS: 1, nn: 1, E: 1, I: 1,
+  aa: 2, DD: 2, kk: 2,
+  O: 3, FF: 3, TH: 3, U: 3, CH: 3, RR: 3,
 };
 
-// Preload all unique frames
-if (typeof window !== 'undefined') {
-  const seen = new Set<string>();
-  Object.values(VISEME_TO_IMAGE).forEach((src) => {
-    if (!seen.has(src)) {
-      seen.add(src);
-      const img = new Image();
-      img.src = src;
-    }
-  });
-}
+const FRAME_SIZE = 400;
 
 const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
-  const [frame, setFrame] = useState('/catOk1.png');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<InstanceType<typeof LipSyncEngine> | null>(null);
-  const lastFrameRef = useRef('/catOk1.png');
+  const rendererRef = useRef<InstanceType<typeof CanvasRenderer> | null>(null);
 
-  // Create engine once
+  // Create engine + canvas renderer once
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const engine = new LipSyncEngine({
       sampleRate: 48000,
       fftSize: 256,
@@ -54,21 +44,26 @@ const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
       analysisMode: 'raf',
     });
 
-    engine.on('viseme', (f: any) => {
-      const simple: SimpleViseme = f.simpleViseme || 'A';
-      const next = VISEME_TO_IMAGE[simple] || '/catOk1.png';
-      // Only update React state when the image actually changes
-      if (next !== lastFrameRef.current) {
-        lastFrameRef.current = next;
-        setFrame(next);
-      }
+    const renderer = new CanvasRenderer(canvas, {
+      spriteSheet: '/cat-sprite.png',
+      frameWidth: FRAME_SIZE,
+      frameHeight: FRAME_SIZE,
+      visemeMap: VISEME_MAP,
+      columns: 4,
+    });
+
+    engine.on('viseme', (frame: any) => {
+      renderer.render(frame);
     });
 
     engineRef.current = engine;
+    rendererRef.current = renderer;
 
     return () => {
       engine.destroy();
+      renderer.destroy();
       engineRef.current = null;
+      rendererRef.current = null;
     };
   }, []);
 
@@ -90,17 +85,13 @@ const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
     };
   }, [agentStream]);
 
-  // Reset to closed when not connected
-  useEffect(() => {
-    if (agentState !== 'connected') setFrame('/catOk1.png');
-  }, [agentState]);
-
   return (
     <div className="cat-avatar-wrap">
-      <img
-        src={frame}
-        alt="Aoife AI"
-        className="cat-avatar-img"
+      <canvas
+        ref={canvasRef}
+        width={FRAME_SIZE}
+        height={FRAME_SIZE}
+        className="cat-avatar-canvas"
       />
       <div className="cat-avatar-label">
         {agentState === 'connecting' && <span className="cat-avatar-status connecting">connecting…</span>}

@@ -2870,3 +2870,21 @@
     border-color: var(--v2-cyan);
     background: rgba(8, 145, 178, 0.08);
 }
+
+/* ─ Chatbot teaser & bubble (light theme) ─ */
+.v2-scope.v2-light #chat-teaser {
+    background: #ffffff;
+    border-color: rgba(8, 145, 178, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 0 16px rgba(8, 145, 178, 0.08);
+}
+.v2-scope.v2-light .teaser-text {
+    color: #374151;
+}
+.v2-scope.v2-light .teaser-dismiss {
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #6b7280;
+}
+.v2-scope.v2-light .teaser-dismiss:hover {
+    border-color: rgba(0, 0, 0, 0.25);
+    color: #374151;
+}

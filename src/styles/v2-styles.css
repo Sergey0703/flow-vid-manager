@@ -2072,9 +2072,9 @@
 
 .v2-hero-alt-h1 {
     font-size: clamp(2.2rem, 4vw, 3.2rem);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.15;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     margin: 0;
 }
 
@@ -2745,10 +2745,8 @@
     text-shadow: none;
 }
 
-/* ─ Hero h1: lighter, more elegant in light theme ─ */
+/* ─ Hero h1: softer color in light theme ─ */
 .v2-scope.v2-light .v2-hero-alt-h1 {
-    font-weight: 800;
-    letter-spacing: -0.02em;
     /* "MediaFlow:" — softer dark, not pitch black */
     color: #2d3f55;
 }

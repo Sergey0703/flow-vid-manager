@@ -12,6 +12,7 @@ const VoiceAgent = () => {
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0);
+  const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
 
   const roomRef = useRef<any>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -83,6 +84,7 @@ const VoiceAgent = () => {
     if (audioRef.current) {
       audioRef.current.srcObject = null;
     }
+    setAgentStream(null);
     setState('idle');
   }, []);
 
@@ -110,13 +112,21 @@ const VoiceAgent = () => {
       const room = new Room({ adaptiveStream: true, dynacast: true });
       roomRef.current = room;
 
-      // Play agent audio
+      // Play agent audio + capture MediaStream for lip-sync
       room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) {
           const el = track.attach();
           el.autoplay = true;
           audioRef.current = el as HTMLAudioElement;
           document.body.appendChild(el);
+
+          // Extract MediaStream for lip-sync analysis
+          const ms = (track as any).mediaStream as MediaStream | undefined;
+          if (ms) {
+            setAgentStream(ms);
+          } else if (el instanceof HTMLMediaElement && (el as any).captureStream) {
+            setAgentStream((el as any).captureStream());
+          }
         }
       });
 
@@ -179,14 +189,14 @@ const VoiceAgent = () => {
       {/* Connecting: show avatar + spinner */}
       {state === 'connecting' && (
         <div className="voice-agent-panel">
-          <CatAvatar volume={0} agentState="connecting" />
+          <CatAvatar agentStream={null} agentState="connecting" />
         </div>
       )}
 
       {/* Connected: avatar with lip-sync + controls */}
       {state === 'connected' && (
         <div className="voice-agent-panel">
-          <CatAvatar volume={volume} agentState="connected" />
+          <CatAvatar agentStream={agentStream} agentState="connected" />
           <div className="voice-agent-controls">
             <div className="voice-agent-info">
               <div className="voice-agent-pulse" />

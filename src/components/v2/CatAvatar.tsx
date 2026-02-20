@@ -1,65 +1,36 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useLipsync, MouthState } from '../../hooks/useLipsync';
 
 interface CatAvatarProps {
-  volume: number;
+  agentStream: MediaStream | null;
   agentState: 'idle' | 'connecting' | 'connected';
 }
 
-const TOTAL_FRAMES = 30;
-const SILENT_FRAME = 7; // frame_007 — mouth closed, stable position
-
-// fps based on volume: 4fps when quiet, up to 24fps when loud
-const getFps = (volume: number): number => {
-  if (volume < 15) return 0;
-  return 4 + Math.round((volume / 255) * 20);
+/** Maps mouth state (0–3) to cat face image */
+const MOUTH_FRAMES: Record<MouthState, string> = {
+  0: '/cat_0.png', // closed
+  1: '/cat_1.png', // slightly open
+  2: '/cat_2.png', // open
+  3: '/cat_3.png', // wide open / laughing
 };
 
-const pad = (n: number) => String(n).padStart(3, '0');
+// Preload all 4 frames so transitions are instant
+if (typeof window !== 'undefined') {
+  Object.values(MOUTH_FRAMES).forEach((src) => {
+    const img = new Image();
+    img.src = src;
+  });
+}
 
-const CatAvatar = ({ volume, agentState }: CatAvatarProps) => {
-  const [frame, setFrame] = useState(SILENT_FRAME);
-  const rafRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
-  const frameRef = useRef<number>(SILENT_FRAME);
-  const volumeRef = useRef<number>(volume);
+const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
+  const mouth = useLipsync(agentStream);
 
-  useEffect(() => {
-    volumeRef.current = volume;
-  }, [volume]);
-
-  useEffect(() => {
-    const tick = (now: number) => {
-      rafRef.current = requestAnimationFrame(tick);
-      const fps = getFps(volumeRef.current);
-
-      if (fps === 0) {
-        // silent — freeze on closed-mouth frame
-        if (frameRef.current !== SILENT_FRAME) {
-          frameRef.current = SILENT_FRAME;
-          setFrame(SILENT_FRAME);
-        }
-        return;
-      }
-
-      const interval = 1000 / fps;
-      if (now - lastTimeRef.current < interval) return;
-      lastTimeRef.current = now;
-
-      frameRef.current = (frameRef.current % TOTAL_FRAMES) + 1;
-      setFrame(frameRef.current);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
+  const src = agentState === 'connected' ? MOUTH_FRAMES[mouth] : MOUTH_FRAMES[0];
 
   return (
     <div className="cat-avatar-wrap">
       <img
-        src={`/cat_frame_${pad(frame)}.png`}
+        src={src}
         alt="Aoife AI"
         className="cat-avatar-img"
       />

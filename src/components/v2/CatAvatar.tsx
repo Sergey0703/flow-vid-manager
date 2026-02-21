@@ -8,17 +8,21 @@ interface CatAvatarProps {
 }
 
 /**
- * Extended viseme → sprite frame index (4 frames).
- *   0 = catOk1 (closed)       — sil
- *   1 = catOk2 (slightly open) — PP, SS, nn, E, I
- *   2 = cat3Ok (open + teeth)  — aa, DD, kk
- *   3 = cat4Ok (wide open)     — O, FF, TH, U, CH, RR
+ * Extended viseme → sprite frame index (6 frames, 1:1 with Preston Blair).
+ *   0 = A: Rest / closed     — sil
+ *   1 = B: Lips pressed      — PP, nn
+ *   2 = C: Smile, slight open — E, I, SS
+ *   3 = D: Wide open         — aa, DD, kk
+ *   4 = E: Rounded           — O, RR, CH
+ *   5 = F: Teeth on lip      — FF, TH, U
  */
 const VISEME_MAP: Record<string, number> = {
   sil: 0,
-  PP: 1, SS: 1, nn: 1, E: 1, I: 1,
-  aa: 2, DD: 2, kk: 2,
-  O: 3, FF: 3, TH: 3, U: 3, CH: 3, RR: 3,
+  PP: 1, nn: 1,
+  E: 2, I: 2, SS: 2,
+  aa: 3, DD: 3, kk: 3,
+  O: 4, RR: 4, CH: 4,
+  FF: 5, TH: 5, U: 5,
 };
 
 const FRAME_SIZE = 400;
@@ -49,7 +53,7 @@ const CatAvatar = ({ agentStream, agentState }: CatAvatarProps) => {
       frameWidth: FRAME_SIZE,
       frameHeight: FRAME_SIZE,
       visemeMap: VISEME_MAP,
-      columns: 4,
+      columns: 6,
     });
 
     engine.on('viseme', (frame: any) => {

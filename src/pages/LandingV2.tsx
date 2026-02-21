@@ -74,7 +74,7 @@ const LandingV2 = () => {
             <Navigation />
 
             <main>
-                <HeroV2Alt agentName="Morgan-1940" />
+                <HeroV2Alt agentName="aimediaflow-agent-local" />
                 <Stats />
                 <VideoShowcase videos={videos} />
                 {/* <Services /> */}

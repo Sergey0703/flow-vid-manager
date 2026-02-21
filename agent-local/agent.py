@@ -98,7 +98,7 @@ class AimediaflowAgent(Agent):
             instructions=SYSTEM_BASE,
             llm=openai.LLM(model="gpt-4.1-nano", api_key=OPENAI_API_KEY),
             stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY),
-            tts=openai.TTS(model="tts-1", voice="bf_emma", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
+            tts=openai.TTS(model="tts-1", voice="bf_alice", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
         )
         self.session_log = session_log
 

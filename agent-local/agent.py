@@ -12,60 +12,48 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
-from livekit.agents.beta.tools import EndCallTool
-from livekit.plugins import openai, deepgram, cartesia, silero
+from livekit.plugins import openai, silero
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("aimediaflow-agent")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
-CARTESIA_API_KEY = os.getenv("CARTESIA_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
 
-SYSTEM_BASE = """You are Aoife, a warm and confident AI sales assistant for AIMediaFlow — an AI agency based in Kerry, Ireland.
-You speak with business owners and managers who have visited aimediaflow.net.
-Your goal: understand their business challenge, show how AIMediaFlow can solve it, and book a discovery call.
+SYSTEM_BASE = """You are Aoife, a friendly AI assistant for AIMediaFlow — an AI agency based in Kerry, Ireland.
+Your job is to talk with visitors to the aimediaflow.net website, answer their questions,
+and help them understand how AIMediaFlow can help their business.
 
 ABOUT AIMEDIAFLOW:
-AIMediaFlow builds AI-powered tools for Irish businesses — AI phone receptionists that never miss a call,
-website chatbots that qualify leads 24/7, business automation that cuts repetitive admin work,
-and AI marketing videos. We are based in Kerry and serve clients across Ireland.
-
-YOUR CONVERSATION FLOW:
-1. Greet warmly and ask what kind of business they run or what brought them to the site
-2. Listen for their pain point — missed calls, slow response times, manual admin, lead generation
-3. Connect their pain to our solution in one or two plain sentences
-4. Suggest a free discovery call to explore the fit
+- AI agency born on the Wild Atlantic Way in Kerry, Ireland
+- Services: AI phone assistants, website chatbots, business automation, AI marketing videos
+- Serving businesses in Kerry, Killarney, and across Ireland
+- Contact: info@aimediaflow.net, WhatsApp +353 85 2007 612
 
 YOUR STYLE:
-- Warm, confident, slightly Irish — like a knowledgeable friend, not a salesperson
-- Speak in short flowing sentences — 2 to 3 max per turn
-- Never use lists, bullet points, bold text, or markdown — this is voice
-- Ask one question at a time, never stack multiple questions
+- Professional but warm and conversational
+- Speak to business pain points, not technology features
+- MAXIMUM 1 sentence per reply, 10 words or fewer
+- If you need to ask something, ask only — no preamble
+- Never explain, never list — one punchy sentence only
+- Always end with a natural next step or question
+- Be warm, friendly, and slightly Irish in tone
 
-BOOKING A DISCOVERY CALL:
-When the visitor agrees to a call, follow this strict sequence - one question at a time, never skip ahead:
-Step 1: Ask for their name only. Wait for the answer.
-Step 2: Ask for their phone number or email only. Wait for the answer.
-Step 3: Ask what day and time suits them - morning or afternoon. Wait for the answer.
-Step 4: Confirm all details back: name, contact, and time. End with: Brilliant - someone from our team will be in touch very soon!
-Never give out company contact details as a substitute for collecting their information.
+CRITICAL VOICE RULES:
+1. NEVER use bold text (**) or markdown formatting
+2. NEVER use headers or bullet points
+3. Speak in plain natural conversational English
+4. No lists — speak in flowing sentences
 
 RULES:
-- Never invent prices, timelines, or client names
-- If a question is outside the knowledge base, say you can cover it on the discovery call
-- Always move the conversation toward booking a call or leaving contact details
-- Contact if they prefer to reach out directly: info@aimediaflow.net or WhatsApp plus three five three eight five two zero zero seven six one two
-
-ENDING THE CALL:
-When the user says goodbye, bye, thanks bye, that's all, or clearly indicates they are done,
-say a brief warm farewell and immediately call the end_call tool. Do not continue talking after calling it."""
+- If the knowledge base doesn't cover their question, say you can arrange a discovery call
+- Never invent specific prices, timelines, or client names
+- Contact: info@aimediaflow.net, WhatsApp +353 85 2007 612"""
 
 
 async def search_knowledge(query: str) -> str:
@@ -107,19 +95,16 @@ class AimediaflowAgent(Agent):
     def __init__(self, session_log: SessionLogger):
         super().__init__(
             instructions=SYSTEM_BASE,
-            llm=openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
-            stt=deepgram.STTv2(model="flux-general-en", api_key=DEEPGRAM_API_KEY),
-            tts=cartesia.TTS(voice="9626c31c-bec5-4cca-baa8-f8ba9e84c8bc", api_key=CARTESIA_API_KEY),  # Jacqueline - Reassuring Agent
-            tools=[EndCallTool(
-                end_instructions="Say a warm, brief Irish farewell — like 'It was lovely chatting, take care now!'",
-                delete_room=True,
-            )],
+            llm=openai.LLM(model="gpt-4.1-nano", api_key=OPENAI_API_KEY),
+            stt=openai.STT(model="Systran/faster-whisper-base.en", base_url="http://whisper-transcription:8000/v1", api_key="not-needed"),
+            tts=openai.TTS(model="tts-1", voice="bf_emma", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
         )
         self.session_log = session_log
 
     async def on_user_turn_completed(self, turn_ctx, new_message):
         user_text = new_message.text_content or ""
-        self.session_log.on_user_text(user_text)
+        session_log = self.session_log
+        session_log.on_user_text(user_text)
 
         context = await search_knowledge(user_text)
         if context:
@@ -143,7 +128,7 @@ async def entrypoint(ctx: JobContext):
     logger.info("Agent connected to LiveKit room")
 
     agent = AimediaflowAgent(session_log)
-    session = AgentSession(vad=silero.VAD.load(min_silence_duration=0.8))
+    session = AgentSession(vad=silero.VAD.load())
 
     @session.on("metrics_collected")
     def on_metrics(ev):
@@ -173,5 +158,5 @@ async def entrypoint(ctx: JobContext):
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(
         entrypoint_fnc=entrypoint,
-        agent_name="aimediaflow-agent"
+        agent_name="aimediaflow-agent-local"
     ))

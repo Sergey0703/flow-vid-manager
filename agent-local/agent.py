@@ -12,13 +12,14 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
-from livekit.plugins import openai, silero
+from livekit.plugins import openai, deepgram, silero
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("aimediaflow-agent")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 
@@ -96,7 +97,7 @@ class AimediaflowAgent(Agent):
         super().__init__(
             instructions=SYSTEM_BASE,
             llm=openai.LLM(model="gpt-4.1-nano", api_key=OPENAI_API_KEY),
-            stt=openai.STT(model="Systran/faster-whisper-base.en", base_url="http://whisper-transcription:8000/v1", api_key="not-needed"),
+            stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY),
             tts=openai.TTS(model="tts-1", voice="bf_emma", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
         )
         self.session_log = session_log

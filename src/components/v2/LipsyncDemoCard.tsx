@@ -9,7 +9,7 @@ const SILENCE_TIMEOUT_MS = 30_000;
 const MAX_CALL_MS = 3 * 60_000;
 
 // ── Shared voice-agent logic ──────────────────────────────────────────────────
-function useDemoAgent() {
+function useDemoAgent(agentName?: string) {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
@@ -52,7 +52,11 @@ function useDemoAgent() {
       const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       const { Room, RoomEvent, Track } = await import('livekit-client');
 
-      const res = await fetch('/api/livekit-token', { method: 'POST' });
+      const res = await fetch('/api/livekit-token', {
+        method: 'POST',
+        headers: agentName ? { 'Content-Type': 'application/json' } : undefined,
+        body: agentName ? JSON.stringify({ agentName }) : undefined,
+      });
       const data = await res.json();
       if (!res.ok) {
         micStream.getTracks().forEach(t => t.stop());
@@ -160,8 +164,8 @@ function DemoCardShell({
 }
 
 // ── Cat variant ───────────────────────────────────────────────────────────────
-const CatDemoContent = ({ title, description }: { title: string; description: string }) => {
-  const { state, error, duration, agentStream, connect, disconnect } = useDemoAgent();
+const CatDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
+  const { state, error, duration, agentStream, connect, disconnect } = useDemoAgent(agentName);
   const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
   return (
     <DemoCardShell
@@ -174,8 +178,8 @@ const CatDemoContent = ({ title, description }: { title: string; description: st
 };
 
 // ── Girl variant ──────────────────────────────────────────────────────────────
-const GirlDemoContent = ({ title, description }: { title: string; description: string }) => {
-  const { state, error, duration, agentStream, connect, disconnect } = useDemoAgent();
+const GirlDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
+  const { state, error, duration, agentStream, connect, disconnect } = useDemoAgent(agentName);
   const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
   return (
     <DemoCardShell
@@ -217,11 +221,12 @@ interface LipsyncDemoCardProps {
   title: string;
   description: string;
   placeholderIcon?: React.ReactNode;
+  agentName?: string;
 }
 
-const LipsyncDemoCard = ({ type, title, description, placeholderIcon }: LipsyncDemoCardProps) => {
-  if (type === 'cat')  return <CatDemoContent  title={title} description={description} />;
-  if (type === 'girl') return <GirlDemoContent title={title} description={description} />;
+const LipsyncDemoCard = ({ type, title, description, placeholderIcon, agentName }: LipsyncDemoCardProps) => {
+  if (type === 'cat')  return <CatDemoContent  title={title} description={description} agentName={agentName} />;
+  if (type === 'girl') return <GirlDemoContent title={title} description={description} agentName={agentName} />;
   return <ComingSoonCard title={title} description={description} placeholderIcon={placeholderIcon} />;
 };
 

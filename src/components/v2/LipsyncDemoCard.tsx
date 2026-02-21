@@ -1,28 +1,25 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import CatAvatar from './CatAvatar';
+import GirlAvatar from './GirlAvatar';
 
 type DemoState = 'idle' | 'connecting' | 'connected' | 'error';
 
 const SILENCE_TIMEOUT_MS = 30_000;
 const MAX_CALL_MS = 3 * 60_000;
 
-// ── Cat variant (full voice agent logic, inline card layout) ─────────────────
-const CatDemoContent = ({ title, description }: { title: string; description: string }) => {
+// ── Shared voice-agent logic ──────────────────────────────────────────────────
+function useDemoAgent() {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
   const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
 
-  const roomRef = useRef<any>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const roomRef         = useRef<any>(null);
+  const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef        = useRef<HTMLAudioElement | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => { disconnect(); };
-  }, []);
 
   const stopTimer = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -37,13 +34,8 @@ const CatDemoContent = ({ title, description }: { title: string; description: st
   const disconnect = useCallback(async () => {
     stopTimer();
     clearAllTimers();
-    if (roomRef.current) {
-      await roomRef.current.disconnect();
-      roomRef.current = null;
-    }
-    if (audioRef.current) {
-      audioRef.current.srcObject = null;
-    }
+    if (roomRef.current) { await roomRef.current.disconnect(); roomRef.current = null; }
+    if (audioRef.current) { audioRef.current.srcObject = null; }
     setAgentStream(null);
     setState('idle');
   }, []);
@@ -114,19 +106,27 @@ const CatDemoContent = ({ title, description }: { title: string; description: st
     }
   }, [disconnect, resetSilenceTimer]);
 
+  useEffect(() => { return () => { disconnect(); }; }, []);
+
+  return { state, error, duration, agentStream, connect, disconnect };
+}
+
+// ── Shared card UI ────────────────────────────────────────────────────────────
+function DemoCardShell({
+  title, description, state, error, duration, connect, disconnect, avatar,
+}: {
+  title: string; description: string;
+  state: DemoState; error: string; duration: number;
+  connect: () => void; disconnect: () => void;
+  avatar: React.ReactNode;
+}) {
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-
-  const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
-
   return (
     <div className="lipsync-demo-card lipsync-demo-card--active">
-      <div className="lipsync-card-preview">
-        <CatAvatar agentStream={agentStream} agentState={avatarState} />
-      </div>
+      <div className="lipsync-card-preview">{avatar}</div>
       <div className="lipsync-card-body">
         <h3 className="lipsync-card-title">{title}</h3>
         <p className="lipsync-card-desc">{description}</p>
-
         <div className="lipsync-card-actions">
           {(state === 'idle' || state === 'error') && (
             <>
@@ -134,12 +134,9 @@ const CatDemoContent = ({ title, description }: { title: string; description: st
                 <MicIcon />
                 <span>{state === 'error' ? 'Retry' : 'Start Demo'}</span>
               </button>
-              {state === 'error' && (
-                <span className="lipsync-card-error">{error}</span>
-              )}
+              {state === 'error' && <span className="lipsync-card-error">{error}</span>}
             </>
           )}
-
           {(state === 'connecting' || state === 'connected') && (
             <>
               <div className="lipsync-card-status">
@@ -147,9 +144,7 @@ const CatDemoContent = ({ title, description }: { title: string; description: st
                 <span style={{ color: state === 'connected' ? 'var(--v2-cyan)' : 'var(--v2-muted)', fontSize: '0.8rem', fontWeight: 600 }}>
                   {state === 'connecting' ? 'Connecting…' : 'Aoife · AIMediaFlow'}
                 </span>
-                {state === 'connected' && (
-                  <span className="lipsync-card-timer">{fmt(duration)}</span>
-                )}
+                {state === 'connected' && <span className="lipsync-card-timer">{fmt(duration)}</span>}
               </div>
               {state === 'connected' && (
                 <button className="lipsync-end-btn" onClick={disconnect} title="End call">
@@ -161,6 +156,34 @@ const CatDemoContent = ({ title, description }: { title: string; description: st
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Cat variant ───────────────────────────────────────────────────────────────
+const CatDemoContent = ({ title, description }: { title: string; description: string }) => {
+  const { state, error, duration, agentStream, connect, disconnect } = useDemoAgent();
+  const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
+  return (
+    <DemoCardShell
+      title={title} description={description}
+      state={state} error={error} duration={duration}
+      connect={connect} disconnect={disconnect}
+      avatar={<CatAvatar agentStream={agentStream} agentState={avatarState} />}
+    />
+  );
+};
+
+// ── Girl variant ──────────────────────────────────────────────────────────────
+const GirlDemoContent = ({ title, description }: { title: string; description: string }) => {
+  const { state, error, duration, agentStream, connect, disconnect } = useDemoAgent();
+  const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
+  return (
+    <DemoCardShell
+      title={title} description={description}
+      state={state} error={error} duration={duration}
+      connect={connect} disconnect={disconnect}
+      avatar={<GirlAvatar agentStream={agentStream} agentState={avatarState} />}
+    />
   );
 };
 
@@ -190,16 +213,15 @@ const ComingSoonCard = ({
 
 // ── Public component ──────────────────────────────────────────────────────────
 interface LipsyncDemoCardProps {
-  type: 'cat' | 'coming-soon';
+  type: 'cat' | 'girl' | 'coming-soon';
   title: string;
   description: string;
   placeholderIcon?: React.ReactNode;
 }
 
 const LipsyncDemoCard = ({ type, title, description, placeholderIcon }: LipsyncDemoCardProps) => {
-  if (type === 'cat') {
-    return <CatDemoContent title={title} description={description} />;
-  }
+  if (type === 'cat')  return <CatDemoContent  title={title} description={description} />;
+  if (type === 'girl') return <GirlDemoContent title={title} description={description} />;
   return <ComingSoonCard title={title} description={description} placeholderIcon={placeholderIcon} />;
 };
 

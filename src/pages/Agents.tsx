@@ -46,10 +46,9 @@ const Agents = () => {
             />
 
             <LipsyncDemoCard
-              type="coming-soon"
-              title="3D Human Avatar"
-              description="Photorealistic 3D head with blend-shape driven lip sync, blinking, and subtle micro-expressions."
-              placeholderIcon={<Avatar3DIcon />}
+              type="girl"
+              title="Girl Avatar"
+              description="Animated girl with precise Preston Blair viseme mapping across 6 mouth positions. Powered by a real-time voice AI."
             />
 
             <LipsyncDemoCard
@@ -68,15 +67,6 @@ const Agents = () => {
 };
 
 // ── Placeholder icons for coming-soon cards ───────────────────────────────────
-const Avatar3DIcon = () => (
-  <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-    <path d="M9 14s-1 1-1 3" />
-    <path d="M15 14s1 1 1 3" />
-  </svg>
-);
-
 const CartoonIcon = () => (
   <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="9" />

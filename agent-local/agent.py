@@ -12,6 +12,7 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
+from livekit.agents.beta.tools import EndCallTool
 from livekit.plugins import openai, deepgram, silero
 from session_logger import SessionLogger
 
@@ -54,7 +55,11 @@ CRITICAL VOICE RULES:
 RULES:
 - If the knowledge base doesn't cover their question, say you can arrange a discovery call
 - Never invent specific prices, timelines, or client names
-- Contact: info@aimediaflow.net, WhatsApp +353 85 2007 612"""
+- Contact: info@aimediaflow.net, WhatsApp +353 85 2007 612
+
+ENDING THE CALL:
+When the user says goodbye, bye, thanks bye, that's all, or clearly indicates they are done,
+say a brief warm farewell and immediately call the end_call tool. Do not continue talking after calling it."""
 
 
 async def search_knowledge(query: str) -> str:
@@ -99,6 +104,10 @@ class AimediaflowAgent(Agent):
             llm=openai.LLM(model="gpt-4.1-nano", api_key=OPENAI_API_KEY),
             stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY),
             tts=openai.TTS(model="tts-1", voice="bf_alice", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
+            tools=[EndCallTool(
+                end_instructions="Say a warm, brief Irish farewell — like 'It was lovely chatting, take care now!'",
+                delete_room=True,
+            )],
         )
         self.session_log = session_log
 

@@ -55,11 +55,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Generate unique room name per session
   const roomName = `aimediaflow-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-  // Build token — max 5 minutes session
+  // Build token — max 3 minutes session
   const token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
     identity: `visitor-${Date.now()}`,
     name: 'Visitor',
-    ttl: 5 * 60, // token valid 5 minutes
+    ttl: 3 * 60, // token valid 3 minutes
   });
 
   token.addGrant({

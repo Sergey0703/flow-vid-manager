@@ -70,6 +70,7 @@ const DEFAULT_KB: Omit<KBEntry, "status">[] = [
   // CONTACT
   { id: "contact-1", category: "contact", text: "Contact AIMediaFlow: Email info@aimediaflow.net | WhatsApp +353 85 2007 612 (Serhii) | Kerry, Ireland. We respond within a few hours during business hours." },
   { id: "contact-2", category: "contact", text: "Book a free 30-minute discovery call — use the contact form on the website or WhatsApp us at +353 85 2007 612. No obligation, no sales pressure. Just a conversation about your business needs." },
+  { id: "contact-3", category: "contact", text: "To speak with a real person or manager, contact Serhii directly: WhatsApp +353 85 2007 612 or email info@aimediaflow.net. A human team member responds within a few hours during business hours." },
 ];
 
 const KnowledgeBase = () => {

@@ -83,7 +83,7 @@ const Index = () => {
       <Navigation isLight={isLight} onToggleTheme={toggleTheme} />
 
       <main>
-        <HeroV2Alt />
+        <HeroV2Alt agentName="aimediaflow-agent-local" />
         <Stats />
         <VideoShowcase videos={videos} />
         <Services />

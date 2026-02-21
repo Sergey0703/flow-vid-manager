@@ -3138,3 +3138,268 @@
     border-color: rgba(8, 145, 178, 0.45);
     background: #ffffff;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LIPSYNC GALLERY PAGE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.v2-scope .lipsync-page {
+    padding-top: 80px;
+    min-height: 100vh;
+}
+
+/* ── Hero / page header ── */
+.v2-scope .lipsync-hero {
+    padding: 5rem 2rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* ── Grid section ── */
+.v2-scope .lipsync-grid-section {
+    padding: 0 2rem 7rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.v2-scope .lipsync-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 960px) {
+    .v2-scope .lipsync-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .v2-scope .lipsync-grid {
+        grid-template-columns: 1fr;
+    }
+    .v2-scope .lipsync-hero {
+        padding: 4rem 1.25rem 3rem;
+    }
+    .v2-scope .lipsync-grid-section {
+        padding: 0 1.25rem 5rem;
+    }
+}
+
+/* ── Demo card shell ── */
+.v2-scope .lipsync-demo-card {
+    background: var(--v2-bg-card);
+    border: 1px solid var(--v2-border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.v2-scope .lipsync-demo-card:hover {
+    border-color: rgba(0, 200, 224, 0.25);
+    box-shadow: 0 8px 36px rgba(0, 0, 0, 0.35);
+}
+
+.v2-scope .lipsync-demo-card--active {
+    border-color: rgba(0, 200, 224, 0.18);
+}
+
+/* ── Preview area (top of card) ── */
+.v2-scope .lipsync-card-preview {
+    background: linear-gradient(160deg, #0d1f2d 0%, #071520 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+    position: relative;
+    overflow: hidden;
+}
+
+.v2-scope .lipsync-card-preview::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0, 200, 224, 0.07) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Scale the cat avatar inside a card (overrides the fixed-widget size) */
+.v2-scope .lipsync-demo-card .cat-avatar-wrap {
+    width: 210px;
+}
+
+/* ── Card body ── */
+.v2-scope .lipsync-card-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    flex: 1;
+}
+
+.v2-scope .lipsync-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--v2-text);
+    margin: 0;
+}
+
+.v2-scope .lipsync-card-desc {
+    font-size: 0.85rem;
+    color: var(--v2-muted);
+    line-height: 1.65;
+    margin: 0;
+}
+
+/* ── Action row ── */
+.v2-scope .lipsync-card-actions {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.v2-scope .lipsync-start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, rgba(0, 200, 224, 0.12) 0%, rgba(0, 200, 224, 0.06) 100%);
+    border: 1px solid var(--v2-cyan);
+    border-radius: 50px;
+    color: var(--v2-cyan);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.v2-scope .lipsync-start-btn:hover {
+    background: var(--v2-cyan);
+    color: #0a0f1e;
+    box-shadow: 0 4px 20px rgba(0, 200, 224, 0.3);
+    transform: translateY(-1px);
+}
+
+.v2-scope .lipsync-end-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: rgba(255, 68, 68, 0.12);
+    border: 1px solid rgba(255, 68, 68, 0.5);
+    border-radius: 50%;
+    color: #ff6b6b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.v2-scope .lipsync-end-btn:hover {
+    background: #ff4444;
+    border-color: #ff4444;
+    color: #fff;
+}
+
+/* ── Status row (connecting / connected) ── */
+.v2-scope .lipsync-card-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.v2-scope .lipsync-card-pulse {
+    width: 7px;
+    height: 7px;
+    background: var(--v2-cyan);
+    border-radius: 50%;
+    animation: voice-pulse 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.v2-scope .lipsync-card-timer {
+    font-family: monospace;
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 0.75rem;
+}
+
+.v2-scope .lipsync-card-error {
+    font-size: 0.75rem;
+    color: #ff6b6b;
+    line-height: 1.4;
+}
+
+/* ── Coming soon card ── */
+.v2-scope .lipsync-demo-card--soon {
+    opacity: 0.72;
+}
+
+.v2-scope .lipsync-demo-card--soon:hover {
+    opacity: 0.9;
+}
+
+.v2-scope .lipsync-card-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2.5rem 2rem;
+    color: var(--v2-subtle);
+    width: 100%;
+    height: 100%;
+}
+
+.v2-scope .lipsync-card-placeholder svg {
+    opacity: 0.28;
+}
+
+.v2-scope .lipsync-soon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    color: var(--v2-purple);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.6rem;
+    border-radius: 100px;
+    margin-bottom: 0.15rem;
+    width: fit-content;
+}
+
+/* ── Light theme overrides ── */
+.v2-scope.v2-light .lipsync-demo-card {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.v2-scope.v2-light .lipsync-demo-card:hover {
+    border-color: rgba(8, 145, 178, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.v2-scope.v2-light .lipsync-card-preview {
+    background: linear-gradient(160deg, #e8f4f8 0%, #dbeef5 100%);
+}
+
+.v2-scope.v2-light .lipsync-card-preview::before {
+    background: radial-gradient(ellipse at 50% 0%, rgba(8, 145, 178, 0.08) 0%, transparent 70%);
+}
+
+.v2-scope.v2-light .lipsync-card-title {
+    color: var(--v2-text);
+}
+
+.v2-scope.v2-light .lipsync-card-timer {
+    color: rgba(0, 0, 0, 0.35);
+}

@@ -48,15 +48,28 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
   const engineRef  = useRef<InstanceType<typeof LipSyncEngine> | null>(null);
   const rendererRef = useRef<InstanceType<typeof CanvasRenderer> | null>(null);
   const blinkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // resolves when the sprite sheet image has loaded and renderer is ready
+  const rendererReadyRef = useRef<Promise<void>>(Promise.resolve());
 
-  // helper: render a named state frame on the canvas
+  // helper: render a named state frame — waits for renderer to be ready first
   const renderState = (viseme: string) => {
-    rendererRef.current?.render({ viseme });
+    rendererReadyRef.current.then(() => {
+      rendererRef.current?.render({ viseme });
+    });
   };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // Preload the sprite sheet so renderer._ready is true immediately on construction
+    const img = new Image();
+    const imageReady = new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = reject;
+      img.src = '/girl-sprite.png';
+    });
+    rendererReadyRef.current = imageReady;
 
     const engine = new LipSyncEngine({
       sampleRate: 48000,
@@ -69,24 +82,28 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
       analysisMode: 'raf',
     });
 
-    const renderer = new CanvasRenderer(canvas, {
-      spriteSheet: '/girl-sprite.png',
-      frameWidth: FRAME_W,
-      frameHeight: FRAME_H,
-      visemeMap: VISEME_MAP,
-      columns: TOTAL_COLS,
-    });
+    // Pass the already-loaded HTMLImageElement so CanvasRenderer sets _ready=true synchronously
+    imageReady.then(() => {
+      const renderer = new CanvasRenderer(canvas, {
+        spriteSheet: img,
+        frameWidth: FRAME_W,
+        frameHeight: FRAME_H,
+        visemeMap: VISEME_MAP,
+        columns: TOTAL_COLS,
+      });
 
-    engine.on('viseme', (frame: any) => {
-      renderer.render(frame);
+      engine.on('viseme', (frame: any) => {
+        renderer.render(frame);
+      });
+
+      rendererRef.current = renderer;
     });
 
     engineRef.current = engine;
-    rendererRef.current = renderer;
 
     return () => {
       engine.destroy();
-      renderer.destroy();
+      rendererRef.current?.destroy();
       engineRef.current = null;
       rendererRef.current = null;
     };

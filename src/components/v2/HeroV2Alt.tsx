@@ -178,50 +178,41 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                     </div>
                 </div>
 
-                {/* Right: GirlAvatar two-column card */}
-                <div className="v2-hero-alt-video-wrap hero-voice-card hero-voice-card--2col">
+                {/* Right: GirlAvatar fullscreen card with overlay */}
+                <div className="v2-hero-alt-video-wrap hero-voice-card hero-voice-card--fullav">
 
-                    {/* Left col: avatar + state indicator */}
-                    <div className="hvc2-avatar-col">
-                        <GirlAvatar
-                            agentStream={agentStream}
-                            agentState={state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle'}
-                            agentThinkingState={agentThinkingState}
-                        />
-                        {/* State indicator under avatar */}
-                        {(state === 'connected' || state === 'connecting') && (
-                            <div className={`hvc2-state-indicator hvc2-state--${agentThinkingState ?? 'idle'}`}>
-                                <span className="hvc2-state-dot" />
-                                <span className="hvc2-state-label">
-                                    {agentThinkingState === 'thinking'  && 'Thinking…'}
-                                    {agentThinkingState === 'speaking'  && 'Speaking…'}
-                                    {agentThinkingState === 'listening' && 'Listening…'}
-                                    {!agentThinkingState && state === 'connecting' && 'Connecting…'}
-                                    {!agentThinkingState && state === 'connected'  && 'Connected'}
-                                </span>
+                    {/* Avatar fills the card */}
+                    <GirlAvatar
+                        agentStream={agentStream}
+                        agentState={state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle'}
+                        agentThinkingState={agentThinkingState}
+                    />
+
+                    {/* Bottom overlay */}
+                    <div className="hvc-overlay">
+                        <div className="hvc-overlay-top">
+                            <div className="hvc-overlay-name">
+                                <span className="hvc-name">Aoife</span>
+                                <div className={`hvc-status-dot ${state === 'connected' ? 'hvc-status-dot--active' : ''}`} />
                             </div>
-                        )}
-                    </div>
-
-                    {/* Right col: info + controls */}
-                    <div className="hvc2-info-col">
-                        <div className="hvc2-name-row">
-                            <span className="hvc-name">Aoife</span>
-                            <div className={`hvc-status-dot ${state === 'connected' ? 'hvc-status-dot--active' : ''}`} />
+                            {(state === 'connected' || state === 'connecting') && (
+                                <div className={`hvc2-state-indicator hvc2-state--${agentThinkingState ?? 'idle'}`}>
+                                    <span className="hvc2-state-dot" />
+                                    <span className="hvc2-state-label">
+                                        {agentThinkingState === 'thinking'  && 'Thinking…'}
+                                        {agentThinkingState === 'speaking'  && 'Speaking…'}
+                                        {agentThinkingState === 'listening' && 'Listening…'}
+                                        {!agentThinkingState && state === 'connecting' && 'Connecting…'}
+                                        {!agentThinkingState && state === 'connected'  && 'Ready'}
+                                    </span>
+                                </div>
+                            )}
+                            {state === 'connected' && (
+                                <span className="hvc2-timer">{fmt(duration)}</span>
+                            )}
                         </div>
-                        <span className="hvc-role">AIMediaFlow AI Assistant</span>
 
-                        {state === 'idle' && (
-                            <p className="hvc2-quote">"Hi! I'm Aoife. Ask me anything about how AI can help your business."</p>
-                        )}
-                        {state === 'connected' && (
-                            <p className="hvc2-timer">{fmt(duration)}</p>
-                        )}
-                        {state === 'error' && (
-                            <p className="hvc-error" style={{ fontSize: '0.8rem', marginTop: '8px' }}>⚠ {error}</p>
-                        )}
-
-                        <div className="hvc-actions" style={{ marginTop: 'auto' }}>
+                        <div className="hvc-actions">
                             {state === 'idle' && (
                                 <button className="hvc-btn hvc-btn--start" onClick={connect}>
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -249,15 +240,21 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                                     End call
                                 </button>
                             )}
-                            {(state === 'ending') && (
+                            {state === 'ending' && (
                                 <button className="hvc-btn hvc-btn--connecting" disabled>
                                     <HvcSpinner /> Ending…
                                 </button>
                             )}
                             {state === 'error' && (
-                                <button className="hvc-btn hvc-btn--start" onClick={() => setState('idle')}>
-                                    Try again
-                                </button>
+                                <>
+                                    <p className="hvc-error" style={{ fontSize: '0.8rem', marginBottom: '8px' }}>⚠ {error}</p>
+                                    <button className="hvc-btn hvc-btn--start" onClick={() => setState('idle')}>
+                                        Try again
+                                    </button>
+                                </>
+                            )}
+                            {state === 'idle' && (
+                                <p className="hvc2-quote">"Hi! Ask me anything about how AI can help your business."</p>
                             )}
                         </div>
                     </div>

@@ -3232,27 +3232,64 @@
     width: 210px;
 }
 
-/* ── Hero voice card: two-column layout ── */
-.v2-scope .hero-voice-card--2col {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    gap: 0;
+/* ── Hero voice card: fullscreen avatar layout ── */
+.v2-scope .hero-voice-card--fullav {
     padding: 0;
     overflow: hidden;
+    position: relative;
+    min-height: 420px;
 }
 
-.v2-scope .hvc2-avatar-col {
+/* Avatar fills the card */
+.v2-scope .hero-voice-card--fullav .cat-avatar-wrap {
+    width: 100%;
+    position: absolute;
+    inset: 0;
+    height: 100%;
+}
+
+.v2-scope .hero-voice-card--fullav .cat-avatar-canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.v2-scope .hero-voice-card--fullav .cat-avatar-label {
+    display: none;
+}
+
+/* Bottom gradient overlay */
+.v2-scope .hvc-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 80px 1.25rem 1.25rem;
+    background: linear-gradient(to top, rgba(5,10,25,0.95) 0%, rgba(5,10,25,0.55) 55%, transparent 100%);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-    background: rgba(0,0,0,0.25);
-    border-right: 1px solid rgba(255,255,255,0.07);
+    gap: 10px;
+    z-index: 2;
 }
 
-.v2-scope .hvc2-avatar-col .cat-avatar-wrap {
-    width: 220px;
+.v2-scope .hvc-overlay-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.v2-scope .hvc-overlay-name {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.v2-scope .hvc-overlay .hvc2-timer {
+    margin-left: auto;
+    font-size: 0.85rem;
+    margin: 0;
 }
 
 .v2-scope .hvc2-state-indicator {

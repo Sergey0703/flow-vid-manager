@@ -43,6 +43,9 @@ class SessionLogger:
 
     # Called from conversation_item_added (assistant role)
     def on_agent_text(self, text: str):
+        # Skip function call outputs (e.g. "function=end_call>{...}")
+        if text.startswith("function=") or text.startswith("<function"):
+            return
         if self._current is None:
             self._current = Turn()
         self._current.agent_text = text

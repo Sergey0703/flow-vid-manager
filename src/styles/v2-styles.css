@@ -2414,6 +2414,40 @@
     animation: voice-pulse 1.2s ease infinite;
 }
 
+/* ── Girl Avatar state images ───────────────────────────────────────────────── */
+.v2-scope .girl-state-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.v2-scope .girl-state-base {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.v2-scope .girl-state-blink {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+    opacity: 0;
+    animation: girl-blink 5s ease-in-out infinite;
+}
+
+@keyframes girl-blink {
+    0%, 93%, 100% { opacity: 0; }
+    95%, 98%      { opacity: 1; }
+}
+
 /* ── Hero Voice Card ────────────────────────────────────────────────────────── */
 .v2-scope .hero-voice-card {
     display: flex;

@@ -2,9 +2,12 @@
 import { useEffect, useRef } from 'react';
 import { LipSyncEngine, CanvasRenderer } from '../../lib/lipsync-engine/index.js';
 
+type AgentThinkingState = 'listening' | 'thinking' | 'speaking' | null;
+
 interface GirlAvatarProps {
   agentStream: MediaStream | null;
   agentState: 'idle' | 'connecting' | 'connected';
+  agentThinkingState?: AgentThinkingState;
 }
 
 /**
@@ -28,7 +31,7 @@ const VISEME_MAP: Record<string, number> = {
 const FRAME_W = 928;
 const FRAME_H = 1120;
 
-const GirlAvatar = ({ agentStream, agentState }: GirlAvatarProps) => {
+const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<InstanceType<typeof LipSyncEngine> | null>(null);
   const rendererRef = useRef<InstanceType<typeof CanvasRenderer> | null>(null);
@@ -88,14 +91,43 @@ const GirlAvatar = ({ agentStream, agentState }: GirlAvatarProps) => {
     };
   }, [agentStream]);
 
+  const isSpeaking = agentThinkingState === 'speaking';
+  const isThinking = agentThinkingState === 'thinking';
+  const isConnected = agentState === 'connected';
+
   return (
     <div className="cat-avatar-wrap">
+      {/* Lipsync canvas — always mounted so engine can attach; hidden when not speaking */}
       <canvas
         ref={canvasRef}
         width={FRAME_W}
         height={FRAME_H}
         className="cat-avatar-canvas"
+        style={{ display: isConnected && isSpeaking ? 'block' : isConnected ? 'none' : 'block' }}
       />
+
+      {/* State images — listening / thinking / blink */}
+      {isConnected && !isSpeaking && (
+        <div className="girl-state-wrap">
+          <img
+            src={isThinking ? '/girlThinking.png' : '/girlListening.png'}
+            width={FRAME_W}
+            height={FRAME_H}
+            className="girl-state-base"
+            alt=""
+          />
+          {!isThinking && (
+            <img
+              src="/girlBlink.png"
+              width={FRAME_W}
+              height={FRAME_H}
+              className="girl-state-blink"
+              alt=""
+            />
+          )}
+        </div>
+      )}
+
       <div className="cat-avatar-label">
         {agentState === 'connecting' && <span className="cat-avatar-status connecting">connecting…</span>}
         {agentState === 'connected'  && <span className="cat-avatar-status connected">● Aoife</span>}

@@ -12,20 +12,20 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
-from livekit.agents.beta.tools import EndCallTool
-from livekit.plugins import openai, deepgram, silero
+from livekit.plugins import openai, deepgram, silero, groq
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("aimediaflow-agent")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is required")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY is required")
 
 SYSTEM_BASE = """You are Aoife, a friendly AI assistant for AIMediaFlow — an AI agency based in Kerry, Ireland.
 Your job is to talk with visitors to the aimediaflow.net website, answer their questions,
@@ -40,7 +40,7 @@ ABOUT AIMEDIAFLOW:
 YOUR STYLE:
 - Professional but warm and conversational
 - Speak to business pain points, not technology features
-- MAXIMUM 1 sentence per reply, 10 words or fewer
+- Keep replies SHORT. Aim for 10 words. Never exceed 15 words.
 - If you need to ask something, ask only — no preamble
 - Never explain, never list — one punchy sentence only
 - Always end with a natural next step or question
@@ -51,8 +51,11 @@ CRITICAL VOICE RULES:
 2. NEVER use headers or bullet points
 3. Speak in plain natural conversational English
 4. No lists — speak in flowing sentences
+5. SHORT replies only. 10 words ideal, 15 words maximum.
 
 RULES:
+- You are an AI assistant — never claim to be a human or a team member
+- If asked to speak with a manager or human, direct them to WhatsApp or email
 - If the knowledge base doesn't cover their question, say you can arrange a discovery call
 - Never invent specific prices, timelines, or client names
 - NEVER offer to send emails, collect names, phone numbers, or any details — you cannot do this
@@ -62,7 +65,7 @@ RULES:
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that's all, or clearly indicates they are done,
-say a brief warm farewell and immediately call the end_call tool. Do not continue talking after calling it."""
+say a brief warm farewell like "It was lovely chatting, take care now!" and stop responding."""
 
 
 async def search_knowledge(query: str) -> str:
@@ -104,13 +107,9 @@ class AimediaflowAgent(Agent):
     def __init__(self, session_log: SessionLogger):
         super().__init__(
             instructions=SYSTEM_BASE,
-            llm=openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
+            llm=groq.LLM(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY),
             stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY),
             tts=openai.TTS(model="tts-1", voice="bf_alice", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
-            tools=[EndCallTool(
-                end_instructions="Say a warm, brief Irish farewell — like 'It was lovely chatting, take care now!'",
-                delete_room=True,
-            )],
         )
         self.session_log = session_log
 
@@ -164,7 +163,7 @@ async def entrypoint(ctx: JobContext):
     await session.start(room=ctx.room, agent=agent)
 
     await session.generate_reply(
-        instructions="Greet the visitor warmly. Say you are Aoife from AIMediaFlow and ask how you can help them today."
+        instructions="Greet the visitor warmly. Say you are Aoife from AIMediaFlow and ask how you can help them today. Do not use Irish phrases."
     )
 
 

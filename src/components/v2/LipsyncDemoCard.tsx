@@ -8,12 +8,15 @@ type DemoState = 'idle' | 'connecting' | 'connected' | 'error';
 const SILENCE_TIMEOUT_MS = 30_000;
 const MAX_CALL_MS = 3 * 60_000;
 
+type AgentThinkingState = 'listening' | 'thinking' | 'speaking' | null;
+
 // ── Shared voice-agent logic ──────────────────────────────────────────────────
 function useDemoAgent(agentName?: string) {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
   const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
+  const [agentThinkingState, setAgentThinkingState] = useState<AgentThinkingState>(null);
 
   const roomRef         = useRef<any>(null);
   const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -87,6 +90,10 @@ function useDemoAgent(agentName?: string) {
       room.on(RoomEvent.ActiveSpeakersChanged, (speakers: any[]) => {
         if (speakers.length > 0) resetSilenceTimer(disconnect);
       });
+      room.on(RoomEvent.ParticipantAttributesChanged, (attrs: Record<string, string>, participant: any) => {
+        const s = attrs['agent_state'] ?? attrs['livekit.agent_state'];
+        if (s) setAgentThinkingState(s as AgentThinkingState);
+      });
 
       micStream.getTracks().forEach(t => t.stop());
       await room.connect(wsUrl, token);
@@ -112,7 +119,7 @@ function useDemoAgent(agentName?: string) {
 
   useEffect(() => { return () => { disconnect(); }; }, []);
 
-  return { state, error, duration, agentStream, connect, disconnect };
+  return { state, error, duration, agentStream, agentThinkingState, connect, disconnect };
 }
 
 // ── Shared card UI ────────────────────────────────────────────────────────────
@@ -179,14 +186,14 @@ const CatDemoContent = ({ title, description, agentName }: { title: string; desc
 
 // ── Girl variant ──────────────────────────────────────────────────────────────
 const GirlDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
-  const { state, error, duration, agentStream, connect, disconnect } = useDemoAgent(agentName);
+  const { state, error, duration, agentStream, agentThinkingState, connect, disconnect } = useDemoAgent(agentName);
   const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
   return (
     <DemoCardShell
       title={title} description={description}
       state={state} error={error} duration={duration}
       connect={connect} disconnect={disconnect}
-      avatar={<GirlAvatar agentStream={agentStream} agentState={avatarState} />}
+      avatar={<GirlAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />}
     />
   );
 };

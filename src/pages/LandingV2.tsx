@@ -84,7 +84,7 @@ const LandingV2 = () => {
             </main>
 
             <FooterV2 />
-            <Chatbot />
+            {/* <Chatbot /> */}
             <VoiceAgent />
         </div>
     );

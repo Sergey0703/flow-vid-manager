@@ -91,9 +91,7 @@ function useDemoAgent(agentName?: string) {
         if (speakers.length > 0) resetSilenceTimer(disconnect);
       });
       room.on(RoomEvent.ParticipantAttributesChanged, (attrs: Record<string, string>, participant: any) => {
-        console.log('[Demo] ParticipantAttributesChanged — all attrs:', JSON.stringify(attrs), 'from:', participant?.identity);
-        const s = attrs['agent_state'] ?? attrs['livekit.agent_state'];
-        console.log('[Demo] agent_state extracted:', s);
+        const s = attrs['lk.agent.state'] ?? attrs['agent_state'] ?? attrs['livekit.agent_state'];
         if (s) setAgentThinkingState(s as AgentThinkingState);
       });
 

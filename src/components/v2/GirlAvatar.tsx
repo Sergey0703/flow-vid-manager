@@ -53,9 +53,7 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
 
   // helper: render a named state frame — waits for renderer to be ready first
   const renderState = (viseme: string) => {
-    console.log(`[GirlAvatar] renderState("${viseme}") called — renderer=${rendererRef.current ? 'exists' : 'null'}`);
     rendererReadyRef.current.then(() => {
-      console.log(`[GirlAvatar] renderState("${viseme}") → renderer.render() — renderer=${rendererRef.current ? 'exists' : 'null'}`);
       rendererRef.current?.render({ viseme });
     });
   };
@@ -64,12 +62,11 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    console.log('[GirlAvatar] mount — starting sprite preload');
     // Preload the sprite sheet so renderer._ready is true immediately on construction
     const img = new Image();
     const imageReady = new Promise<void>((resolve, reject) => {
-      img.onload = () => { console.log('[GirlAvatar] sprite loaded, creating renderer'); resolve(); };
-      img.onerror = (e) => { console.error('[GirlAvatar] sprite load error', e); reject(e); };
+      img.onload = () => resolve();
+      img.onerror = reject;
       img.src = '/girl-sprite.png';
     });
     rendererReadyRef.current = imageReady;
@@ -94,14 +91,12 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
         visemeMap: VISEME_MAP,
         columns: TOTAL_COLS,
       });
-      console.log('[GirlAvatar] CanvasRenderer created, _ready=', (renderer as any)._ready);
 
       engine.on('viseme', (frame: any) => {
         renderer.render(frame);
       });
 
       rendererRef.current = renderer;
-      console.log('[GirlAvatar] rendererRef assigned');
     });
 
     engineRef.current = engine;
@@ -132,8 +127,6 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
 
   // State-driven rendering (listening / thinking / speaking)
   useEffect(() => {
-    console.log(`[GirlAvatar] state effect — agentState="${agentState}" agentThinkingState="${agentThinkingState}"`);
-
     if (blinkTimerRef.current) {
       clearTimeout(blinkTimerRef.current);
       blinkTimerRef.current = null;

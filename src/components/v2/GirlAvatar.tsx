@@ -53,10 +53,13 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
 
   // helper: render a named state frame — waits for renderer to be ready first
   const renderState = (viseme: string) => {
-    console.log(`[GirlAvatar] renderState("${viseme}") called — renderer=${rendererRef.current ? 'exists' : 'null'}`);
     rendererReadyRef.current.then(() => {
-      console.log(`[GirlAvatar] renderState("${viseme}") → render() — renderer=${rendererRef.current ? 'exists' : 'null'}`);
-      rendererRef.current?.render({ viseme });
+      const r = rendererRef.current as any;
+      if (!r) return;
+      const frameIndex = r.opts?.visemeMap?.[viseme] ?? '?';
+      const ready = r._ready;
+      console.log(`[GirlAvatar] render("${viseme}") → frameIndex=${frameIndex} _ready=${ready} cols=${r.opts?.columns}`);
+      r.render({ viseme });
     });
   };
 

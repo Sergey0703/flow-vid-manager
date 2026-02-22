@@ -53,7 +53,9 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
 
   // helper: render a named state frame — waits for renderer to be ready first
   const renderState = (viseme: string) => {
+    console.log(`[GirlAvatar] renderState("${viseme}") called — renderer=${rendererRef.current ? 'exists' : 'null'}`);
     rendererReadyRef.current.then(() => {
+      console.log(`[GirlAvatar] renderState("${viseme}") → render() — renderer=${rendererRef.current ? 'exists' : 'null'}`);
       rendererRef.current?.render({ viseme });
     });
   };
@@ -127,6 +129,8 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
 
   // State-driven rendering (listening / thinking / speaking)
   useEffect(() => {
+    console.log(`[GirlAvatar] state effect — agentState="${agentState}" agentThinkingState="${agentThinkingState}"`);
+
     if (blinkTimerRef.current) {
       clearTimeout(blinkTimerRef.current);
       blinkTimerRef.current = null;

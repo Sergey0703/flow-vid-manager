@@ -136,9 +136,12 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
       blinkTimerRef.current = null;
     }
 
-    if (agentThinkingState === 'thinking') {
+    if (agentThinkingState === 'speaking') {
+      // lipsync engine drives the canvas via viseme events — just stop blink timer (done above)
+      console.log('[GirlAvatar] speaking — lipsync takes over');
+    } else if (agentThinkingState === 'thinking') {
       renderState('thinking');
-    } else if (agentThinkingState === 'listening' || (agentState === 'connected' && agentThinkingState !== 'speaking')) {
+    } else if (agentThinkingState === 'listening' || agentState === 'connected') {
       // Show listening face + periodic blink
       renderState('listening');
 
@@ -152,7 +155,8 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
         }, 4000 + Math.random() * 2000);
       };
       scheduleBlink();
-    } else if (!agentThinkingState && agentState !== 'connected') {
+    } else {
+      // idle / disconnected
       renderState('sil');
     }
 

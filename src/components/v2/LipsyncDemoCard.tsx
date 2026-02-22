@@ -40,6 +40,7 @@ function useDemoAgent(agentName?: string) {
     if (roomRef.current) { await roomRef.current.disconnect(); roomRef.current = null; }
     if (audioRef.current) { audioRef.current.srcObject = null; }
     setAgentStream(null);
+    setAgentThinkingState(null);
     setState('idle');
   }, []);
 

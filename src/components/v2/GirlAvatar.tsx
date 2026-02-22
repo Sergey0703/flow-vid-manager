@@ -25,7 +25,8 @@ const VISEME_MAP: Record<string, number> = {
   FF: 5, TH: 5, U: 5,
 };
 
-const FRAME_SIZE = 500;
+const FRAME_W = 928;
+const FRAME_H = 1120;
 
 const GirlAvatar = ({ agentStream, agentState }: GirlAvatarProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,8 +50,8 @@ const GirlAvatar = ({ agentStream, agentState }: GirlAvatarProps) => {
 
     const renderer = new CanvasRenderer(canvas, {
       spriteSheet: '/girl-sprite.png',
-      frameWidth: FRAME_SIZE,
-      frameHeight: FRAME_SIZE,
+      frameWidth: FRAME_W,
+      frameHeight: FRAME_H,
       visemeMap: VISEME_MAP,
       columns: 6,
     });
@@ -91,8 +92,8 @@ const GirlAvatar = ({ agentStream, agentState }: GirlAvatarProps) => {
     <div className="cat-avatar-wrap">
       <canvas
         ref={canvasRef}
-        width={FRAME_SIZE}
-        height={FRAME_SIZE}
+        width={FRAME_W}
+        height={FRAME_H}
         className="cat-avatar-canvas"
       />
       <div className="cat-avatar-label">

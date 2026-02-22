@@ -178,85 +178,116 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                     </div>
                 </div>
 
-                {/* Right: GirlAvatar fullscreen card with overlay */}
-                <div className="v2-hero-alt-video-wrap hero-voice-card hero-voice-card--fullav">
+                {/* Right: AI interface card */}
+                <div className="v2-hero-alt-video-wrap hero-voice-card hero-voice-card--hud">
 
-                    {/* Avatar fills the card */}
-                    <GirlAvatar
-                        agentStream={agentStream}
-                        agentState={state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle'}
-                        agentThinkingState={agentThinkingState}
-                    />
+                    {/* Top bar */}
+                    <div className="hud-topbar">
+                        <span className="hud-topbar-dot" />
+                        <span className="hud-topbar-title">AOIFE · AI ASSISTANT</span>
+                        <span className="hud-topbar-sys">{state === 'connected' ? 'SYS:ONLINE' : state === 'connecting' ? 'SYS:INIT…' : 'SYS:STANDBY'}</span>
+                    </div>
 
-                    {/* Bottom overlay */}
-                    <div className="hvc-overlay">
-                        <div className="hvc-overlay-top">
-                            <div className="hvc-overlay-name">
-                                <span className="hvc-name">Aoife</span>
-                                <div className={`hvc-status-dot ${state === 'connected' ? 'hvc-status-dot--active' : ''}`} />
+                    {/* Body: avatar + side panel */}
+                    <div className="hud-body">
+
+                        {/* Avatar with corner brackets */}
+                        <div className="hud-avatar-wrap">
+                            <GirlAvatar
+                                agentStream={agentStream}
+                                agentState={state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle'}
+                                agentThinkingState={agentThinkingState}
+                            />
+                            {/* Corner brackets */}
+                            <span className="hud-corner hud-corner--tl" />
+                            <span className="hud-corner hud-corner--tr" />
+                            <span className="hud-corner hud-corner--bl" />
+                            <span className="hud-corner hud-corner--br" />
+                        </div>
+
+                        {/* Side panel */}
+                        <div className="hud-side">
+                            <div className="hud-side-section">
+                                <span className="hud-label">AGENT</span>
+                                <span className="hud-value">Aoife</span>
                             </div>
-                            {(state === 'connected' || state === 'connecting') && (
-                                <div className={`hvc2-state-indicator hvc2-state--${agentThinkingState ?? 'idle'}`}>
-                                    <span className="hvc2-state-dot" />
-                                    <span className="hvc2-state-label">
-                                        {agentThinkingState === 'thinking'  && 'Thinking…'}
-                                        {agentThinkingState === 'speaking'  && 'Speaking…'}
-                                        {agentThinkingState === 'listening' && 'Listening…'}
-                                        {!agentThinkingState && state === 'connecting' && 'Connecting…'}
+                            <div className="hud-divider" />
+                            <div className="hud-side-section">
+                                <span className="hud-label">STATUS</span>
+                                <div className={`hud-state hud-state--${agentThinkingState ?? (state === 'connected' ? 'ready' : 'off')}`}>
+                                    <span className="hud-state-dot" />
+                                    <span className="hud-state-text">
+                                        {agentThinkingState === 'thinking'  && 'Thinking'}
+                                        {agentThinkingState === 'speaking'  && 'Speaking'}
+                                        {agentThinkingState === 'listening' && 'Listening'}
                                         {!agentThinkingState && state === 'connected'  && 'Ready'}
+                                        {!agentThinkingState && state === 'connecting' && 'Init…'}
+                                        {!agentThinkingState && state === 'idle'       && 'Standby'}
+                                        {state === 'ending' && 'Ending…'}
                                     </span>
                                 </div>
-                            )}
-                            {state === 'connected' && (
-                                <span className="hvc2-timer">{fmt(duration)}</span>
-                            )}
+                            </div>
+                            {state === 'connected' && <>
+                                <div className="hud-divider" />
+                                <div className="hud-side-section">
+                                    <span className="hud-label">SESSION</span>
+                                    <span className="hud-value hud-mono">{fmt(duration)}</span>
+                                </div>
+                            </>}
+                            <div className="hud-divider" />
+                            <div className="hud-side-section">
+                                <span className="hud-label">NEURAL</span>
+                                <span className="hud-value">v2.1</span>
+                            </div>
+                            <div className="hud-divider" />
+                            <div className="hud-side-section">
+                                <span className="hud-label">VOICE</span>
+                                <span className={`hud-value ${state === 'connected' ? 'hud-ok' : 'hud-muted'}`}>
+                                    {state === 'connected' ? 'ACTIVE' : 'IDLE'}
+                                </span>
+                            </div>
                         </div>
+                    </div>
 
-                        <div className="hvc-actions">
-                            {state === 'idle' && (
-                                <button className="hvc-btn hvc-btn--start" onClick={connect}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                        <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
-                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                        <line x1="12" y1="19" x2="12" y2="23"/>
-                                        <line x1="8" y1="23" x2="16" y2="23"/>
-                                    </svg>
-                                    Talk to Aoife — free
-                                </button>
-                            )}
-                            {state === 'connecting' && (
-                                <button className="hvc-btn hvc-btn--connecting" disabled>
-                                    <HvcSpinner /> Connecting…
-                                </button>
-                            )}
-                            {state === 'connected' && (
-                                <button className="hvc-btn hvc-btn--end" onClick={disconnect}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                        <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
-                                        <path d="M14.5 2.81a19.79 19.79 0 0 1 3.07 8.63"/>
-                                        <line x1="2" y1="2" x2="22" y2="22"/>
-                                        <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59"/>
-                                    </svg>
-                                    End call
-                                </button>
-                            )}
-                            {state === 'ending' && (
-                                <button className="hvc-btn hvc-btn--connecting" disabled>
-                                    <HvcSpinner /> Ending…
-                                </button>
-                            )}
-                            {state === 'error' && (
-                                <>
-                                    <p className="hvc-error" style={{ fontSize: '0.8rem', marginBottom: '8px' }}>⚠ {error}</p>
-                                    <button className="hvc-btn hvc-btn--start" onClick={() => setState('idle')}>
-                                        Try again
-                                    </button>
-                                </>
-                            )}
-                            {state === 'idle' && (
-                                <p className="hvc2-quote">"Hi! Ask me anything about how AI can help your business."</p>
-                            )}
-                        </div>
+                    {/* Bottom action */}
+                    <div className="hud-footer">
+                        {state === 'idle' && (
+                            <button className="hvc-btn hvc-btn--start" onClick={connect}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                    <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                    <line x1="12" y1="19" x2="12" y2="23"/>
+                                    <line x1="8" y1="23" x2="16" y2="23"/>
+                                </svg>
+                                Talk to Aoife — free
+                            </button>
+                        )}
+                        {state === 'connecting' && (
+                            <button className="hvc-btn hvc-btn--connecting" disabled>
+                                <HvcSpinner /> Connecting…
+                            </button>
+                        )}
+                        {state === 'connected' && (
+                            <button className="hvc-btn hvc-btn--end" onClick={disconnect}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                    <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+                                    <path d="M14.5 2.81a19.79 19.79 0 0 1 3.07 8.63"/>
+                                    <line x1="2" y1="2" x2="22" y2="22"/>
+                                    <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59"/>
+                                </svg>
+                                End call
+                            </button>
+                        )}
+                        {state === 'ending' && (
+                            <button className="hvc-btn hvc-btn--connecting" disabled>
+                                <HvcSpinner /> Ending…
+                            </button>
+                        )}
+                        {state === 'error' && (
+                            <button className="hvc-btn hvc-btn--start" onClick={() => setState('idle')}>
+                                ⚠ {error} — retry
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

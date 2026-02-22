@@ -3385,6 +3385,173 @@
     color: var(--v2-cyan);
 }
 
+/* ── Hero HUD layout ── */
+.v2-scope .hero-voice-card--hud {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Top bar */
+.v2-scope .hud-topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(0,200,224,0.06);
+    border-bottom: 1px solid rgba(0,200,224,0.15);
+    flex-shrink: 0;
+}
+
+.v2-scope .hud-topbar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--v2-cyan);
+    box-shadow: 0 0 8px rgba(0,200,224,0.8);
+    animation: voice-pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.v2-scope .hud-topbar-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--v2-cyan);
+    flex: 1;
+}
+
+.v2-scope .hud-topbar-sys {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.3);
+    font-family: monospace;
+}
+
+/* Body: avatar + side panel */
+.v2-scope .hud-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Avatar section */
+.v2-scope .hud-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.v2-scope .hud-avatar-wrap .cat-avatar-wrap {
+    width: 240px;
+}
+
+/* Corner bracket decorations */
+.v2-scope .hud-corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: var(--v2-cyan);
+    border-style: solid;
+    opacity: 0.7;
+}
+.v2-scope .hud-corner--tl { top: 6px; left: 6px;  border-width: 2px 0 0 2px; }
+.v2-scope .hud-corner--tr { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+.v2-scope .hud-corner--bl { bottom: 6px; left: 6px;  border-width: 0 0 2px 2px; }
+.v2-scope .hud-corner--br { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+
+/* Side panel */
+.v2-scope .hud-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px;
+    gap: 0;
+    border-left: 1px solid rgba(0,200,224,0.12);
+    background: rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.v2-scope .hud-side-section {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 0;
+}
+
+.v2-scope .hud-divider {
+    height: 1px;
+    background: rgba(0,200,224,0.08);
+    flex-shrink: 0;
+}
+
+.v2-scope .hud-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.25);
+    font-family: monospace;
+}
+
+.v2-scope .hud-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.02em;
+}
+
+.v2-scope .hud-mono {
+    font-family: monospace;
+    color: var(--v2-cyan);
+    font-size: 0.9rem;
+}
+
+.v2-scope .hud-ok    { color: #22c55e; }
+.v2-scope .hud-muted { color: rgba(255,255,255,0.3); }
+
+/* State indicator in side panel */
+.v2-scope .hud-state {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.v2-scope .hud-state-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.2);
+}
+
+.v2-scope .hud-state-text {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+}
+
+.v2-scope .hud-state--listening .hud-state-dot  { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.8); animation: voice-pulse 1.5s ease-in-out infinite; }
+.v2-scope .hud-state--listening .hud-state-text { color: #22c55e; }
+.v2-scope .hud-state--thinking  .hud-state-dot  { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.8); animation: voice-pulse 0.8s ease-in-out infinite; }
+.v2-scope .hud-state--thinking  .hud-state-text { color: #f59e0b; }
+.v2-scope .hud-state--speaking  .hud-state-dot  { background: var(--v2-cyan); box-shadow: 0 0 6px rgba(0,200,224,0.8); animation: voice-pulse 0.5s ease-in-out infinite; }
+.v2-scope .hud-state--speaking  .hud-state-text { color: var(--v2-cyan); }
+.v2-scope .hud-state--ready     .hud-state-dot  { background: #22c55e; }
+.v2-scope .hud-state--ready     .hud-state-text { color: #22c55e; }
+
+/* Footer */
+.v2-scope .hud-footer {
+    padding: 12px 14px;
+    border-top: 1px solid rgba(0,200,224,0.12);
+    background: rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+
+.v2-scope .hud-footer .hvc-btn {
+    width: 100%;
+}
+
 /* ── Card body ── */
 .v2-scope .lipsync-card-body {
     padding: 1.25rem 1.5rem 1.5rem;

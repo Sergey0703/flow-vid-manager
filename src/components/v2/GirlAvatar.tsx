@@ -56,6 +56,8 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
   // tracks when thinking started so we can enforce THINKING_MIN_MS
   const thinkingStartRef = useRef<number | null>(null);
   const thinkingHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // when false, viseme events from lipsync engine are blocked (thinking/listening frames hold)
+  const lipsyncActiveRef = useRef<boolean>(false);
 
   // helper: render a named state frame — waits for renderer to be ready first
   const renderState = (viseme: string) => {
@@ -104,7 +106,7 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
       });
 
       engine.on('viseme', (frame: any) => {
-        renderer.render(frame);
+        if (lipsyncActiveRef.current) renderer.render(frame);
       });
 
       rendererRef.current = renderer;
@@ -160,35 +162,36 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
     }
 
     if (agentThinkingState === 'thinking') {
-      // Record when thinking started
+      lipsyncActiveRef.current = false;
       thinkingStartRef.current = Date.now();
       if (thinkingHoldTimerRef.current) {
         clearTimeout(thinkingHoldTimerRef.current);
         thinkingHoldTimerRef.current = null;
       }
       renderState('thinking');
-      console.log('[GirlAvatar] thinking started');
+      console.log('[GirlAvatar] thinking started — lipsync blocked');
     } else if (agentThinkingState === 'speaking') {
-      // Hold thinking frame for THINKING_MIN_MS before letting lipsync take over
       const elapsed = thinkingStartRef.current ? Date.now() - thinkingStartRef.current : THINKING_MIN_MS;
       const remaining = Math.max(0, THINKING_MIN_MS - elapsed);
-      console.log(`[GirlAvatar] speaking — thinking elapsed=${elapsed}ms remaining=${remaining}ms`);
+      console.log(`[GirlAvatar] speaking — elapsed=${elapsed}ms remaining=${remaining}ms`);
       if (remaining > 0) {
         thinkingHoldTimerRef.current = setTimeout(() => {
           thinkingHoldTimerRef.current = null;
           thinkingStartRef.current = null;
-          console.log('[GirlAvatar] thinking hold done — lipsync takes over');
+          lipsyncActiveRef.current = true;
+          console.log('[GirlAvatar] thinking hold done — lipsync unblocked');
         }, remaining);
       } else {
         thinkingStartRef.current = null;
-        console.log('[GirlAvatar] speaking — lipsync takes over immediately');
+        lipsyncActiveRef.current = true;
+        console.log('[GirlAvatar] speaking — lipsync unblocked immediately');
       }
     } else if (agentThinkingState === 'listening' || agentState === 'connected') {
-      // If we were thinking, wait out the hold timer before showing listening
+      lipsyncActiveRef.current = false;
       const elapsed = thinkingStartRef.current ? Date.now() - thinkingStartRef.current : THINKING_MIN_MS;
       const remaining = Math.max(0, THINKING_MIN_MS - elapsed);
       if (remaining > 0 && thinkingStartRef.current !== null) {
-        console.log(`[GirlAvatar] listening but holding thinking for ${remaining}ms more`);
+        console.log(`[GirlAvatar] listening — holding thinking for ${remaining}ms`);
         thinkingHoldTimerRef.current = setTimeout(() => {
           thinkingHoldTimerRef.current = null;
           thinkingStartRef.current = null;
@@ -199,7 +202,7 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
         startListening();
       }
     } else {
-      // idle / disconnected
+      lipsyncActiveRef.current = false;
       thinkingStartRef.current = null;
       renderState('sil');
     }

@@ -3232,6 +3232,122 @@
     width: 210px;
 }
 
+/* ── Hero voice card: two-column layout ── */
+.v2-scope .hero-voice-card--2col {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.v2-scope .hvc2-avatar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.25);
+    border-right: 1px solid rgba(255,255,255,0.07);
+}
+
+.v2-scope .hvc2-avatar-col .cat-avatar-wrap {
+    width: 220px;
+}
+
+.v2-scope .hvc2-state-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px 10px;
+}
+
+.v2-scope .hvc2-state-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.3);
+}
+
+.v2-scope .hvc2-state--listening .hvc2-state-dot {
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34,197,94,0.7);
+    animation: voice-pulse 1.5s ease-in-out infinite;
+}
+
+.v2-scope .hvc2-state--thinking .hvc2-state-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 6px rgba(245,158,11,0.7);
+    animation: voice-pulse 0.8s ease-in-out infinite;
+}
+
+.v2-scope .hvc2-state--speaking .hvc2-state-dot {
+    background: var(--v2-cyan);
+    box-shadow: 0 0 6px rgba(0,200,224,0.7);
+    animation: voice-pulse 0.5s ease-in-out infinite;
+}
+
+.v2-scope .hvc2-state-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.5);
+}
+
+.v2-scope .hvc2-state--listening .hvc2-state-label { color: #22c55e; }
+.v2-scope .hvc2-state--thinking  .hvc2-state-label { color: #f59e0b; }
+.v2-scope .hvc2-state--speaking  .hvc2-state-label { color: var(--v2-cyan); }
+
+.v2-scope .hvc2-info-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1.5rem 1.5rem;
+    gap: 6px;
+}
+
+.v2-scope .hvc2-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.v2-scope .hvc2-quote {
+    color: rgba(255,255,255,0.45);
+    font-size: 0.85rem;
+    line-height: 1.55;
+    font-style: italic;
+    margin: 8px 0 0;
+}
+
+.v2-scope .hvc2-timer {
+    color: var(--v2-cyan);
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 8px 0 0;
+}
+
+.v2-scope .hvc2-info-col .hvc-actions {
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+/* Light theme overrides for 2col */
+.v2-scope.v2-light .hvc2-avatar-col {
+    background: rgba(0,0,0,0.04);
+    border-right-color: rgba(8,145,178,0.12);
+}
+
+.v2-scope.v2-light .hvc2-quote {
+    color: rgba(17,24,39,0.5);
+}
+
+.v2-scope.v2-light .hvc2-timer {
+    color: var(--v2-cyan);
+}
+
 /* ── Card body ── */
 .v2-scope .lipsync-card-body {
     padding: 1.25rem 1.5rem 1.5rem;

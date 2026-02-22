@@ -178,37 +178,67 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                     </div>
                 </div>
 
-                {/* Right: GirlAvatar with voice controls */}
-                <div className="v2-hero-alt-video-wrap hero-voice-card">
-                    <GirlAvatar
-                        agentStream={agentStream}
-                        agentState={state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle'}
-                        agentThinkingState={agentThinkingState}
-                    />
+                {/* Right: GirlAvatar two-column card */}
+                <div className="v2-hero-alt-video-wrap hero-voice-card hero-voice-card--2col">
 
-                    {/* CTA button */}
-                    <div className="hvc-actions">
-                        {state === 'idle' && (
-                            <button className="hvc-btn hvc-btn--start" onClick={connect}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                    <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                    <line x1="12" y1="19" x2="12" y2="23"/>
-                                    <line x1="8" y1="23" x2="16" y2="23"/>
-                                </svg>
-                                Talk to Aoife — free
-                            </button>
+                    {/* Left col: avatar + state indicator */}
+                    <div className="hvc2-avatar-col">
+                        <GirlAvatar
+                            agentStream={agentStream}
+                            agentState={state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle'}
+                            agentThinkingState={agentThinkingState}
+                        />
+                        {/* State indicator under avatar */}
+                        {(state === 'connected' || state === 'connecting') && (
+                            <div className={`hvc2-state-indicator hvc2-state--${agentThinkingState ?? 'idle'}`}>
+                                <span className="hvc2-state-dot" />
+                                <span className="hvc2-state-label">
+                                    {agentThinkingState === 'thinking'  && 'Thinking…'}
+                                    {agentThinkingState === 'speaking'  && 'Speaking…'}
+                                    {agentThinkingState === 'listening' && 'Listening…'}
+                                    {!agentThinkingState && state === 'connecting' && 'Connecting…'}
+                                    {!agentThinkingState && state === 'connected'  && 'Connected'}
+                                </span>
+                            </div>
                         )}
-                        {state === 'connecting' && (
-                            <button className="hvc-btn hvc-btn--connecting" disabled>
-                                <HvcSpinner /> Connecting…
-                            </button>
+                    </div>
+
+                    {/* Right col: info + controls */}
+                    <div className="hvc2-info-col">
+                        <div className="hvc2-name-row">
+                            <span className="hvc-name">Aoife</span>
+                            <div className={`hvc-status-dot ${state === 'connected' ? 'hvc-status-dot--active' : ''}`} />
+                        </div>
+                        <span className="hvc-role">AIMediaFlow AI Assistant</span>
+
+                        {state === 'idle' && (
+                            <p className="hvc2-quote">"Hi! I'm Aoife. Ask me anything about how AI can help your business."</p>
                         )}
                         {state === 'connected' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span style={{ color: 'var(--v2-cyan)', fontSize: '0.85rem', fontWeight: 600 }}>
-                                    Connected · {fmt(duration)}
-                                </span>
+                            <p className="hvc2-timer">{fmt(duration)}</p>
+                        )}
+                        {state === 'error' && (
+                            <p className="hvc-error" style={{ fontSize: '0.8rem', marginTop: '8px' }}>⚠ {error}</p>
+                        )}
+
+                        <div className="hvc-actions" style={{ marginTop: 'auto' }}>
+                            {state === 'idle' && (
+                                <button className="hvc-btn hvc-btn--start" onClick={connect}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                        <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                        <line x1="12" y1="19" x2="12" y2="23"/>
+                                        <line x1="8" y1="23" x2="16" y2="23"/>
+                                    </svg>
+                                    Talk to Aoife — free
+                                </button>
+                            )}
+                            {state === 'connecting' && (
+                                <button className="hvc-btn hvc-btn--connecting" disabled>
+                                    <HvcSpinner /> Connecting…
+                                </button>
+                            )}
+                            {state === 'connected' && (
                                 <button className="hvc-btn hvc-btn--end" onClick={disconnect}>
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                                         <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
@@ -218,30 +248,19 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                                     </svg>
                                     End call
                                 </button>
-                            </div>
-                        )}
-                        {state === 'ending' && (
-                            <button className="hvc-btn hvc-btn--connecting" disabled>
-                                <HvcSpinner /> Ending…
-                            </button>
-                        )}
-                        {state === 'error' && (
-                            <button className="hvc-btn hvc-btn--start" onClick={() => setState('idle')}>
-                                Try again
-                            </button>
-                        )}
+                            )}
+                            {(state === 'ending') && (
+                                <button className="hvc-btn hvc-btn--connecting" disabled>
+                                    <HvcSpinner /> Ending…
+                                </button>
+                            )}
+                            {state === 'error' && (
+                                <button className="hvc-btn hvc-btn--start" onClick={() => setState('idle')}>
+                                    Try again
+                                </button>
+                            )}
+                        </div>
                     </div>
-
-                    {state === 'idle' && (
-                        <div className="hvc-message">
-                            <p>"Hi! I'm Aoife. Ask me anything about how AI can help your business."</p>
-                        </div>
-                    )}
-                    {state === 'error' && (
-                        <div className="hvc-message">
-                            <p className="hvc-error">⚠ {error}</p>
-                        </div>
-                    )}
                 </div>
             </div>
 

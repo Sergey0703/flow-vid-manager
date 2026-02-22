@@ -1,7 +1,9 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import GirlAvatar from "./GirlAvatar";
 
 type VoiceState = 'idle' | 'connecting' | 'connected' | 'ending' | 'error';
+type AgentThinkingState = 'listening' | 'thinking' | 'speaking' | null;
 
 const SILENCE_TIMEOUT_MS = 30_000; // auto-disconnect after 30s of no audio
 const MAX_CALL_MS = 3 * 60_000;   // hard limit: 3 minutes per call
@@ -14,6 +16,8 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
     const [state, setState] = useState<VoiceState>('idle');
     const [error, setError] = useState('');
     const [duration, setDuration] = useState(0);
+    const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
+    const [agentThinkingState, setAgentThinkingState] = useState<AgentThinkingState>(null);
     const roomRef = useRef<any>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -56,6 +60,8 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
         if (audioRef.current) {
             audioRef.current.srcObject = null;
         }
+        setAgentStream(null);
+        setAgentThinkingState(null);
         setState('idle');
     }, []);
 
@@ -84,13 +90,24 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                     el.autoplay = true;
                     audioRef.current = el as HTMLAudioElement;
                     document.body.appendChild(el);
+                    const ms = (track as any).mediaStream as MediaStream | undefined;
+                    if (ms) {
+                        setAgentStream(ms);
+                    } else if (el instanceof HTMLMediaElement && (el as any).captureStream) {
+                        setAgentStream((el as any).captureStream());
+                    }
                 }
             });
             room.on(RoomEvent.TrackUnsubscribed, (track) => { track.detach(); });
             room.on(RoomEvent.Disconnected, () => { disconnect(); });
-            // Reset silence timer on any audio activity from agent
             room.on(RoomEvent.ActiveSpeakersChanged, (speakers: any[]) => {
                 if (speakers.length > 0) resetSilenceTimer(disconnect);
+            });
+            room.on(RoomEvent.ParticipantAttributesChanged, (attrs: Record<string, string>, participant: any) => {
+                console.log('[Hero] ParticipantAttributesChanged — all attrs:', JSON.stringify(attrs), 'from:', participant?.identity);
+                const s = attrs['lk.agent.state'] ?? attrs['agent_state'] ?? attrs['livekit.agent_state'];
+                console.log('[Hero] agent_state extracted:', s);
+                if (s) setAgentThinkingState(s as AgentThinkingState);
             });
             micStream.getTracks().forEach(t => t.stop());
             await room.connect(wsUrl, token);
@@ -161,78 +178,13 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                     </div>
                 </div>
 
-                {/* Right: voice agent card */}
+                {/* Right: GirlAvatar with voice controls */}
                 <div className="v2-hero-alt-video-wrap hero-voice-card">
-                    {/* Header */}
-                    <div className="hvc-header">
-                        <div className="hvc-avatar">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                                <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
-                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                <line x1="12" y1="19" x2="12" y2="23"/>
-                                <line x1="8" y1="23" x2="16" y2="23"/>
-                            </svg>
-                        </div>
-                        <div className="hvc-header-info">
-                            <span className="hvc-name">Aoife</span>
-                            <span className="hvc-role">AIMediaFlow AI Assistant</span>
-                        </div>
-                        <div className={`hvc-status-dot ${state === 'connected' ? 'hvc-status-dot--active' : ''}`} />
-                    </div>
-
-                    {/* Waveform visual */}
-                    <div className="hvc-wave-area">
-                        {state === 'connected' ? (
-                            <div className="hvc-wave-bars">
-                                {[...Array(12)].map((_, i) => (
-                                    <div key={i} className="hvc-bar" style={{ animationDelay: `${i * 0.08}s` }} />
-                                ))}
-                            </div>
-                        ) : state === 'connecting' ? (
-                            <div className="hvc-wave-bars hvc-wave-bars--slow">
-                                {[...Array(12)].map((_, i) => (
-                                    <div key={i} className="hvc-bar" style={{ animationDelay: `${i * 0.15}s` }} />
-                                ))}
-                            </div>
-                        ) : state === 'ending' ? (
-                            <div className="hvc-idle-icon">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e63946" strokeWidth="1.5" strokeLinecap="round" opacity="0.7">
-                                    <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
-                                    <path d="M14.5 2.81a19.79 19.79 0 0 1 3.07 8.63"/>
-                                    <line x1="2" y1="2" x2="22" y2="22"/>
-                                    <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59"/>
-                                </svg>
-                            </div>
-                        ) : (
-                            <div className="hvc-idle-icon">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.3">
-                                    <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                    <line x1="12" y1="19" x2="12" y2="23"/>
-                                    <line x1="8" y1="23" x2="16" y2="23"/>
-                                </svg>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Message / status */}
-                    <div className="hvc-message">
-                        {state === 'idle' && (
-                            <p>"Hi! I'm Aoife. Ask me anything about how AI can help your business."</p>
-                        )}
-                        {state === 'connecting' && (
-                            <p>Connecting to Aoife…</p>
-                        )}
-                        {state === 'connected' && (
-                            <p>Connected · <span className="hvc-timer">{fmt(duration)}</span></p>
-                        )}
-                        {state === 'ending' && (
-                            <p style={{ color: '#e63946' }}>Aoife ended the call…</p>
-                        )}
-                        {state === 'error' && (
-                            <p className="hvc-error">⚠ {error}</p>
-                        )}
-                    </div>
+                    <GirlAvatar
+                        agentStream={agentStream}
+                        agentState={state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle'}
+                        agentThinkingState={agentThinkingState}
+                    />
 
                     {/* CTA button */}
                     <div className="hvc-actions">
@@ -253,15 +205,20 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                             </button>
                         )}
                         {state === 'connected' && (
-                            <button className="hvc-btn hvc-btn--end" onClick={disconnect}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                    <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
-                                    <path d="M14.5 2.81a19.79 19.79 0 0 1 3.07 8.63"/>
-                                    <line x1="2" y1="2" x2="22" y2="22"/>
-                                    <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59"/>
-                                </svg>
-                                End call
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span style={{ color: 'var(--v2-cyan)', fontSize: '0.85rem', fontWeight: 600 }}>
+                                    Connected · {fmt(duration)}
+                                </span>
+                                <button className="hvc-btn hvc-btn--end" onClick={disconnect}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                        <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+                                        <path d="M14.5 2.81a19.79 19.79 0 0 1 3.07 8.63"/>
+                                        <line x1="2" y1="2" x2="22" y2="22"/>
+                                        <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59"/>
+                                    </svg>
+                                    End call
+                                </button>
+                            </div>
                         )}
                         {state === 'ending' && (
                             <button className="hvc-btn hvc-btn--connecting" disabled>
@@ -275,8 +232,16 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                         )}
                     </div>
 
-                    {/* Subtle glow ring when connected */}
-                    {state === 'connected' && <div className="hvc-glow-ring" />}
+                    {state === 'idle' && (
+                        <div className="hvc-message">
+                            <p>"Hi! I'm Aoife. Ask me anything about how AI can help your business."</p>
+                        </div>
+                    )}
+                    {state === 'error' && (
+                        <div className="hvc-message">
+                            <p className="hvc-error">⚠ {error}</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

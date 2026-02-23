@@ -16,6 +16,7 @@ interface HeroV2AltProps {
 const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
     const [state, setState] = useState<VoiceState>('idle');
     const [error, setError] = useState('');
+    const [micUnavailable, setMicUnavailable] = useState(false);
     const [duration, setDuration] = useState(0);
     const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
     const [agentThinkingState, setAgentThinkingState] = useState<AgentThinkingState>(null);
@@ -133,9 +134,10 @@ const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
             }, MAX_CALL_MS);
         } catch (err: any) {
             const isMicError = err.name === 'NotFoundError' || err.name === 'NotAllowedError' || err.name === 'DevicesNotFoundError';
-            if (isMicError && onMicError) {
-                onMicError();
+            if (isMicError) {
+                setMicUnavailable(true);
                 setState('idle');
+                if (onMicError) onMicError();
             } else {
                 setError(err.message || 'Connection failed');
                 setState('error');
@@ -258,7 +260,13 @@ const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
 
                     {/* Bottom action */}
                     <div className="hud-footer">
-                        {state === 'idle' && (
+                        {micUnavailable && (
+                            <div className="hud-mic-error">
+                                <span className="hud-mic-error-icon">⚠</span>
+                                <span>Microphone not available — use the chat below to connect with us</span>
+                            </div>
+                        )}
+                        {state === 'idle' && !micUnavailable && (
                             <button className="hvc-btn hvc-btn--start" onClick={connect}>
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                                     <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>

@@ -2953,6 +2953,10 @@
 .v2-scope.v2-light .hud-state-text {
     color: rgba(30,40,60,0.5);
 }
+.v2-scope.v2-light .hud-footer {
+    background: rgba(255,255,255,0.5);
+    border-top: 1px solid rgba(8,145,178,0.12);
+}
 
 /* ─ Section tag: glass pill ─ */
 .v2-scope.v2-light .v2-section-tag {

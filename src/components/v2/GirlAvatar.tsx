@@ -11,7 +11,7 @@ interface GirlAvatarProps {
 }
 
 /**
- * Sprite sheet: girl-sprite.png — 9 frames (928×1120 each, total 8352×1120)
+ * Sprite sheet: girl-sprite4.webp — 9 frames (928×1120 each, total 8352×1120)
  *
  * Speaking frames (lipsync):
  *   0 = Rest / sil
@@ -80,7 +80,7 @@ const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarP
     const imageReady = new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
       img.onerror = reject;
-      img.src = '/girl-sprite.png';
+      img.src = '/girl-sprite4.webp';
     });
     rendererReadyRef.current = imageReady;
 

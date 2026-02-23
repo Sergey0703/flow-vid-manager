@@ -43,7 +43,7 @@ const Agents = () => {
               type="cat"
               title="Cat Avatar"
               description="Cute animated cat with precise Preston Blair viseme mapping across 6 mouth positions. Powered by a real-time voice AI."
-              agentName="aimediaflow-agent-local"
+              agentName="aimediaflow-cat-agent"
             />
 
             <LipsyncDemoCard

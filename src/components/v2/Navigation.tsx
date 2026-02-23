@@ -40,14 +40,14 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
         <>
             <header className={`v2-header ${scrolled ? 'scrolled' : ''}`}>
                 <nav className="v2-nav">
-                    <a href="#" className="v2-logo"><span className="ai">AI</span><span className="rest">MediaFlow</span></a>
+                    <a href="/" className="v2-logo"><span className="ai">AI</span><span className="rest">MediaFlow</span></a>
 
                     <ul className="v2-nav-links">
-                        <li><a href="#services">Services</a></li>
-                        <li><a href="#work">Our Work</a></li>
-                        <li><a href="#how">How It Works</a></li>
-                        <li><a href="#faq">FAQ</a></li>
-                        <li><a href="#contact">Contact</a></li>
+                        <li><a href="/#services">Services</a></li>
+                        <li><a href="/#work">Our Work</a></li>
+                        <li><a href="/#how">How It Works</a></li>
+                        <li><a href="/#faq">FAQ</a></li>
+                        <li><a href="/#contact">Contact</a></li>
                     </ul>
 
                     <div className="v2-nav-cta" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -59,7 +59,7 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
                         >
                             {isLight ? <MoonIcon /> : <SunIcon />}
                         </button>
-                        <a href="#contact" className="v2-btn v2-btn-primary">Book a Demo</a>
+                        <a href="/#contact" className="v2-btn v2-btn-primary">Book a Demo</a>
                     </div>
 
                     <div className="v2-hamburger" onClick={toggleMobileMenu}>
@@ -69,12 +69,12 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
             </header>
 
             <nav className={`v2-mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
-                <a href="#services" onClick={() => setMobileMenuOpen(false)}>Services</a>
-                <a href="#work" onClick={() => setMobileMenuOpen(false)}>Our Work</a>
-                <a href="#how" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
-                <a href="#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
-                <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
-                <a href="#contact" className="v2-btn v2-btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileMenuOpen(false)}>Book a Demo</a>
+                <a href="/#services" onClick={() => setMobileMenuOpen(false)}>Services</a>
+                <a href="/#work" onClick={() => setMobileMenuOpen(false)}>Our Work</a>
+                <a href="/#how" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
+                <a href="/#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
+                <a href="/#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
+                <a href="/#contact" className="v2-btn v2-btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileMenuOpen(false)}>Book a Demo</a>
             </nav>
         </>
     );

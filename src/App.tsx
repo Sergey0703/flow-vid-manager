@@ -8,7 +8,6 @@ import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
-import LandingV2 from "./pages/LandingV2";
 import Agents from "./pages/Agents";
 
 const queryClient = new QueryClient();
@@ -21,7 +20,6 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/v2" element={<LandingV2 />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />

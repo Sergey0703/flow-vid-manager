@@ -12,20 +12,20 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
-from livekit.plugins import openai, deepgram, silero, groq
+from livekit.agents.beta.tools import EndCallTool
+from livekit.plugins import openai, deepgram, silero
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("aimediaflow-agent")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY is required")
+if not OPENAI_API_KEY:
+    raise ValueError("OPENAI_API_KEY is required")
 
 SYSTEM_BASE = """You are Aoife, a friendly AI assistant for AIMediaFlow — an AI agency based in Kerry, Ireland.
 Your job is to talk with visitors to the aimediaflow.net website, answer their questions,
@@ -35,7 +35,6 @@ ABOUT AIMEDIAFLOW:
 - AI agency born on the Wild Atlantic Way in Kerry, Ireland
 - Services: AI phone assistants, website chatbots, business automation, AI marketing videos
 - Serving businesses in Kerry, Killarney, and across Ireland
-- Contact: info@aimediaflow.net, WhatsApp +353 85 2007 612
 
 YOUR STYLE:
 - Professional but warm and conversational
@@ -53,19 +52,22 @@ CRITICAL VOICE RULES:
 4. No lists — speak in flowing sentences
 5. SHORT replies only. 10 words ideal, 15 words maximum.
 
+BOOKING & CONTACT RULES — follow these strictly, no exceptions:
+- You CANNOT send messages, emails, or WhatsApp — you are a voice AI, not a messaging system
+- You CANNOT collect names, phone numbers, emails, or any personal details — never ask for them
+- NEVER say "I'll send you a message", "I'll pass that on", "I'll connect you", or anything implying you can take action outside this conversation
+- When the visitor wants to book a call, get a quote, or get in touch: always say the booking form is just below on this page — "Just scroll down and hit the Book a Demo button"
+- The booking form URL is: aimediaflow.net/#contact
+- Never suggest email or WhatsApp as a way to book — the form is the only action to direct them to
+
 RULES:
 - You are an AI assistant — never claim to be a human or a team member
-- If asked to speak with a manager or human, direct them to WhatsApp or email
-- If the knowledge base doesn't cover their question, say you can arrange a discovery call
 - Never invent specific prices, timelines, or client names
-- NEVER offer to send emails, collect names, phone numbers, or any details — you cannot do this
-- NEVER ask for the visitor's contact information
-- To book a call or get in touch, always direct them to: WhatsApp +353 85 2007 612 or info@aimediaflow.net
-- You can also mention the contact form on the website: aimediaflow.net
+- If the knowledge base doesn't cover their question, say it can be covered on the discovery call — and direct them to the booking form
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that's all, or clearly indicates they are done,
-say a brief warm farewell like "It was lovely chatting, take care now!" and stop responding."""
+say a brief warm farewell and immediately call the end_call tool. Do not continue talking after calling it."""
 
 
 async def search_knowledge(query: str) -> str:
@@ -107,9 +109,13 @@ class AimediaflowAgent(Agent):
     def __init__(self, session_log: SessionLogger):
         super().__init__(
             instructions=SYSTEM_BASE,
-            llm=groq.LLM(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY),
+            llm=openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
             stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY),
             tts=openai.TTS(model="tts-1", voice="bf_alice", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
+            tools=[EndCallTool(
+                end_instructions="Say a warm, brief farewell — like 'It was lovely chatting, take care now!'",
+                delete_room=True,
+            )],
         )
         self.session_log = session_log
 

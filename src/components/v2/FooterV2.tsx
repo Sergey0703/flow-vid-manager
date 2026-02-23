@@ -6,7 +6,7 @@ const FooterV2 = () => {
                 <div className="v2-footer-grid">
                     <div className="v2-footer-brand">
                         <a href="#" className="v2-logo" style={{ marginBottom: '1rem', display: 'inline-block' }}>
-                            <span className="ai">AI</span><span className="rest" style={{ color: '#fff' }}>MediaFlow</span>
+                            <span className="ai">AI</span><span className="rest">MediaFlow</span>
                         </a>
                         <p>Empowering Irish businesses with intelligent AI solutions that work from day one.</p>
                     </div>

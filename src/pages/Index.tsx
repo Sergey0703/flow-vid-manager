@@ -94,7 +94,7 @@ const Index = () => {
       </main>
 
       <FooterV2 />
-      <Chatbot forceOpen={chatOpen} />
+      {chatOpen && <Chatbot forceOpen={chatOpen} />}
     </div>
   );
 };

@@ -2923,6 +2923,37 @@
     background: radial-gradient(ellipse at 50% 0%, rgba(8, 145, 178, 0.08) 0%, transparent 65%);
 }
 
+/* ─ HUD inner elements: light theme ─ */
+.v2-scope.v2-light .hud-side {
+    background: rgba(255,255,255,0.4);
+    border-left: 1px solid rgba(8,145,178,0.15);
+}
+.v2-scope.v2-light .hud-divider {
+    background: rgba(8,145,178,0.1);
+}
+.v2-scope.v2-light .hud-topbar {
+    background: rgba(8,145,178,0.06);
+    border-bottom: 1px solid rgba(8,145,178,0.15);
+}
+.v2-scope.v2-light .hud-topbar-sys {
+    color: rgba(30,40,60,0.45);
+}
+.v2-scope.v2-light .hud-label {
+    color: rgba(30,40,60,0.45);
+}
+.v2-scope.v2-light .hud-value {
+    color: rgba(15,25,50,0.85);
+}
+.v2-scope.v2-light .hud-mono {
+    color: var(--v2-cyan);
+}
+.v2-scope.v2-light .hud-muted {
+    color: rgba(30,40,60,0.35);
+}
+.v2-scope.v2-light .hud-state-text {
+    color: rgba(30,40,60,0.5);
+}
+
 /* ─ Section tag: glass pill ─ */
 .v2-scope.v2-light .v2-section-tag {
     background: rgba(8, 145, 178, 0.07);

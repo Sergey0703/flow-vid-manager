@@ -10,8 +10,12 @@ interface Message {
     time: string;
 }
 
-const Chatbot = () => {
+const Chatbot = ({ forceOpen = false }: { forceOpen?: boolean }) => {
     const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        if (forceOpen) toggleChat();
+    }, [forceOpen]);
     const [showTeaser, setShowTeaser] = useState(false);
     const [teaserDismissed, setTeaserDismissed] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);

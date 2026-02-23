@@ -10,9 +10,10 @@ const MAX_CALL_MS = 3 * 60_000;   // hard limit: 3 minutes per call
 
 interface HeroV2AltProps {
     agentName?: string; // undefined = use server default (aimediaflow-agent)
+    onMicError?: () => void;
 }
 
-const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
+const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
     const [state, setState] = useState<VoiceState>('idle');
     const [error, setError] = useState('');
     const [duration, setDuration] = useState(0);
@@ -131,11 +132,17 @@ const HeroV2Alt = ({ agentName }: HeroV2AltProps) => {
                 disconnect();
             }, MAX_CALL_MS);
         } catch (err: any) {
-            setError(err.message || 'Connection failed');
-            setState('error');
+            const isMicError = err.name === 'NotFoundError' || err.name === 'NotAllowedError' || err.name === 'DevicesNotFoundError';
+            if (isMicError && onMicError) {
+                onMicError();
+                setState('idle');
+            } else {
+                setError(err.message || 'Connection failed');
+                setState('error');
+            }
             roomRef.current = null;
         }
-    }, [disconnect]);
+    }, [disconnect, onMicError]);
 
     const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 

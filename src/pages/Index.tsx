@@ -29,6 +29,7 @@ const THEME_KEY = 'v2-theme';
 const Index = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
   const [isLight, setIsLight] = useState<boolean>(() => {
     return localStorage.getItem(THEME_KEY) === 'light';
   });
@@ -83,7 +84,7 @@ const Index = () => {
       <Navigation isLight={isLight} onToggleTheme={toggleTheme} />
 
       <main>
-        <HeroV2Alt agentName="aimediaflow-agent-local" />
+        <HeroV2Alt agentName="aimediaflow-agent-local" onMicError={() => setChatOpen(true)} />
         <Stats />
         <VideoShowcase videos={videos} />
         <Services />
@@ -93,7 +94,7 @@ const Index = () => {
       </main>
 
       <FooterV2 />
-      {/* <Chatbot /> */}
+      <Chatbot forceOpen={chatOpen} />
     </div>
   );
 };

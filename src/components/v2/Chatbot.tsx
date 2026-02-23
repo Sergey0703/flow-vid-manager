@@ -12,10 +12,6 @@ interface Message {
 
 const Chatbot = ({ forceOpen = false }: { forceOpen?: boolean }) => {
     const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-        if (forceOpen) toggleChat();
-    }, [forceOpen]);
     const [showTeaser, setShowTeaser] = useState(false);
     const [teaserDismissed, setTeaserDismissed] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -110,8 +106,13 @@ const Chatbot = ({ forceOpen = false }: { forceOpen?: boolean }) => {
         }
     };
 
-    // Auto-show teaser after 4s
     useEffect(() => {
+        if (forceOpen && !isOpen) toggleChat();
+    }, [forceOpen]);
+
+    // Auto-show teaser after 4s — disabled when used as mic fallback
+    useEffect(() => {
+        if (forceOpen) return;
         const timer = setTimeout(() => {
             if (!isOpen && !teaserDismissed) setShowTeaser(true);
         }, 4000);

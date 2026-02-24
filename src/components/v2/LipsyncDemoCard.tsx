@@ -182,7 +182,7 @@ const CatDemoContent = ({ title, description, agentName }: { title: string; desc
       title={title} description={description}
       state={state} error={error} duration={duration}
       connect={connect} disconnect={disconnect}
-      avatar={<CatAvatar agentStream={agentStream} agentState={avatarState} />}
+      avatar={<CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />}
     />
   );
 };

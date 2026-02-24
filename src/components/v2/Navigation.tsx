@@ -48,6 +48,7 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
                         <li><a href="/#how">How It Works</a></li>
                         <li><a href="/#faq">FAQ</a></li>
                         <li><a href="/#contact">Contact</a></li>
+                        <li><a href="/agents" className="v2-nav-live-demo">Live Demo</a></li>
                     </ul>
 
                     <div className="v2-nav-cta" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -74,6 +75,7 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
                 <a href="/#how" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
                 <a href="/#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
                 <a href="/#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
+                <a href="/agents" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>✦ Live Demo</a>
                 <a href="/#contact" className="v2-btn v2-btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileMenuOpen(false)}>Book a Demo</a>
             </nav>
         </>

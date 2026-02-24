@@ -1292,6 +1292,30 @@
     }
 }
 
+/* ── Contact form mobile ── */
+@media (max-width: 768px) {
+    .v2-contact {
+        padding: 4rem 1.25rem;
+    }
+
+    .v2-contact-inner {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .v2-contact-cards {
+        display: none;
+    }
+
+    .v2-contact-form {
+        padding: 1.5rem;
+    }
+
+    .v2-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 560px) {
     .v2-footer {
         padding: 3rem 1.25rem 1.5rem;

@@ -40,6 +40,10 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
         <>
             <header className={`v2-header ${scrolled ? 'scrolled' : ''}`}>
                 <nav className="v2-nav">
+                    <div className="v2-hamburger" onClick={toggleMobileMenu}>
+                        <span></span><span></span><span></span>
+                    </div>
+
                     <a href="/" className="v2-logo"><span className="ai">AI</span><span className="rest">MediaFlow</span></a>
 
                     <ul className="v2-nav-links">
@@ -61,10 +65,6 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
                             {isLight ? <MoonIcon /> : <SunIcon />}
                         </button>
                         <a href="/#contact" className="v2-btn v2-btn-primary">Book a Demo</a>
-                    </div>
-
-                    <div className="v2-hamburger" onClick={toggleMobileMenu}>
-                        <span></span><span></span><span></span>
                     </div>
                 </nav>
             </header>

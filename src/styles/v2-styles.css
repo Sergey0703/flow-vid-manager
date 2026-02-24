@@ -360,8 +360,11 @@
         display: flex;
     }
 
-    .v2-nav-links,
-    .v2-nav-cta {
+    .v2-nav-links {
+        display: none;
+    }
+
+    .v2-theme-toggle {
         display: none;
     }
 }

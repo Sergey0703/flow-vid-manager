@@ -187,39 +187,6 @@ function playRandomMeow(volume = 0.6) {
   audio.play().catch(() => {});
 }
 
-// ── Cat voice filter (Web Audio API) ─────────────────────────────────────────
-function applyCatVoiceFilter(stream: MediaStream): { output: MediaStream; close: () => void } {
-  const ctx = new AudioContext();
-  const src = ctx.createMediaStreamSource(stream);
-
-  // High-pass: cut below 300Hz (remove chest/bass resonance)
-  const hp = ctx.createBiquadFilter();
-  hp.type = 'highpass';
-  hp.frequency.value = 300;
-  hp.Q.value = 0.7;
-
-  // High-shelf boost: +10dB above 2kHz (brighten, thin out)
-  const hs = ctx.createBiquadFilter();
-  hs.type = 'highshelf';
-  hs.frequency.value = 2000;
-  hs.gain.value = 10;
-
-  // Peaking boost around 3.5kHz — adds nasal "cartoon" quality
-  const peak = ctx.createBiquadFilter();
-  peak.type = 'peaking';
-  peak.frequency.value = 3500;
-  peak.Q.value = 1.5;
-  peak.gain.value = 8;
-
-  const dest = ctx.createMediaStreamDestination();
-  src.connect(hp).connect(hs).connect(peak).connect(dest);
-
-  return {
-    output: dest.stream,
-    close: () => ctx.close(),
-  };
-}
-
 // ── Cat variant ───────────────────────────────────────────────────────────────
 const CatDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
   const { state, error, duration, agentStream, agentThinkingState, connect, disconnect } = useDemoAgent(agentName);
@@ -227,40 +194,6 @@ const CatDemoContent = ({ title, description, agentName }: { title: string; desc
 
   const prevThinkingState = useRef<AgentThinkingState>(null);
   const meowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const audioCtxCloseRef = useRef<(() => void) | null>(null);
-  const filteredAudioRef = useRef<HTMLAudioElement | null>(null);
-  const [filteredStream, setFilteredStream] = useState<MediaStream | null>(null);
-
-  // Apply cat voice filter when agentStream arrives
-  useEffect(() => {
-    if (audioCtxCloseRef.current) { audioCtxCloseRef.current(); audioCtxCloseRef.current = null; }
-    if (filteredAudioRef.current) { filteredAudioRef.current.pause(); filteredAudioRef.current = null; }
-
-    if (!agentStream) { setFilteredStream(null); return; }
-
-    // Mute all existing audio elements playing this stream (LiveKit's auto-play)
-    document.querySelectorAll('audio').forEach((el) => {
-      if ((el as HTMLAudioElement).srcObject === agentStream) {
-        (el as HTMLAudioElement).muted = true;
-      }
-    });
-
-    const { output, close } = applyCatVoiceFilter(agentStream);
-    audioCtxCloseRef.current = close;
-
-    // Play filtered audio instead
-    const el = new Audio();
-    el.srcObject = output;
-    el.autoplay = true;
-    el.play().catch(() => {});
-    filteredAudioRef.current = el;
-
-    setFilteredStream(agentStream); // lip-sync uses original stream
-    return () => {
-      close();
-      el.pause();
-    };
-  }, [agentStream]);
 
   // Meow when connected
   useEffect(() => {
@@ -296,7 +229,7 @@ const CatDemoContent = ({ title, description, agentName }: { title: string; desc
       title={title} description={description}
       state={state} error={error} duration={duration}
       connect={connect} disconnect={disconnect}
-      avatar={<CatAvatar agentStream={filteredStream} agentState={avatarState} />}
+      avatar={<CatAvatar agentStream={agentStream} agentState={avatarState} />}
     />
   );
 };

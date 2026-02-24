@@ -379,13 +379,9 @@
         display: none;
     }
 
-    .v2-theme-toggle {
-        display: none;
-    }
-
     .v2-nav-cta {
         flex-shrink: 0;
-        gap: 0;
+        gap: 0.5rem;
     }
 }
 

@@ -199,7 +199,7 @@ const CatAvatar = ({ agentStream, agentState, agentThinkingState }: CatAvatarPro
   }, [agentThinkingState, agentState]);
 
   return (
-    <div className="cat-avatar-wrap">
+    <div className="cat-avatar-wrap cat-avatar-wrap--pixel">
       <canvas
         ref={canvasRef}
         width={FRAME_W}

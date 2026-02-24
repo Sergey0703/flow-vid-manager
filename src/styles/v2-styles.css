@@ -3269,7 +3269,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 300px;
+    min-height: 280px;
     position: relative;
     overflow: hidden;
 }
@@ -3282,15 +3282,15 @@
     pointer-events: none;
 }
 
-/* Cat avatar fills the card preview — zoomed in, bottom-cropped for "up close" look */
-.v2-scope .lipsync-demo-card .cat-avatar-wrap {
+/* Pixel (cat) avatar only — zoomed in, bottom-cropped for "up close" look */
+.v2-scope .lipsync-demo-card .cat-avatar-wrap--pixel {
     width: 100%;
     position: absolute;
     bottom: -12%;
     left: 0;
 }
 
-.v2-scope .lipsync-demo-card .cat-avatar-canvas {
+.v2-scope .lipsync-demo-card .cat-avatar-wrap--pixel .cat-avatar-canvas {
     width: 100%;
     height: auto;
     display: block;

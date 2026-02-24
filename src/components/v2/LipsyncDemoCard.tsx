@@ -173,57 +173,10 @@ function DemoCardShell({
   );
 }
 
-// ── Cat sounds ────────────────────────────────────────────────────────────────
-const CAT_SOUNDS = [
-  '/sounds/cat-meow-soft.mp3',
-  '/sounds/cat-meow.mp3',
-  '/sounds/cat-meow-long.mp3',
-];
-
-function playRandomMeow(volume = 0.6) {
-  const src = CAT_SOUNDS[Math.floor(Math.random() * CAT_SOUNDS.length)];
-  const audio = new Audio(src);
-  audio.volume = volume;
-  audio.play().catch(() => {});
-}
-
 // ── Cat variant ───────────────────────────────────────────────────────────────
 const CatDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
   const { state, error, duration, agentStream, agentThinkingState, connect, disconnect } = useDemoAgent(agentName);
   const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
-
-  const prevThinkingState = useRef<AgentThinkingState>(null);
-  const meowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Meow when connected
-  useEffect(() => {
-    if (state === 'connected') {
-      setTimeout(() => playRandomMeow(0.5), 300);
-    }
-  }, [state]);
-
-  // Random meow during listening pauses (every 20-40s)
-  useEffect(() => {
-    if (state !== 'connected') {
-      if (meowTimerRef.current) { clearTimeout(meowTimerRef.current); meowTimerRef.current = null; }
-      return;
-    }
-    const schedule = () => {
-      const delay = 20000 + Math.random() * 20000;
-      meowTimerRef.current = setTimeout(() => {
-        if (prevThinkingState.current !== 'speaking') playRandomMeow(0.4);
-        schedule();
-      }, delay);
-    };
-    schedule();
-    return () => { if (meowTimerRef.current) clearTimeout(meowTimerRef.current); };
-  }, [state]);
-
-  // Track thinking state
-  useEffect(() => {
-    prevThinkingState.current = agentThinkingState;
-  }, [agentThinkingState]);
-
   return (
     <DemoCardShell
       title={title} description={description}

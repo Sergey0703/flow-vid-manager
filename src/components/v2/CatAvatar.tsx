@@ -69,7 +69,7 @@ const CatAvatar = ({ agentStream, agentState, agentThinkingState }: CatAvatarPro
     const imageReady = new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
       img.onerror = reject;
-      img.src = '/cat-sprite.png';
+      img.src = '/cat-sprite.webp';
     });
     rendererReadyRef.current = imageReady;
 

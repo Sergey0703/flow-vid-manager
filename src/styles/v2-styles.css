@@ -3269,7 +3269,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 280px;
+    height: 300px;
     position: relative;
     overflow: hidden;
 }
@@ -3282,9 +3282,18 @@
     pointer-events: none;
 }
 
-/* Scale the cat avatar inside a card (overrides the fixed-widget size) */
+/* Cat avatar fills the card preview — zoomed in, bottom-cropped for "up close" look */
 .v2-scope .lipsync-demo-card .cat-avatar-wrap {
-    width: 210px;
+    width: 100%;
+    position: absolute;
+    bottom: -12%;
+    left: 0;
+}
+
+.v2-scope .lipsync-demo-card .cat-avatar-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
 /* ── Hero voice card: fullscreen avatar layout ── */

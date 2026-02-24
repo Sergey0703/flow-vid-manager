@@ -356,8 +356,23 @@
 }
 
 @media (max-width: 768px) {
+    .v2-header {
+        padding: 0.6rem 1rem;
+    }
+
+    .v2-nav {
+        gap: 0;
+    }
+
     .v2-hamburger {
         display: flex;
+        flex-shrink: 0;
+        margin-right: 0.75rem;
+    }
+
+    .v2-logo {
+        font-size: 1.1rem;
+        flex: 1;
     }
 
     .v2-nav-links {
@@ -366,6 +381,11 @@
 
     .v2-theme-toggle {
         display: none;
+    }
+
+    .v2-nav-cta {
+        flex-shrink: 0;
+        gap: 0;
     }
 }
 

@@ -3282,12 +3282,13 @@
     pointer-events: none;
 }
 
-/* Pixel (cat) avatar only — zoomed in, bottom-cropped for "up close" look */
+/* Pixel (cat) avatar only — zoomed in, centered */
 .v2-scope .lipsync-demo-card .cat-avatar-wrap--pixel {
-    width: 100%;
+    width: 90%;
     position: absolute;
-    bottom: -2%;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .v2-scope .lipsync-demo-card .cat-avatar-wrap--pixel .cat-avatar-canvas {

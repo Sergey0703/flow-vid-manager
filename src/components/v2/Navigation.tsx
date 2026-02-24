@@ -51,7 +51,7 @@ const Navigation = ({ isLight, onToggleTheme }: NavigationProps) => {
                         <li><a href="/agents" className="v2-nav-live-demo">Live Demo</a></li>
                     </ul>
 
-                    <div className="v2-nav-cta" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className="v2-nav-cta">
                         <button
                             className="v2-theme-toggle"
                             onClick={onToggleTheme}

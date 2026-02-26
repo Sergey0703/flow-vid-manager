@@ -1,6 +1,7 @@
 import logging
 import os
 import asyncio
+import random
 
 import httpx
 import aiohttp
@@ -33,6 +34,28 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 
 KOKORO_SAMPLE_RATE = 24000
+PHRASES_DIR = os.path.join(os.path.dirname(__file__), "phrases")
+
+
+def _load_phrase(name: str) -> bytes | None:
+    """Load a pre-recorded PCM phrase from disk. Returns None if file missing."""
+    path = os.path.join(PHRASES_DIR, f"{name}.pcm")
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return f.read()
+    return None
+
+
+def _random_phrase(prefix: str) -> bytes | None:
+    """Pick a random pre-recorded phrase by prefix (e.g. 'greet', 'bye', 'think')."""
+    candidates = []
+    for i in range(10):
+        data = _load_phrase(f"{prefix}_{i}")
+        if data:
+            candidates.append(data)
+        else:
+            break
+    return random.choice(candidates) if candidates else None
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
@@ -75,7 +98,7 @@ RULES:
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that is all, or clearly indicates they are done,
-say a cute kitten farewell like Purrr, bye bye! Come back anytime! and immediately call the end_call tool."""
+say a short friendly farewell like Bye! Come back anytime! and immediately call the end_call tool."""
 
 
 def _pitch_shift_all(raw_bytes: bytes, semitones: float, sample_rate: int = 24000) -> bytes:
@@ -204,7 +227,7 @@ class CatAgent(Agent):
                 semitones=8,
             ),
             tools=[EndCallTool(
-                end_instructions="Say a cute kitten farewell — like Purrr, bye bye! Come back anytime!",
+                end_instructions="Say a short friendly farewell, like: Bye! Come back anytime! No cat sounds.",
                 delete_room=True,
             )],
         )
@@ -220,6 +243,22 @@ class CatAgent(Agent):
                 content=f"[Knowledge base context for this query]\n{context}"
             )
         await super().on_user_turn_completed(turn_ctx, new_message)
+
+
+async def play_pcm(session: AgentSession, pcm_bytes: bytes) -> None:
+    """Push raw pre-recorded PCM directly into the session audio pipeline."""
+    from livekit.agents import tts as tts_module
+    emitter = tts_module.AudioEmitter()
+    emitter.initialize(
+        request_id="pre-recorded",
+        sample_rate=KOKORO_SAMPLE_RATE,
+        num_channels=1,
+        mime_type="audio/pcm",
+    )
+    CHUNK_BYTES = 480 * 2
+    for i in range(0, len(pcm_bytes), CHUNK_BYTES):
+        emitter.push(pcm_bytes[i: i + CHUNK_BYTES])
+    emitter.flush()
 
 
 async def entrypoint(ctx: JobContext):
@@ -256,9 +295,16 @@ async def entrypoint(ctx: JobContext):
 
     await session.start(room=ctx.room, agent=agent)
 
-    await session.generate_reply(
-        instructions="Greet the visitor as Pixel the kitten. Start with a cute cat sound, then introduce yourself warmly and ask how you can help."
-    )
+    # Use pre-recorded greeting if available, otherwise fall back to LLM
+    greet_pcm = _random_phrase("greet")
+    if greet_pcm:
+        logger.info("Playing pre-recorded greeting")
+        await play_pcm(session, greet_pcm)
+    else:
+        logger.info("No pre-recorded greeting found, generating via LLM")
+        await session.generate_reply(
+            instructions="Greet the visitor as Pixel. Introduce yourself warmly and ask how you can help. No cat sounds."
+        )
 
 
 if __name__ == "__main__":

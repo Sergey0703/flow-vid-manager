@@ -179,6 +179,41 @@ class KokoroPitchTTS(tts_module.TTS):
         return PitchShiftedStream(tts=self, input_text=text, conn_options=conn_options)
 
 
+class PrerecordedStream(tts_module.ChunkedStream):
+    """Plays a pre-recorded PCM buffer through the standard TTS pipeline."""
+
+    def __init__(self, *, tts: "PrerecordedTTS", input_text: str, conn_options: APIConnectOptions, pcm_bytes: bytes) -> None:
+        super().__init__(tts=tts, input_text=input_text, conn_options=conn_options)
+        self._pcm_bytes = pcm_bytes
+
+    async def _run(self, output_emitter: tts_module.AudioEmitter) -> None:
+        output_emitter.initialize(
+            request_id="prerecorded",
+            sample_rate=KOKORO_SAMPLE_RATE,
+            num_channels=1,
+            mime_type="audio/pcm",
+        )
+        CHUNK_BYTES = 480 * 2
+        for i in range(0, len(self._pcm_bytes), CHUNK_BYTES):
+            output_emitter.push(self._pcm_bytes[i: i + CHUNK_BYTES])
+        output_emitter.flush()
+
+
+class PrerecordedTTS(tts_module.TTS):
+    """TTS that serves a specific pre-recorded PCM file."""
+
+    def __init__(self, pcm_bytes: bytes) -> None:
+        super().__init__(
+            capabilities=tts_module.TTSCapabilities(streaming=False),
+            sample_rate=KOKORO_SAMPLE_RATE,
+            num_channels=1,
+        )
+        self._pcm_bytes = pcm_bytes
+
+    def synthesize(self, text: str, *, conn_options: APIConnectOptions = DEFAULT_API_CONNECT_OPTIONS) -> PrerecordedStream:
+        return PrerecordedStream(tts=self, input_text=text, conn_options=conn_options, pcm_bytes=self._pcm_bytes)
+
+
 async def search_knowledge(query: str) -> str:
     if not PINECONE_API_KEY or not PINECONE_INDEX_HOST:
         return ""
@@ -245,20 +280,6 @@ class CatAgent(Agent):
         await super().on_user_turn_completed(turn_ctx, new_message)
 
 
-async def play_pcm(session: AgentSession, pcm_bytes: bytes) -> None:
-    """Push raw pre-recorded PCM directly into the session audio pipeline."""
-    from livekit.agents import tts as tts_module
-    emitter = tts_module.AudioEmitter()
-    emitter.initialize(
-        request_id="pre-recorded",
-        sample_rate=KOKORO_SAMPLE_RATE,
-        num_channels=1,
-        mime_type="audio/pcm",
-    )
-    CHUNK_BYTES = 480 * 2
-    for i in range(0, len(pcm_bytes), CHUNK_BYTES):
-        emitter.push(pcm_bytes[i: i + CHUNK_BYTES])
-    emitter.flush()
 
 
 async def entrypoint(ctx: JobContext):
@@ -299,7 +320,10 @@ async def entrypoint(ctx: JobContext):
     greet_pcm = _random_phrase("greet")
     if greet_pcm:
         logger.info("Playing pre-recorded greeting")
-        await play_pcm(session, greet_pcm)
+        orig_tts = agent.tts
+        agent.update_options(tts=PrerecordedTTS(greet_pcm))
+        await session.generate_reply(instructions="(greeting)")
+        agent.update_options(tts=orig_tts)
     else:
         logger.info("No pre-recorded greeting found, generating via LLM")
         await session.generate_reply(

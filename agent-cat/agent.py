@@ -1,7 +1,6 @@
 import logging
 import os
 import asyncio
-import random
 
 import httpx
 import aiohttp
@@ -34,28 +33,6 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 
 KOKORO_SAMPLE_RATE = 24000
-PHRASES_DIR = os.path.join(os.path.dirname(__file__), "phrases")
-
-
-def _load_phrase(name: str) -> bytes | None:
-    """Load a pre-recorded PCM phrase from disk. Returns None if file missing."""
-    path = os.path.join(PHRASES_DIR, f"{name}.pcm")
-    if os.path.exists(path):
-        with open(path, "rb") as f:
-            return f.read()
-    return None
-
-
-def _random_phrase(prefix: str) -> bytes | None:
-    """Pick a random pre-recorded phrase by prefix (e.g. 'greet', 'bye', 'think')."""
-    candidates = []
-    for i in range(10):
-        data = _load_phrase(f"{prefix}_{i}")
-        if data:
-            candidates.append(data)
-        else:
-            break
-    return random.choice(candidates) if candidates else None
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
@@ -282,36 +259,9 @@ async def entrypoint(ctx: JobContext):
 
     await session.start(room=ctx.room, agent=agent)
 
-    # Use pre-recorded greeting if available, otherwise fall back to LLM
-    greet_pcm = _random_phrase("greet")
-    if greet_pcm:
-        logger.info("Playing pre-recorded greeting via session.say(audio=...)")
-        from livekit import rtc
-
-        async def _pcm_frames(pcm_bytes: bytes):
-            SAMPLES_PER_FRAME = 480
-            BYTES_PER_FRAME = SAMPLES_PER_FRAME * 2
-            for i in range(0, len(pcm_bytes), BYTES_PER_FRAME):
-                chunk = pcm_bytes[i: i + BYTES_PER_FRAME]
-                if len(chunk) < BYTES_PER_FRAME:
-                    chunk = chunk + b'\x00' * (BYTES_PER_FRAME - len(chunk))
-                yield rtc.AudioFrame(
-                    data=chunk,
-                    sample_rate=KOKORO_SAMPLE_RATE,
-                    num_channels=1,
-                    samples_per_channel=SAMPLES_PER_FRAME,
-                )
-
-        handle = session.say(
-            "Hi! I'm Pixel, AIMediaFlow's AI assistant. How can I help?",
-            audio=_pcm_frames(greet_pcm),
-        )
-        await handle
-    else:
-        logger.info("No pre-recorded greeting found, generating via LLM")
-        await session.generate_reply(
-            instructions="Greet the visitor as Pixel. Introduce yourself warmly and ask how you can help. No cat sounds."
-        )
+    await session.generate_reply(
+        instructions="Greet the visitor as Pixel. Introduce yourself warmly and ask how you can help. No cat sounds."
+    )
 
 
 if __name__ == "__main__":

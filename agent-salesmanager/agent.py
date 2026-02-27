@@ -171,66 +171,56 @@ def _classify_intent(query: str) -> str:
 
 # ── Typesense search ───────────────────────────────────────────────────────────
 
-async def search_products(query: str) -> str:
-    """Search products collection in Typesense. Only returns in-stock items unless query is specific."""
+async def _fetch_products_hits(query: str, stock_filter: bool) -> list:
+    """Return raw Typesense hits for a product query."""
+    params = {
+        "q": query,
+        "query_by": "name,description,category,colors,sizes",
+        "per_page": 5,
+        "sort_by": "_text_match:desc",
+    }
+    if stock_filter:
+        params["filter_by"] = "stock:>0"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{TYPESENSE_BASE}/collections/products/documents/search",
                 headers={"X-TYPESENSE-API-KEY": TYPESENSE_API_KEY},
-                params={
-                    "q": query,
-                    "query_by": "name,description,category,colors,sizes",
-                    "filter_by": "stock:>0",
-                    "per_page": 5,
-                    "sort_by": "_text_match:desc",
-                },
+                params=params,
             ) as res:
                 if res.status != 200:
-                    logger.warning(f"Typesense products search returned {res.status}")
-                    return ""
+                    return []
                 data = await res.json()
-                hits = data.get("hits", [])
-                if not hits:
-                    # Retry without stock filter to detect out-of-stock items
-                    async with session.get(
-                        f"{TYPESENSE_BASE}/collections/products/documents/search",
-                        headers={"X-TYPESENSE-API-KEY": TYPESENSE_API_KEY},
-                        params={
-                            "q": query,
-                            "query_by": "name,description,category,colors,sizes",
-                            "per_page": 3,
-                            "sort_by": "_text_match:desc",
-                        },
-                    ) as res2:
-                        if res2.status == 200:
-                            data2 = await res2.json()
-                            hits = data2.get("hits", [])
-
-                if not hits:
-                    return ""
-
-                lines = []
-                for h in hits:
-                    d = h["document"]
-                    name = d.get("name", "")
-                    price = d.get("price", 0)
-                    stock = d.get("stock", 0)
-                    sizes = ", ".join(d.get("sizes", [])) or "one size"
-                    colors = ", ".join(d.get("colors", [])) or ""
-                    desc = d.get("description", "")
-                    stock_label = f"in stock: {stock}" if stock > 0 else "OUT OF STOCK"
-                    color_part = f" | colors: {colors}" if colors else ""
-                    lines.append(
-                        f"- {name} €{price:.2f} | sizes: {sizes}{color_part} | {stock_label} | {desc}"
-                    )
-
-                context = "\n".join(lines)
-                return f"Matching products from the shop:\n{context}"
-
+                return data.get("hits", [])
     except Exception as e:
-        logger.error(f"Typesense products search error: {e}")
-        return ""
+        logger.error(f"Typesense products fetch error: {e}")
+        return []
+
+
+async def search_products(query: str) -> tuple[str, list[str]]:
+    """Search products. Returns (formatted_context, list_of_ids)."""
+    hits = await _fetch_products_hits(query, stock_filter=True)
+    if not hits:
+        hits = await _fetch_products_hits(query, stock_filter=False)
+
+    if not hits:
+        return "", []
+
+    ids = [h["document"].get("id", "") for h in hits if h["document"].get("id")]
+    lines = []
+    for h in hits:
+        d = h["document"]
+        name = d.get("name", "")
+        price = d.get("price", 0)
+        stock = d.get("stock", 0)
+        sizes = ", ".join(d.get("sizes", [])) or "one size"
+        colors = ", ".join(d.get("colors", [])) or ""
+        desc = d.get("description", "")
+        stock_label = f"in stock: {stock}" if stock > 0 else "OUT OF STOCK"
+        color_part = f" | colors: {colors}" if colors else ""
+        lines.append(f"- {name} €{price:.2f} | sizes: {sizes}{color_part} | {stock_label} | {desc}")
+
+    return f"Matching products from the shop:\n" + "\n".join(lines), ids
 
 
 async def search_faq(query: str) -> str:
@@ -267,23 +257,24 @@ async def search_faq(query: str) -> str:
         return ""
 
 
-async def search_knowledge(query: str) -> str:
-    """Route query to products or FAQ based on intent, return formatted context."""
+async def search_knowledge(query: str) -> tuple[str, list[str]]:
+    """Route query to products or FAQ. Returns (context_text, highlighted_product_ids)."""
     intent = _classify_intent(query)
     logger.info(f"Query intent: {intent} | query: {query[:60]}")
 
     if intent == "product_search":
-        result = await search_products(query)
-        if not result:
-            result = await search_faq(query)
+        context, ids = await search_products(query)
+        if not context:
+            context = await search_faq(query)
+            ids = []
+        return context, ids
     else:
-        result = await search_faq(query)
-
-    return result
+        context = await search_faq(query)
+        return context, []
 
 
 class SalesManagerAgent(Agent):
-    def __init__(self, session_log: SessionLogger):
+    def __init__(self, session_log: SessionLogger, room):
         super().__init__(
             instructions=SYSTEM_BASE,
             llm=lk_openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
@@ -300,16 +291,24 @@ class SalesManagerAgent(Agent):
             )],
         )
         self.session_log = session_log
+        self._room = room
 
     async def on_user_turn_completed(self, turn_ctx, new_message):
         user_text = new_message.text_content or ""
         self.session_log.on_user_text(user_text)
-        context = await search_knowledge(user_text)
+        context, ids = await search_knowledge(user_text)
         if context:
             turn_ctx.add_message(
                 role="system",
                 content=f"[Shop context for this query]\n{context}"
             )
+        # Send highlighted product ids to the frontend
+        try:
+            await self._room.local_participant.set_attributes(
+                {"highlighted_ids": ",".join(ids)}
+            )
+        except Exception as e:
+            logger.warning(f"set_attributes failed: {e}")
         await super().on_user_turn_completed(turn_ctx, new_message)
 
 
@@ -324,7 +323,7 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     logger.info("Sales manager agent connected to LiveKit room")
 
-    agent = SalesManagerAgent(session_log)
+    agent = SalesManagerAgent(session_log, ctx.room)
     session = AgentSession(vad=silero.VAD.load())
 
     @session.on("metrics_collected")

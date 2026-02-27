@@ -54,10 +54,10 @@ const Agents = () => {
             />
 
             <LipsyncDemoCard
-              type="coming-soon"
-              title="Animated Character"
-              description="Stylised 2D cartoon character with expressive mouth shapes and hand-crafted animation curves."
-              placeholderIcon={<CartoonIcon />}
+              type="cat"
+              title="Sales Manager"
+              description="AI sales assistant that searches a live product catalogue and helps customers find exactly what they need."
+              agentName="aimediaflow-salesmanager"
             />
           </div>
         </section>
@@ -67,17 +67,5 @@ const Agents = () => {
     </div>
   );
 };
-
-// ── Placeholder icons for coming-soon cards ───────────────────────────────────
-const CartoonIcon = () => (
-  <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-    <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="2" />
-    <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="2" />
-    <path d="M8 8c.5-1 1.5-1.5 2-1.5" />
-    <path d="M16 8c-.5-1-1.5-1.5-2-1.5" />
-  </svg>
-);
 
 export default Agents;

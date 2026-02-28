@@ -20,6 +20,18 @@ TARGET_SAMPLE_RATE = 24000
 app = FastAPI()
 
 
+@app.on_event("startup")
+async def warmup():
+    """Send one request to piper on startup to load the ONNX model into memory."""
+    import asyncio
+    await asyncio.sleep(2)  # give piper time to be ready
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            await client.get(f"{PIPER_URL}/", params={"text": "Hello."})
+    except Exception:
+        pass  # best-effort, not critical
+
+
 class TTSRequest(BaseModel):
     model: str = "tts-1"
     input: str

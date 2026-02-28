@@ -67,6 +67,7 @@ class CoordinatorAgent(Agent):
             tts=lk_openai.TTS(
                 model="tts-1",
                 voice="alba",
+                response_format="pcm",
                 base_url="http://pocket-tts-wrapper:8880/v1",
                 api_key="not-needed",
             ),

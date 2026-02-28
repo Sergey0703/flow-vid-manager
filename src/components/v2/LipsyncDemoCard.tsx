@@ -156,7 +156,7 @@ function DemoCardShell({
               <div className="lipsync-card-status">
                 {state === 'connected' && <div className="lipsync-card-pulse" />}
                 <span style={{ color: state === 'connected' ? 'var(--v2-cyan)' : 'var(--v2-muted)', fontSize: '0.8rem', fontWeight: 600 }}>
-                  {state === 'connecting' ? 'Connecting…' : 'Aoife · AIMediaFlow'}
+                  {state === 'connecting' ? 'Connecting…' : `${title} · AIMediaFlow`}
                 </span>
                 {state === 'connected' && <span className="lipsync-card-timer">{fmt(duration)}</span>}
               </div>

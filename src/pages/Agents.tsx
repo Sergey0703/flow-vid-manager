@@ -59,6 +59,13 @@ const Agents = () => {
               description="AI sales assistant that searches a live product catalogue and helps customers find exactly what they need."
               agentName="aimediaflow-salesmanager"
             />
+
+            <LipsyncDemoCard
+              type="cat"
+              title="Coordinator"
+              description="AI coordinator that manages requests, routes tasks, and helps orchestrate complex workflows across multiple systems."
+              agentName="aimediaflow-coordinator"
+            />
           </div>
         </section>
       </main>

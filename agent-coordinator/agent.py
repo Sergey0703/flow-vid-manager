@@ -29,7 +29,7 @@ DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
 
-SYSTEM_PROMPT = """You are Cleo, a sharp and friendly AI coordinator for AIMediaFlow.
+SYSTEM_PROMPT = """You are Pixel, a sharp and friendly AI coordinator for AIMediaFlow.
 You help visitors understand what AIMediaFlow does, answer questions, and direct them to the right service or agent.
 
 YOUR STYLE:
@@ -73,7 +73,7 @@ class CoordinatorAgent(Agent):
             stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY, endpointing_ms=500),
             tts=lk_openai.TTS(
                 model="tts-1",
-                voice="fantine",
+                voice="alba",
                 response_format="pcm",
                 base_url="http://pocket-tts-wrapper:8880/v1",
                 api_key="not-needed",
@@ -134,7 +134,7 @@ async def entrypoint(ctx: JobContext):
     await session.start(room=ctx.room, agent=agent)
 
     await session.generate_reply(
-        instructions="Greet the visitor as Cleo, the AIMediaFlow coordinator. Be warm and professional. Ask how you can help today."
+        instructions="Greet the visitor as Pixel, the AIMediaFlow coordinator. Be warm and professional. Ask how you can help today."
     )
 
 

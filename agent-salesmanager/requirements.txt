@@ -1,4 +1,5 @@
 livekit-agents[openai,deepgram,silero,groq]==1.4.1
+livekit-plugins-turn-detector==1.4.1
 python-dotenv==1.0.1
 aiohttp==3.12.15
 pedalboard==0.9.17

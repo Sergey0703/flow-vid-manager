@@ -66,8 +66,8 @@ class CoordinatorAgent(Agent):
             stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY, endpointing_ms=500),
             tts=lk_openai.TTS(
                 model="tts-1",
-                voice="af_jessica",
-                base_url="http://kokoro-tts:8880/v1",
+                voice="alba",
+                base_url="http://pocket-tts-wrapper:8880/v1",
                 api_key="not-needed",
             ),
             tools=[

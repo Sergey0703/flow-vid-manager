@@ -66,6 +66,13 @@ const Agents = () => {
               description="AI coordinator that manages requests, routes tasks, and helps orchestrate complex workflows across multiple systems."
               agentName="aimediaflow-coordinator"
             />
+
+            <LipsyncDemoCard
+              type="girl"
+              title="Secretary"
+              description="AI secretary powered by Piper TTS — ultra-fast responses with a natural British voice. Ask about AIMediaFlow services."
+              agentName="aimediaflow-secretary"
+            />
           </div>
         </section>
       </main>

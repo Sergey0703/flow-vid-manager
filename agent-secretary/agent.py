@@ -1,5 +1,6 @@
 import logging
 import os
+import aiohttp
 
 from dotenv import load_dotenv
 
@@ -11,10 +12,9 @@ from livekit.agents import (
     JobContext,
     WorkerOptions,
     cli,
-    llm,
 )
-from livekit.agents.beta.tools import EndCallTool
 from livekit.plugins import openai as lk_openai, deepgram, silero
+from livekit.plugins import groq as lk_groq
 from livekit.plugins.turn_detector.english import EnglishModel
 from session_logger import SessionLogger
 
@@ -23,35 +23,89 @@ logger = logging.getLogger("aimediaflow-secretary")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
 
-SYSTEM_PROMPT = """You are Sophie, a professional AI secretary for AIMediaFlow.
-You help visitors understand what AIMediaFlow does, answer questions, and direct them to the right service or agent.
+SYSTEM_BASE = """You are Sophie, a friendly AI secretary for AIMediaFlow — an AI agency based in Kerry, Ireland.
+Your job is to talk with visitors to the aimediaflow.net website, answer their questions,
+and help them understand how AIMediaFlow can help their business.
+
+ABOUT AIMEDIAFLOW:
+- AI agency born on the Wild Atlantic Way in Kerry, Ireland
+- Services: AI phone assistants, website chatbots, business automation, AI marketing videos
+- Serving businesses in Kerry, Killarney, and across Ireland
 
 YOUR STYLE:
-- Professional but warm — confident, clear, never robotic
-- Keep replies VERY SHORT. Aim for 10-15 words. Hard limit: 20 words maximum.
-- One or two short sentences maximum.
-- Speak in plain natural conversational English
+- Professional but warm and conversational
+- Speak to business pain points, not technology features
+- Keep replies SHORT. Aim for 10 words. Never exceed 15 words.
+- If you need to ask something, ask only — no preamble
+- Never explain, never list — one punchy sentence only
+- Always end with a natural next step or question
+- Be warm, friendly, and slightly Irish in tone
 
 CRITICAL VOICE RULES:
-1. NEVER use bold text or markdown formatting
+1. NEVER use bold text (**) or markdown formatting
 2. NEVER use headers or bullet points
 3. Speak in plain natural conversational English
 4. No lists — speak in flowing sentences
-5. SHORT replies only.
+5. SHORT replies only. 10 words ideal, 15 words maximum.
 
-ABOUT AIMEDIAFLOW:
-- AI voice agents for businesses: sales assistants, customer support, coordinators
-- Real-time lipsync avatars powered by LiveKit, Deepgram STT, Kokoro TTS
-- Typesense-powered product search for e-commerce
-- Based in Kerry, Ireland. Contact: info@aimediaflow.net
+BOOKING & CONTACT RULES — follow these strictly, no exceptions:
+- You CANNOT send messages, emails, or WhatsApp — you are a voice AI, not a messaging system
+- You CANNOT collect names, phone numbers, emails, or any personal details — never ask for them
+- NEVER say "I'll send you a message", "I'll pass that on", "I'll connect you", or anything implying you can take action outside this conversation
+- When the visitor wants to book a call, get a quote, or get in touch: always say the booking form is just below on this page — "Just scroll down and hit the Book a Demo button"
+- The booking form URL is: aimediaflow.net/#contact
+- Never suggest email or WhatsApp as a way to book — the form is the only action to direct them to
+
+RULES:
+- You are an AI assistant — never claim to be a human or a team member
+- Never invent specific prices, timelines, or client names
+- If the knowledge base doesn't cover their question, say it can be covered on the discovery call — and direct them to the booking form
 
 ENDING THE CALL:
-When the user says goodbye, bye, thanks bye, that is all, or clearly indicates they are done,
-call the end_call tool immediately — do NOT say anything before calling it."""
+When the user says goodbye, bye, thanks bye, that's all, or clearly indicates they are done,
+say a brief warm farewell like "Bye! Have a great day!" and nothing else."""
+
+
+async def search_knowledge(query: str) -> str:
+    if not PINECONE_API_KEY or not PINECONE_INDEX_HOST:
+        return ""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{PINECONE_INDEX_HOST}/records/namespaces/__default__/search",
+                headers={
+                    "Api-Key": PINECONE_API_KEY,
+                    "Content-Type": "application/json",
+                    "X-Pinecone-Api-Version": "2025-10",
+                },
+                json={
+                    "query": {"inputs": {"text": query}, "top_k": 4},
+                    "fields": ["text", "category"],
+                },
+            ) as res:
+                if res.status != 200:
+                    return ""
+                data = await res.json()
+                hits = data.get("result", {}).get("hits", [])
+                relevant = [
+                    h["fields"]["text"]
+                    for h in hits
+                    if (h.get("_score", 0) >= 0.2 and h.get("fields", {}).get("text"))
+                ]
+                if relevant:
+                    context = "\n".join(f"{i+1}. {t}" for i, t in enumerate(relevant))
+                    return f"Relevant knowledge from our knowledge base:\n{context}"
+                return ""
+    except Exception as e:
+        logger.error(f"Pinecone search error: {e}")
+        return ""
 
 
 # ── Agent ──────────────────────────────────────────────────────────────────────
@@ -59,9 +113,13 @@ call the end_call tool immediately — do NOT say anything before calling it."""
 class SecretaryAgent(Agent):
     def __init__(self, session_log: SessionLogger):
         super().__init__(
-            instructions=SYSTEM_PROMPT,
-            llm=lk_openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
-            stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY, endpointing_ms=500),
+            instructions=SYSTEM_BASE,
+            llm=lk_groq.LLM(model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=GROQ_API_KEY),
+            stt=lk_openai.STT(
+                model="parakeet-tdt-0.6b-v3",
+                base_url="http://parakeet-stt:5092/v1",
+                api_key="not-needed",
+            ),
             tts=lk_openai.TTS(
                 model="tts-1",
                 voice="default",
@@ -69,12 +127,7 @@ class SecretaryAgent(Agent):
                 base_url="http://piper-wrapper:8881/v1",
                 api_key="not-needed",
             ),
-            tools=[
-                EndCallTool(
-                    end_instructions="Say a short friendly farewell, like: Bye! Talk soon!",
-                    delete_room=True,
-                ),
-            ],
+            tools=[],
         )
         self.session_log = session_log
 
@@ -82,6 +135,13 @@ class SecretaryAgent(Agent):
         user_text = new_message.text_content or ""
         logger.info(f"User said: {repr(user_text)}")
         self.session_log.on_user_text(user_text)
+
+        context = await search_knowledge(user_text)
+        if context:
+            turn_ctx.add_message(
+                role="system",
+                content=f"[Knowledge base context for this query]\n{context}"
+            )
         await super().on_user_turn_completed(turn_ctx, new_message)
 
 
@@ -125,7 +185,7 @@ async def entrypoint(ctx: JobContext):
     await session.start(room=ctx.room, agent=agent)
 
     await session.generate_reply(
-        instructions="Greet the visitor as Sophie, the AIMediaFlow secretary. Be warm and professional. Ask how you can help today."
+        instructions="Greet the visitor warmly as Sophie, the AIMediaFlow secretary. Ask how you can help them today."
     )
 
 

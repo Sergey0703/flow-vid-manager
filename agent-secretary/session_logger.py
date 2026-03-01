@@ -111,11 +111,29 @@ class SessionLogger:
             lines.append("")
         return "\n".join(lines)
 
+    def save_to_file(self, report: str):
+        """Append session report to /var/log/agent-sessions.log"""
+        try:
+            log_dir = "/var/log/agent-sessions"
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = os.path.join(log_dir, f"{AGENT_NAME}.log")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open(log_path, "a") as f:
+                f.write(f"\n{'='*60}\n")
+                f.write(f"Session: {timestamp}\n")
+                f.write(f"{'='*60}\n")
+                f.write(report)
+                f.write("\n")
+            logger.info(f"Session report saved to {log_path}")
+        except Exception as e:
+            logger.error(f"Failed to save session log: {e}")
+
     async def send_email(self):
         report = self.get_report()
         if not report:
             logger.info("No turns to report, skipping email")
             return
+        self.save_to_file(report)
         if not BREVO_API_KEY:
             logger.warning("BREVO_API_KEY not set, printing report:")
             print(report)

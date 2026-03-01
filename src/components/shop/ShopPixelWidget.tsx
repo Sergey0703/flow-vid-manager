@@ -130,42 +130,38 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
 
   return (
     <>
-      {/* ── Desktop: floating cat ────────────────────────────────────────── */}
-      <div className="shop-floating-cat">
-        {/* Cat avatar — transparent bg */}
-        <div className="shop-floating-cat__avatar">
+      {/* ── Header inline widget ─────────────────────────────────────────── */}
+      <div className="shop-header-widget">
+        {/* Cat avatar */}
+        <div className="shop-header-widget__avatar">
           <CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />
         </div>
 
-        {/* Status line when connected */}
-        {state === 'connected' && (
-          <div className="shop-floating-cat__status">
-            <span className="shop-floating-cat__pulse" />
-            <span className="shop-floating-cat__timer">{fmt(duration)}</span>
-            <button className="shop-floating-cat__end" onClick={disconnect} title="End call">✕</button>
-          </div>
-        )}
-        {state === 'connecting' && (
-          <div className="shop-floating-cat__status">
-            <span className="shop-floating-cat__connecting">connecting…</span>
-          </div>
-        )}
-
-        {/* Cart badge */}
-        {cartCount > 0 && (
-          <div className="shop-floating-cat__cart">
-            <CartIcon />
-            <span className="shop-floating-cat__cart-count">{cartCount}</span>
-          </div>
-        )}
-
-        {/* Ask Pixel button — only when idle */}
-        {(state === 'idle' || state === 'error') && (
-          <button className="shop-floating-cat__cta" onClick={connect}>
-            <MicIcon /> Ask Pixel
-          </button>
-        )}
-        {state === 'error' && <span className="shop-floating-cat__error">{error}</span>}
+        {/* Right side: action + status */}
+        <div className="shop-header-widget__controls">
+          {cartCount > 0 && (
+            <div className="shop-header-widget__cart">
+              <CartIcon />
+              <span>{cartCount}</span>
+            </div>
+          )}
+          {(state === 'idle' || state === 'error') && (
+            <button className="shop-header-widget__cta" onClick={connect}>
+              <MicIcon /> Ask Pixel
+            </button>
+          )}
+          {state === 'connecting' && (
+            <span className="shop-header-widget__status">connecting…</span>
+          )}
+          {state === 'connected' && (
+            <div className="shop-header-widget__live">
+              <span className="shop-header-widget__pulse" />
+              <span className="shop-header-widget__timer">{fmt(duration)}</span>
+              <button className="shop-header-widget__end" onClick={disconnect} title="End call">✕</button>
+            </div>
+          )}
+          {state === 'error' && <span className="shop-header-widget__error">{error}</span>}
+        </div>
       </div>
 
       {/* ── Mobile tab bar + sheet ───────────────────────────────────────── */}

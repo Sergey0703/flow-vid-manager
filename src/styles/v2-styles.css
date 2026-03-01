@@ -4915,3 +4915,113 @@
     align-items: center;
     gap: 0.4rem;
 }
+
+/* ── Header inline widget ────────────────────────────────────────────────── */
+.v2-scope .shop-header-widget {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.v2-scope .shop-header-widget__avatar {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+}
+
+.v2-scope .shop-header-widget__avatar .cat-avatar-wrap {
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+}
+
+.v2-scope .shop-header-widget__avatar .cat-avatar-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.v2-scope .shop-header-widget__avatar .cat-avatar-label {
+    display: none;
+}
+
+.v2-scope .shop-header-widget__controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.v2-scope .shop-header-widget__cta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--v2-cyan);
+    color: #000;
+    border: none;
+    border-radius: 20px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.v2-scope .shop-header-widget__cta:hover { opacity: 0.85; }
+
+.v2-scope .shop-header-widget__live {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.v2-scope .shop-header-widget__pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 5px #4ade80;
+    animation: hudPulse 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.v2-scope .shop-header-widget__timer {
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--v2-text);
+}
+
+.v2-scope .shop-header-widget__end {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--v2-border);
+    color: var(--v2-text);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.v2-scope .shop-header-widget__end:hover { background: rgba(248,113,113,0.2); color: #f87171; }
+
+.v2-scope .shop-header-widget__cart {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--v2-cyan);
+    color: #000;
+    border-radius: 20px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.v2-scope .shop-header-widget__status {
+    font-size: 0.72rem;
+    color: var(--v2-muted);
+}
+
+.v2-scope .shop-header-widget__error {
+    font-size: 0.65rem;
+    color: #f87171;
+}

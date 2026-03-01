@@ -27,6 +27,11 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function Shop() {
   const [isLight, setIsLight] = useState(() => localStorage.getItem(THEME_KEY) === 'light');
+  const toggleTheme = () => setIsLight(prev => {
+    const next = !prev;
+    localStorage.setItem(THEME_KEY, next ? 'light' : 'dark');
+    return next;
+  });
   const [activeCategory, setActiveCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +101,9 @@ export default function Shop() {
         </Link>
         <span className="shop-title">PIXEL'S SHOP</span>
         <div className="shop-header-right">
-          <span className="shop-demo-badge">AI Demo</span>
+          <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+            {isLight ? <MoonIcon /> : <SunIcon />}
+          </button>
           <ShopPixelWidget
             onRecommend={handleRecommend}
             onExpand={handleExpand}
@@ -336,5 +343,19 @@ function ColorDot({ color }: { color: string }) {
 const BackIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
+  </svg>
+);
+const SunIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="12" cy="12" r="5" />
+    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+  </svg>
+);
+const MoonIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
   </svg>
 );

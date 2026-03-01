@@ -12,8 +12,10 @@ from livekit.agents import (
     WorkerOptions,
     cli,
 )
-from livekit.agents.beta.tools import EndCallTool
+from livekit import api as lk_api
 from livekit.plugins import openai, deepgram, silero
+from livekit.plugins import groq as lk_groq
+from livekit.plugins.turn_detector.english import EnglishModel
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -21,8 +23,12 @@ logger = logging.getLogger("aimediaflow-agent")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
+LIVEKIT_URL = os.getenv("LIVEKIT_URL")
+LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
+LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
@@ -67,7 +73,23 @@ RULES:
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that's all, or clearly indicates they are done,
-say a brief warm farewell and immediately call the end_call tool. Do not continue talking after calling it."""
+say a brief warm farewell like "It was lovely chatting, take care now!" and nothing else."""
+
+
+FAREWELL_WORDS = {"bye", "goodbye", "that's all", "that is all", "thanks bye", "thank you bye", "see you", "talk later", "take care", "have a good", "have a great", "cheers"}
+
+
+async def delete_room(room_name: str):
+    """Delete the LiveKit room to cleanly end the session."""
+    if not LIVEKIT_URL or not LIVEKIT_API_KEY or not LIVEKIT_API_SECRET:
+        logger.warning("LiveKit credentials not set, cannot delete room")
+        return
+    try:
+        async with lk_api.LiveKitAPI(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) as lkapi:
+            await lkapi.room.delete_room(lk_api.DeleteRoomRequest(room=room_name))
+            logger.info(f"Room {room_name} deleted")
+    except Exception as e:
+        logger.error(f"Failed to delete room: {e}")
 
 
 async def search_knowledge(query: str) -> str:
@@ -106,23 +128,34 @@ async def search_knowledge(query: str) -> str:
 
 
 class AimediaflowAgent(Agent):
-    def __init__(self, session_log: SessionLogger):
+    def __init__(self, session_log: SessionLogger, ctx: JobContext):
         super().__init__(
             instructions=SYSTEM_BASE,
-            llm=openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
-            stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY),
-            tts=openai.TTS(model="tts-1", voice="bf_alice", base_url="http://kokoro-tts:8880/v1", api_key="not-needed"),
-            tools=[EndCallTool(
-                end_instructions="Say a warm, brief farewell — like 'It was lovely chatting, take care now!'",
-                delete_room=True,
-            )],
+            llm=lk_groq.LLM(model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=GROQ_API_KEY),
+            stt=openai.STT(
+                model="parakeet-tdt-0.6b-v3",
+                base_url="http://parakeet-stt:5092/v1",
+                api_key="not-needed",
+            ),
+            tts=openai.TTS(
+                model="tts-1",
+                voice="default",
+                response_format="pcm",
+                base_url="http://piper-wrapper:8881/v1",
+                api_key="not-needed",
+            ),
+            tools=[],
         )
         self.session_log = session_log
+        self._ctx = ctx
 
     async def on_user_turn_completed(self, turn_ctx, new_message):
         user_text = new_message.text_content or ""
-        session_log = self.session_log
-        session_log.on_user_text(user_text)
+        logger.info(f"User said: {repr(user_text)}")
+        self.session_log.on_user_text(user_text)
+
+        lower = user_text.lower().strip().rstrip(".,!")
+        is_farewell = any(w in lower for w in FAREWELL_WORDS)
 
         context = await search_knowledge(user_text)
         if context:
@@ -131,6 +164,15 @@ class AimediaflowAgent(Agent):
                 content=f"[Knowledge base context for this query]\n{context}"
             )
         await super().on_user_turn_completed(turn_ctx, new_message)
+
+        if is_farewell:
+            import asyncio
+            logger.info(f"Farewell detected in: {repr(lower)} — scheduling room deletion")
+            room_name = self._ctx.room.name
+            async def delayed_delete():
+                await asyncio.sleep(4)
+                await delete_room(room_name)
+            asyncio.ensure_future(delayed_delete())
 
 
 async def entrypoint(ctx: JobContext):
@@ -145,8 +187,13 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     logger.info("Agent connected to LiveKit room")
 
-    agent = AimediaflowAgent(session_log)
-    session = AgentSession(vad=silero.VAD.load())
+    agent = AimediaflowAgent(session_log, ctx)
+    session = AgentSession(
+        vad=silero.VAD.load(),
+        turn_detection=EnglishModel(),
+        min_endpointing_delay=0.5,
+        max_endpointing_delay=4.0,
+    )
 
     @session.on("metrics_collected")
     def on_metrics(ev):

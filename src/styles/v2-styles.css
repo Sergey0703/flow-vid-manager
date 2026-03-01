@@ -4675,7 +4675,7 @@
 .v2-scope .shop-hud-avatar-wrap {
     position: relative;
     flex: 1;
-    background: linear-gradient(160deg, rgba(8, 145, 178, 0.08) 0%, rgba(168, 85, 247, 0.06) 100%);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;

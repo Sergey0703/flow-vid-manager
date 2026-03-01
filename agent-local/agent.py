@@ -128,8 +128,9 @@ async def search_knowledge(query: str) -> str:
         return ""
 
 
-SILENCE_PROMPT_DELAY = 30   # seconds of silence before agent checks in
+SILENCE_PROMPT_DELAY = 40   # seconds of true idle before agent checks in
 SILENCE_END_DELAY    = 25   # further seconds with no reply before goodbye
+TTS_SPEAK_BUFFER     = 8    # extra seconds after TTS starts to ensure playback finishes
 SESSION_WARN_AT      = 150  # warn user at 2m30s (30s before 3-min hard limit)
 
 
@@ -157,6 +158,7 @@ class AimediaflowAgent(Agent):
         self._agent_session: AgentSession | None = None
         self._silence_task: asyncio.Task | None = None
         self._ending = False
+        self._tts_started_at: float = 0.0   # monotonic time when last TTS started
 
     def _reset_silence_watchdog(self):
         """Cancel existing silence timer and start a fresh one."""
@@ -164,13 +166,32 @@ class AimediaflowAgent(Agent):
             self._silence_task.cancel()
         self._silence_task = asyncio.ensure_future(self._silence_watchdog())
 
+    def on_tts_started(self):
+        """Called when TTS begins — resets watchdog so idle timer starts from now."""
+        import time
+        self._tts_started_at = time.monotonic()
+        self._reset_silence_watchdog()
+        logger.debug("Silence watchdog reset (TTS started)")
+
     async def _silence_watchdog(self):
-        """After SILENCE_PROMPT_DELAY seconds of no user input, check in.
+        """Wait SILENCE_PROMPT_DELAY seconds of true idle (after TTS finishes), then check in.
         If still no reply after SILENCE_END_DELAY more seconds, say goodbye."""
+        # First wait for the full idle period
         try:
             await asyncio.sleep(SILENCE_PROMPT_DELAY)
         except asyncio.CancelledError:
             return
+
+        # Extra guard: if TTS started recently, wait until it's likely finished
+        import time
+        elapsed_since_tts = time.monotonic() - self._tts_started_at
+        remaining_buffer = TTS_SPEAK_BUFFER - elapsed_since_tts
+        if remaining_buffer > 0:
+            logger.debug(f"Silence watchdog: waiting {remaining_buffer:.1f}s more for TTS buffer")
+            try:
+                await asyncio.sleep(remaining_buffer)
+            except asyncio.CancelledError:
+                return
 
         if self._ending or self._agent_session is None:
             return
@@ -264,6 +285,9 @@ async def entrypoint(ctx: JobContext):
             session_log.on_llm_metrics(m.duration)
         elif m.type == "tts_metrics":
             session_log.on_tts_metrics(m.ttfb)
+            # TTS started playing — reset silence watchdog so idle timer starts NOW
+            if not agent._ending:
+                agent.on_tts_started()
 
     @session.on("conversation_item_added")
     def on_item_added(event):
@@ -272,9 +296,6 @@ async def entrypoint(ctx: JobContext):
             content = getattr(item, "text_content", "") or ""
             if content:
                 session_log.on_agent_text(content)
-                # Reset silence watchdog when agent responds — timer starts after agent finishes
-                if not agent._ending:
-                    agent._reset_silence_watchdog()
 
     await session.start(room=ctx.room, agent=agent)
 

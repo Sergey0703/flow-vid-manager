@@ -3951,13 +3951,12 @@
 /* ── Main / grid ────────────────────────────────────────────────────────── */
 .v2-scope .shop-main {
     padding: 1.5rem;
-    padding-right: calc(1.5rem + 300px); /* make room for floating widget */
     min-height: calc(100vh - 120px);
 }
 
 .v2-scope .shop-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1.25rem;
 }
 
@@ -4168,30 +4167,134 @@
     cursor: not-allowed;
 }
 
-/* ── Floating Pixel widget (desktop) ────────────────────────────────────── */
-.v2-scope .shop-pixel-widget {
+/* ── Floating cat (desktop) ──────────────────────────────────────────────── */
+.v2-scope .shop-floating-cat {
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    width: 280px;
-    background: var(--v2-card-bg);
-    border: 1px solid var(--v2-border);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    z-index: 100;
+    bottom: 1rem;
+    right: 1rem;
+    width: 160px;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    z-index: 100;
+    pointer-events: none; /* let clicks pass through to page */
 }
 
-.v2-scope .shop-pixel-avatar-wrap {
-    height: 220px;
-    background: linear-gradient(160deg, rgba(8, 145, 178, 0.08) 0%, rgba(168, 85, 247, 0.06) 100%);
+.v2-scope .shop-floating-cat > * {
+    pointer-events: auto;
+}
+
+.v2-scope .shop-floating-cat__avatar {
+    width: 160px;
+    height: 160px;
+    position: relative;
+}
+
+/* Make canvas fill the avatar div, transparent bg */
+.v2-scope .shop-floating-cat__avatar .cat-avatar-wrap {
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+}
+
+.v2-scope .shop-floating-cat__avatar .cat-avatar-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.v2-scope .shop-floating-cat__avatar .cat-avatar-label {
+    display: none;
+}
+
+.v2-scope .shop-floating-cat__status {
     display: flex;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    gap: 0.4rem;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    border-radius: 20px;
+    padding: 0.2rem 0.6rem;
+    margin-top: -0.25rem;
+    margin-bottom: 0.4rem;
 }
+
+.v2-scope .shop-floating-cat__pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 5px #4ade80;
+    animation: hudPulse 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.v2-scope .shop-floating-cat__timer {
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: #fff;
+}
+
+.v2-scope .shop-floating-cat__connecting {
+    font-size: 0.7rem;
+    color: var(--v2-muted);
+}
+
+.v2-scope .shop-floating-cat__end {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 0;
+    line-height: 1;
+}
+.v2-scope .shop-floating-cat__end:hover { color: #f87171; }
+
+.v2-scope .shop-floating-cat__cart {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--v2-cyan);
+    color: #000;
+    border-radius: 20px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+}
+
+.v2-scope .shop-floating-cat__cart-count {
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.v2-scope .shop-floating-cat__cta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--v2-cyan);
+    color: #000;
+    border: none;
+    border-radius: 20px;
+    padding: 0.45rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.v2-scope .shop-floating-cat__cta:hover { opacity: 0.85; }
+
+.v2-scope .shop-floating-cat__error {
+    font-size: 0.65rem;
+    color: #f87171;
+    text-align: center;
+    margin-top: 0.25rem;
+}
+
+/* old widget — hidden on desktop, keep for mobile reference */
+.v2-scope .shop-pixel-widget { display: none; }
+.v2-scope .shop-pixel-avatar-wrap { display: none; }
 
 .v2-scope .shop-pixel-controls {
     padding: 0.75rem;
@@ -4332,8 +4435,7 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1200px) {
-    .v2-scope .shop-grid { grid-template-columns: repeat(3, 1fr); }
-    .v2-scope .shop-main { padding-right: calc(1.5rem + 300px); }
+    .v2-scope .shop-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 @media (max-width: 900px) {
@@ -4342,11 +4444,11 @@
 
 @media (max-width: 768px) {
     /* Hide desktop widget, show mobile tab */
-    .v2-scope .shop-pixel-widget { display: none; }
+    .v2-scope .shop-floating-cat { display: none; }
     .v2-scope .shop-pixel-tab    { display: flex; }
     .v2-scope .shop-pixel-sheet  { display: flex; }
     .v2-scope .shop-main {
-        padding-right: 1rem;
+        padding: 1rem;
         padding-bottom: 80px; /* space for tab bar */
     }
     .v2-scope .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }

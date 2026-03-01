@@ -127,105 +127,45 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
 
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
-  const statusText = agentThinkingState === 'thinking'  ? 'Thinking'
-                   : agentThinkingState === 'speaking'  ? 'Speaking'
-                   : agentThinkingState === 'listening' ? 'Listening'
-                   : state === 'connected'              ? 'Ready'
-                   : state === 'connecting'             ? 'Init…'
-                   : 'Standby';
-  const statusKey = agentThinkingState ?? (state === 'connected' ? 'ready' : 'off');
 
   return (
     <>
-      {/* ── Desktop HUD widget ───────────────────────────────────────────── */}
-      <div className="shop-pixel-widget">
-
-        {/* Top bar */}
-        <div className="shop-hud-topbar">
-          <span className="shop-hud-topbar-dot" />
-          <span className="shop-hud-topbar-title">PIXEL · AI STYLIST</span>
-          <span className="shop-hud-topbar-sys">
-            {state === 'connected' ? 'SYS:ONLINE' : state === 'connecting' ? 'SYS:INIT…' : 'SYS:STANDBY'}
-          </span>
+      {/* ── Desktop: floating cat ────────────────────────────────────────── */}
+      <div className="shop-floating-cat">
+        {/* Cat avatar — transparent bg */}
+        <div className="shop-floating-cat__avatar">
+          <CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />
         </div>
 
-        {/* Body: avatar + side panel */}
-        <div className="shop-hud-body">
-
-          {/* Avatar with corner brackets */}
-          <div className="shop-hud-avatar-wrap">
-            <CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />
-            <span className="shop-hud-corner shop-hud-corner--tl" />
-            <span className="shop-hud-corner shop-hud-corner--tr" />
-            <span className="shop-hud-corner shop-hud-corner--bl" />
-            <span className="shop-hud-corner shop-hud-corner--br" />
+        {/* Status line when connected */}
+        {state === 'connected' && (
+          <div className="shop-floating-cat__status">
+            <span className="shop-floating-cat__pulse" />
+            <span className="shop-floating-cat__timer">{fmt(duration)}</span>
+            <button className="shop-floating-cat__end" onClick={disconnect} title="End call">✕</button>
           </div>
-
-          {/* Side panel */}
-          <div className="shop-hud-side">
-            <div className="shop-hud-section">
-              <span className="shop-hud-label">AGENT</span>
-              <span className="shop-hud-value">Pixel</span>
-            </div>
-            <div className="shop-hud-divider" />
-            <div className="shop-hud-section">
-              <span className="shop-hud-label">STATUS</span>
-              <div className={`shop-hud-state shop-hud-state--${statusKey}`}>
-                <span className="shop-hud-state-dot" />
-                <span className="shop-hud-state-text">{statusText}</span>
-              </div>
-            </div>
-            {state === 'connected' && <>
-              <div className="shop-hud-divider" />
-              <div className="shop-hud-section">
-                <span className="shop-hud-label">SESSION</span>
-                <span className="shop-hud-value shop-hud-mono">{fmt(duration)}</span>
-              </div>
-            </>}
-            <div className="shop-hud-divider" />
-            <div className="shop-hud-section">
-              <span className="shop-hud-label">MODEL</span>
-              <span className="shop-hud-value">v1.0</span>
-            </div>
-            <div className="shop-hud-divider" />
-            <div className="shop-hud-section">
-              <span className="shop-hud-label">CART</span>
-              <div className="shop-hud-cart-row">
-                <CartIcon />
-                <span className={`shop-hud-value ${cartCount > 0 ? 'shop-hud-ok' : 'shop-hud-muted'}`}>
-                  {cartCount > 0 ? `${cartCount} item${cartCount > 1 ? 's' : ''}` : 'Empty'}
-                </span>
-              </div>
-            </div>
-            {lastRecommended && <>
-              <div className="shop-hud-divider" />
-              <div className="shop-hud-section">
-                <span className="shop-hud-label">LAST</span>
-                <span className="shop-hud-value shop-hud-last-name">{lastRecommended.name}</span>
-              </div>
-            </>}
+        )}
+        {state === 'connecting' && (
+          <div className="shop-floating-cat__status">
+            <span className="shop-floating-cat__connecting">connecting…</span>
           </div>
-        </div>
+        )}
 
-        {/* Footer: action button */}
-        <div className="shop-hud-footer">
-          {(state === 'idle' || state === 'error') && (
-            <>
-              <button className="shop-pixel-btn shop-pixel-btn--start" onClick={connect}>
-                <MicIcon /> Ask Pixel
-              </button>
-              {state === 'error' && <span className="shop-pixel-error">{error}</span>}
-            </>
-          )}
-          {state === 'connecting' && (
-            <span className="shop-pixel-status">Connecting…</span>
-          )}
-          {state === 'connected' && (
-            <button className="shop-pixel-btn shop-pixel-btn--end" onClick={disconnect}>
-              <PhoneOffIcon /> End call
-            </button>
-          )}
-        </div>
+        {/* Cart badge */}
+        {cartCount > 0 && (
+          <div className="shop-floating-cat__cart">
+            <CartIcon />
+            <span className="shop-floating-cat__cart-count">{cartCount}</span>
+          </div>
+        )}
+
+        {/* Ask Pixel button — only when idle */}
+        {(state === 'idle' || state === 'error') && (
+          <button className="shop-floating-cat__cta" onClick={connect}>
+            <MicIcon /> Ask Pixel
+          </button>
+        )}
+        {state === 'error' && <span className="shop-floating-cat__error">{error}</span>}
       </div>
 
       {/* ── Mobile tab bar + sheet ───────────────────────────────────────── */}
@@ -260,7 +200,7 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
 }
 
 const MicIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
     <line x1="12" y1="19" x2="12" y2="23" />
@@ -277,7 +217,7 @@ const PhoneOffIcon = () => (
 );
 
 const CartIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
   </svg>

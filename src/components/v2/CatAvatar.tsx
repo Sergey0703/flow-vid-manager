@@ -91,6 +91,9 @@ const CatAvatar = ({ agentStream, agentState, agentThinkingState }: CatAvatarPro
         frameHeight: FRAME_H,
         visemeMap: VISEME_MAP,
         columns: TOTAL_COLS,
+        scale: 1.8,
+        offsetX: -410,
+        offsetY: -80,
       });
 
       engine.on('viseme', (frame: any) => {

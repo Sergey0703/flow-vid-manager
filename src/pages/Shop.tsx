@@ -60,6 +60,12 @@ export default function Shop() {
 
   const handleExpand = useCallback((id: string | null) => {
     setExpandedId(id);
+    if (id) {
+      setTimeout(() => {
+        const el = document.getElementById(`shop-card-${id}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
   }, []);
 
   // Sort: recommended products first (in agent's order), rest after

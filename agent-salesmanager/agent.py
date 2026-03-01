@@ -16,23 +16,23 @@ from livekit.agents import (
     llm,
 )
 from livekit.agents.beta.tools import EndCallTool
-from livekit.plugins import openai as lk_openai, deepgram, silero
+from livekit.plugins import openai as lk_openai, silero
+from livekit.plugins import groq as lk_groq
 from livekit.plugins.turn_detector.english import EnglishModel
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("aimediaflow-salesmanager")
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TYPESENSE_HOST = os.getenv("TYPESENSE_HOST", "typesense")
 TYPESENSE_PORT = os.getenv("TYPESENSE_PORT", "8108")
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "typesense-local-key-2025")
 
 TYPESENSE_BASE = f"http://{TYPESENSE_HOST}:{TYPESENSE_PORT}"
 
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY is required")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY is required")
 
 SYSTEM_BASE_TEMPLATE = """You are Pixel, a funny, cute AI kitten assistant for a streetwear clothing shop.
 You help customers find the perfect items — {categories_list}, and more.
@@ -228,12 +228,17 @@ class SalesManagerAgent(Agent):
         )
         super().__init__(
             instructions=instructions,
-            llm=lk_openai.LLM(model="gpt-4o-mini", api_key=OPENAI_API_KEY),
-            stt=deepgram.STT(model="nova-2-general", api_key=DEEPGRAM_API_KEY, endpointing_ms=500),
+            llm=lk_groq.LLM(model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=GROQ_API_KEY),
+            stt=lk_openai.STT(
+                model="parakeet-tdt-0.6b-v3",
+                base_url="http://parakeet-stt:5092/v1",
+                api_key="not-needed",
+            ),
             tts=lk_openai.TTS(
                 model="tts-1",
-                voice="am_puck",
-                base_url="http://kokoro-tts:8880/v1",
+                voice="default",
+                response_format="pcm",
+                base_url="http://piper-wrapper-ryan:8881/v1",
                 api_key="not-needed",
             ),
             tools=[

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import CatAvatar from '../v2/CatAvatar';
+import type { Product } from '../../lib/shopApi';
 
 type DemoState = 'idle' | 'connecting' | 'connected' | 'error';
 type AgentThinkingState = 'listening' | 'thinking' | 'speaking' | null;
@@ -9,9 +10,11 @@ const MAX_CALL_MS = 3 * 60_000;
 interface ShopPixelWidgetProps {
   onRecommend: (ids: string[]) => void;
   onExpand: (id: string | null) => void;
+  lastRecommended: Product | null;
+  cartCount: number;
 }
 
-export default function ShopPixelWidget({ onRecommend, onExpand }: ShopPixelWidgetProps) {
+export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended, cartCount }: ShopPixelWidgetProps) {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
@@ -81,22 +84,18 @@ export default function ShopPixelWidget({ onRecommend, onExpand }: ShopPixelWidg
       room.on(RoomEvent.Disconnected, () => { disconnect(); });
 
       room.on(RoomEvent.ParticipantAttributesChanged, (attrs: Record<string, string>) => {
-        // Agent thinking state
         const s = attrs['lk.agent.state'] ?? attrs['agent_state'] ?? attrs['livekit.agent_state'];
         if (s) setAgentThinkingState(s as AgentThinkingState);
 
-        // Recommended products (ordered list → sort to top)
         if ('recommended_ids' in attrs) {
           const ids = attrs['recommended_ids'];
           onRecommend(ids ? ids.split(',').filter(Boolean) : []);
         }
-        // Also support legacy highlighted_ids from older agent builds
         if ('highlighted_ids' in attrs && !('recommended_ids' in attrs)) {
           const ids = attrs['highlighted_ids'];
           onRecommend(ids ? ids.split(',').filter(Boolean) : []);
         }
 
-        // Single product expanded inline
         if ('expanded_id' in attrs) {
           const eid = attrs['expanded_id'];
           onExpand(eid || null);
@@ -133,9 +132,32 @@ export default function ShopPixelWidget({ onRecommend, onExpand }: ShopPixelWidg
     <>
       {/* ── Desktop floating widget ──────────────────────────────────────── */}
       <div className="shop-pixel-widget">
+
+        {/* ── Widget header: last product preview + cart badge ── */}
+        <div className="shop-pixel-header">
+          {lastRecommended ? (
+            <div className="shop-pixel-last-product">
+              <ProductThumb id={lastRecommended.id} />
+              <div className="shop-pixel-last-info">
+                <span className="shop-pixel-last-name">{lastRecommended.name}</span>
+                <span className="shop-pixel-last-price">€{lastRecommended.price.toFixed(2)}</span>
+              </div>
+            </div>
+          ) : (
+            <span className="shop-pixel-header-label">Pixel's Shop</span>
+          )}
+          <div className="shop-pixel-cart">
+            <CartIcon />
+            {cartCount > 0 && <span className="shop-pixel-cart-badge">{cartCount}</span>}
+          </div>
+        </div>
+
+        {/* ── Avatar ── */}
         <div className="shop-pixel-avatar-wrap">
           <CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />
         </div>
+
+        {/* ── Controls ── */}
         <div className="shop-pixel-controls">
           {(state === 'idle' || state === 'error') && (
             <>
@@ -171,6 +193,7 @@ export default function ShopPixelWidget({ onRecommend, onExpand }: ShopPixelWidg
         <span className="shop-pixel-tab-label">
           {state === 'idle' ? 'Ask Pixel' : state === 'connecting' ? 'Connecting…' : `Pixel · ${fmt(duration)}`}
         </span>
+        {cartCount > 0 && <span className="shop-pixel-tab-cart">🛒 {cartCount}</span>}
         {state === 'connected' && <span className="shop-pixel-tab-pulse" />}
       </div>
 
@@ -192,6 +215,19 @@ export default function ShopPixelWidget({ onRecommend, onExpand }: ShopPixelWidg
   );
 }
 
+function ProductThumb({ id }: { id: string }) {
+  const [hasPhoto, setHasPhoto] = useState(true);
+  if (!hasPhoto) return <span className="shop-pixel-last-thumb shop-pixel-last-thumb--fallback">📦</span>;
+  return (
+    <img
+      src={`/products/${id}.jpg`}
+      alt=""
+      className="shop-pixel-last-thumb"
+      onError={() => setHasPhoto(false)}
+    />
+  );
+}
+
 const MicIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
@@ -206,5 +242,12 @@ const PhoneOffIcon = () => (
     <line x1="2" y1="2" x2="22" y2="22" />
     <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07" />
     <path d="M6.05 6.05A19.79 19.79 0 0 0 2 14.5a2 2 0 0 0 2 2h3a2 2 0 0 0 2-1.72 12.84 12.84 0 0 1 .7-2.81 2 2 0 0 0-.45-2.11L7.98 8.59" />
+  </svg>
+);
+
+const CartIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
   </svg>
 );

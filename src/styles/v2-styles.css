@@ -4012,8 +4012,15 @@
 
 .v2-scope .shop-card__image {
     position: relative;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 3 / 4;
     overflow: hidden;
+}
+
+.v2-scope .shop-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .v2-scope .shop-card__image-placeholder {
@@ -4355,4 +4362,246 @@
 }
 .v2-scope.v2-light .shop-pixel-widget {
     box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+/* ── Product Modal ───────────────────────────────────────────────────────── */
+.v2-scope .shop-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+}
+
+.v2-scope .shop-modal {
+    background: var(--v2-surface);
+    border: 1px solid var(--v2-border);
+    border-radius: 12px;
+    width: 50%;
+    max-width: 680px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+.v2-scope .shop-modal__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--v2-text);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+.v2-scope .shop-modal__close:hover { background: rgba(255,255,255,0.16); }
+
+.v2-scope .shop-modal__image {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
+}
+
+.v2-scope .shop-modal__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.v2-scope .shop-modal__body {
+    padding: 1.25rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.v2-scope .shop-modal__name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--v2-text);
+    margin: 0;
+}
+
+.v2-scope .shop-modal__desc {
+    font-size: 0.9rem;
+    color: var(--v2-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.v2-scope .shop-modal__row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.v2-scope .shop-card__detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--v2-muted);
+    min-width: 48px;
+}
+
+.v2-scope .shop-card__sizes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.v2-scope .shop-card__size {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--v2-border);
+    border-radius: 4px;
+    color: var(--v2-text);
+}
+
+.v2-scope .shop-card__stock-ok { color: #4ade80; font-size: 0.85rem; font-weight: 600; }
+.v2-scope .shop-card__stock-oos { color: #f87171; font-size: 0.85rem; font-weight: 600; }
+
+.v2-scope .shop-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--v2-border);
+    margin-top: 0.25rem;
+}
+
+.v2-scope .shop-modal__price {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--v2-text);
+}
+
+.v2-scope .shop-modal__cta {
+    min-width: 140px;
+}
+
+@media (max-width: 768px) {
+    .v2-scope .shop-modal {
+        width: 95%;
+        max-width: none;
+    }
+}
+
+/* ── Widget header: last product preview ─────────────────────────────────── */
+.v2-scope .shop-pixel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--v2-border);
+    min-height: 48px;
+    flex-shrink: 0;
+}
+
+.v2-scope .shop-pixel-header-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--v2-muted);
+}
+
+.v2-scope .shop-pixel-last-product {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.v2-scope .shop-pixel-last-thumb {
+    width: 36px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.v2-scope .shop-pixel-last-thumb--fallback {
+    width: 36px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+}
+
+.v2-scope .shop-pixel-last-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.v2-scope .shop-pixel-last-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--v2-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.v2-scope .shop-pixel-last-price {
+    font-size: 0.7rem;
+    color: var(--v2-cyan);
+    font-weight: 700;
+}
+
+.v2-scope .shop-pixel-cart {
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: var(--v2-muted);
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.v2-scope .shop-pixel-cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--v2-cyan);
+    color: #000;
+    font-size: 0.6rem;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+}
+
+/* ── Mobile tab cart indicator ───────────────────────────────────────────── */
+.v2-scope .shop-pixel-tab-cart {
+    font-size: 0.8rem;
+    margin-left: 0.25rem;
 }

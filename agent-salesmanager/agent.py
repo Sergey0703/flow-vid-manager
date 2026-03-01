@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from typing import Annotated
@@ -7,6 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from livekit import api as lk_api
 from livekit.agents import (
     Agent,
     AgentSession,
@@ -15,7 +17,6 @@ from livekit.agents import (
     cli,
     llm,
 )
-from livekit.agents.beta.tools import EndCallTool
 from livekit.plugins import openai as lk_openai, silero
 from livekit.plugins import groq as lk_groq
 from livekit.plugins.turn_detector.english import EnglishModel
@@ -28,11 +29,31 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TYPESENSE_HOST = os.getenv("TYPESENSE_HOST", "typesense")
 TYPESENSE_PORT = os.getenv("TYPESENSE_PORT", "8108")
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "typesense-local-key-2025")
+LIVEKIT_URL = os.getenv("LIVEKIT_URL")
+LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
+LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 
 TYPESENSE_BASE = f"http://{TYPESENSE_HOST}:{TYPESENSE_PORT}"
 
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY is required")
+
+FAREWELL_WORDS = {"bye", "goodbye", "that's all", "that is all", "thanks bye", "thank you bye", "see you", "talk later", "have a good", "have a great", "cheers"}
+
+USER_AWAY_TIMEOUT = 40
+SILENCE_END_DELAY = 25
+
+
+async def delete_room(room_name: str):
+    if not LIVEKIT_URL or not LIVEKIT_API_KEY or not LIVEKIT_API_SECRET:
+        logger.warning("LiveKit credentials not set, cannot delete room")
+        return
+    try:
+        async with lk_api.LiveKitAPI(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET) as lkapi:
+            await lkapi.room.delete_room(lk_api.DeleteRoomRequest(room=room_name))
+            logger.info(f"Room {room_name} deleted")
+    except Exception as e:
+        logger.error(f"Failed to delete room: {e}")
 
 SYSTEM_BASE_TEMPLATE = """You are Pixel, a funny, cute AI kitten assistant for a streetwear clothing shop.
 You help customers find the perfect items — {categories_list}, and more.
@@ -51,20 +72,27 @@ CRITICAL VOICE RULES:
 4. No lists — speak in flowing sentences
 5. SHORT replies only.
 
-PRODUCT RULES:
-- Always call search_products before recommending any item
+PRODUCT RULES — CRITICAL, NO EXCEPTIONS:
+- IMMEDIATELY call search_products the moment a user mentions ANY item, category, or style
+- Do NOT ask clarifying questions first — search first, then respond based on results
+- Do NOT say "let me check" or "I can check" — just call search_products silently and respond with results
 - Only mention products returned by search_products
 - Always mention name and price when recommending a product
 - If a product is out of stock (stock = 0), say it is currently out of stock and suggest an alternative
 - If sizes or colors are available, mention them naturally
 - Never invent products, prices, or stock levels
 
+SHOWING PRODUCT DETAIL:
+- Call expand_product when the user says: "show me that", "open it", "tell me more", "show the card", "show details", "select it", "that one", or picks a specific product from a list
+- Use the product_id from the most recent search_products result
+- If multiple products were found and user picks one by name or number, expand that specific one
+
 AVAILABLE CATEGORIES (exact values for search_products category parameter):
 {categories_exact}
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that is all, or clearly indicates they are done,
-call the end_call tool immediately — do NOT say anything before calling it."""
+say a short warm farewell like "Bye! Come back anytime!" and nothing else."""
 
 
 # ── Typesense categories ───────────────────────────────────────────────────────
@@ -184,7 +212,8 @@ async def _search_products_raw(
         desc = d.get("description", "")
         stock_label = f"in stock: {stock}" if stock > 0 else "OUT OF STOCK"
         color_part = f" | colors: {colors_avail}" if colors_avail else ""
-        lines.append(f"- {name} €{price:.2f} | sizes: {sizes_avail}{color_part} | {stock_label} | {desc}")
+        pid = d.get("id", "")
+        lines.append(f"- [id:{pid}] {name} €{price:.2f} | sizes: {sizes_avail}{color_part} | {stock_label} | {desc}")
 
     return "Matching products from the shop:\n" + "\n".join(lines), ids
 
@@ -219,7 +248,7 @@ async def _search_faq_raw(query: str) -> str:
 # ── Agent ──────────────────────────────────────────────────────────────────────
 
 class SalesManagerAgent(Agent):
-    def __init__(self, session_log: SessionLogger, room, categories: list[str]):
+    def __init__(self, session_log: SessionLogger, room, ctx: JobContext, categories: list[str]):
         cats_exact = ", ".join(categories) if categories else "hoodies, tshirts, jackets, sweatshirts, accessories, bottoms"
         cats_list = ", ".join(categories[:-1]) + (f", and {categories[-1]}" if len(categories) > 1 else categories[0]) if categories else "hoodies, jackets, accessories"
         instructions = SYSTEM_BASE_TEMPLATE.format(
@@ -241,15 +270,12 @@ class SalesManagerAgent(Agent):
                 base_url="http://piper-wrapper-ryan:8881/v1",
                 api_key="not-needed",
             ),
-            tools=[
-                EndCallTool(
-                    end_instructions="Say a short friendly farewell, like: Bye! Come back anytime! No cat sounds.",
-                    delete_room=True,
-                ),
-            ],
+            tools=[],
         )
         self.session_log = session_log
         self._room = room
+        self._ctx = ctx
+        self._ending = False
 
     @llm.function_tool
     async def search_products(
@@ -288,6 +314,23 @@ class SalesManagerAgent(Agent):
         return context
 
     @llm.function_tool
+    async def expand_product(
+        self,
+        product_id: Annotated[str, "The product ID to expand. Use the id shown as [id:XXX] in the search_products result, e.g. 'p011'. Never use the product name."],
+    ) -> str:
+        """Show a single product card in full detail on the page. Call this when the user says 'show me that one', 'open it', 'tell me more about it', 'show me the card', or picks a specific product from a list."""
+        logger.info(f"expand_product: product_id={repr(product_id)}")
+        try:
+            await self._room.local_participant.set_attributes({
+                "expanded_id": product_id,
+                "recommended_ids": product_id,
+            })
+            return f"Product {product_id} is now shown in detail on the page."
+        except Exception as e:
+            logger.warning(f"expand_product set_attributes failed: {e}")
+            return "Could not expand product."
+
+    @llm.function_tool
     async def search_faq(
         self,
         query: Annotated[str, "Question about shop policies, shipping, returns, payment, or general info"],
@@ -302,7 +345,20 @@ class SalesManagerAgent(Agent):
         user_text = new_message.text_content or ""
         logger.info(f"User said: {repr(user_text)}")
         self.session_log.on_user_text(user_text)
+
+        lower = user_text.lower().strip().rstrip(".,!")
+        is_farewell = any(w in lower for w in FAREWELL_WORDS)
+
         await super().on_user_turn_completed(turn_ctx, new_message)
+
+        if is_farewell and not self._ending:
+            self._ending = True
+            logger.info(f"Farewell detected: {repr(lower)} — scheduling room deletion")
+            room_name = self._ctx.room.name
+            async def delayed_delete():
+                await asyncio.sleep(4)
+                await delete_room(room_name)
+            asyncio.ensure_future(delayed_delete())
 
 
 async def entrypoint(ctx: JobContext):
@@ -318,13 +374,44 @@ async def entrypoint(ctx: JobContext):
 
     categories = await _fetch_categories()
     logger.info(f"Loaded categories from Typesense: {categories}")
-    agent = SalesManagerAgent(session_log, ctx.room, categories=categories)
+    agent = SalesManagerAgent(session_log, ctx.room, ctx, categories=categories)
     session = AgentSession(
         vad=silero.VAD.load(),
         turn_detection=EnglishModel(),
         min_endpointing_delay=0.5,
         max_endpointing_delay=4.0,
+        user_away_timeout=USER_AWAY_TIMEOUT,
     )
+
+    inactivity_task: asyncio.Task | None = None
+
+    async def inactivity_check():
+        logger.info("Inactivity check: user away — asking if they need more help")
+        await session.say("Still there? Any other questions, or shall I let you browse?", allow_interruptions=True)
+        try:
+            await asyncio.sleep(SILENCE_END_DELAY)
+        except asyncio.CancelledError:
+            return
+        if agent._ending:
+            return
+        logger.info("Inactivity check: no response — ending session")
+        agent._ending = True
+        await session.say("Come back anytime! Bye!", allow_interruptions=False)
+        await asyncio.sleep(4)
+        await delete_room(ctx.room.name)
+
+    @session.on("user_state_changed")
+    def on_user_state_changed(ev):
+        nonlocal inactivity_task
+        if ev.new_state == "away":
+            if not agent._ending:
+                logger.info("user_state_changed → away: starting inactivity check")
+                inactivity_task = asyncio.create_task(inactivity_check())
+        else:
+            if inactivity_task is not None and not inactivity_task.done():
+                logger.info(f"user_state_changed → {ev.new_state}: cancelling inactivity check")
+                inactivity_task.cancel()
+                inactivity_task = None
 
     @session.on("metrics_collected")
     def on_metrics(ev):

@@ -30,8 +30,9 @@ export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [recommendedIds, setRecommendedIds] = useState<string[]>([]); // ordered by agent
-  const [expandedId, setExpandedId] = useState<string | null>(null);  // single product detail
+  const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [cartItems, setCartItems] = useState<{ product: Product; qty: number }[]>([]);
 
   const toggleTheme = () => setIsLight(prev => {
     const next = !prev;
@@ -49,7 +50,6 @@ export default function Shop() {
 
   const handleRecommend = useCallback((ids: string[]) => {
     setRecommendedIds(ids);
-    // If single result auto-expands, also scroll it into view
     if (ids.length > 0) {
       setTimeout(() => {
         const el = document.getElementById(`shop-card-${ids[0]}`);
@@ -60,15 +60,21 @@ export default function Shop() {
 
   const handleExpand = useCallback((id: string | null) => {
     setExpandedId(id);
-    if (id) {
-      setTimeout(() => {
-        const el = document.getElementById(`shop-card-${id}`);
-        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-    }
   }, []);
 
-  // Sort: recommended products first (in agent's order), rest after
+  const handleAddToCart = useCallback((product: Product) => {
+    setCartItems(prev => {
+      const existing = prev.find(i => i.product.id === product.id);
+      if (existing) {
+        return prev.map(i => i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+      }
+      return [...prev, { product, qty: 1 }];
+    });
+  }, []);
+
+  const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
+
+  // Sort: recommended first in agent order, rest after
   const agentActive = recommendedIds.length > 0;
   const sorted = agentActive
     ? [
@@ -77,6 +83,14 @@ export default function Shop() {
         ...products.filter(p => !recommendedIds.includes(p.id)),
       ]
     : products;
+
+  // Last recommended product for widget preview
+  const lastRecommended = recommendedIds.length > 0
+    ? products.find(p => p.id === recommendedIds[0]) ?? null
+    : null;
+
+  // Modal product
+  const modalProduct = expandedId ? products.find(p => p.id === expandedId) ?? null : null;
 
   return (
     <div className={`v2-scope${isLight ? ' v2-light' : ''}`}>
@@ -124,29 +138,45 @@ export default function Shop() {
                 product={p}
                 recommended={agentActive && recommendedIds.includes(p.id)}
                 dimmed={agentActive && !recommendedIds.includes(p.id)}
-                expanded={expandedId === p.id}
-                onExpand={() => setExpandedId(id => id === p.id ? null : p.id)}
+                onExpand={() => setExpandedId(p.id)}
+                onAddToCart={() => handleAddToCart(p)}
               />
             ))}
           </div>
         )}
       </main>
 
+      {/* Product modal overlay */}
+      {modalProduct && (
+        <ProductModal
+          product={modalProduct}
+          onClose={() => setExpandedId(null)}
+          onAddToCart={() => handleAddToCart(modalProduct)}
+        />
+      )}
+
       {/* Floating Pixel widget */}
-      <ShopPixelWidget onRecommend={handleRecommend} onExpand={handleExpand} />
+      <ShopPixelWidget
+        onRecommend={handleRecommend}
+        onExpand={handleExpand}
+        lastRecommended={lastRecommended}
+        cartCount={cartCount}
+      />
     </div>
   );
 }
+
+// ── Product Card ──────────────────────────────────────────────────────────────
 
 interface ProductCardProps {
   product: Product;
   recommended: boolean;
   dimmed: boolean;
-  expanded: boolean;
   onExpand: () => void;
+  onAddToCart: () => void;
 }
 
-function ProductCard({ product: p, recommended, dimmed, expanded, onExpand }: ProductCardProps) {
+function ProductCard({ product: p, recommended, dimmed, onExpand, onAddToCart }: ProductCardProps) {
   const icon = CATEGORY_ICONS[p.category] ?? '📦';
   const oos = p.stock === 0;
 
@@ -157,16 +187,13 @@ function ProductCard({ product: p, recommended, dimmed, expanded, onExpand }: Pr
         'shop-card',
         recommended ? 'shop-card--recommended' : '',
         dimmed      ? 'shop-card--dimmed'      : '',
-        expanded    ? 'shop-card--expanded'    : '',
         oos         ? 'shop-card--oos'         : '',
       ].filter(Boolean).join(' ')}
       onClick={onExpand}
     >
       {/* Image */}
       <div className="shop-card__image">
-        <div className="shop-card__image-placeholder">
-          <span className="shop-card__icon">{icon}</span>
-        </div>
+        <ProductImage id={p.id} icon={icon} />
         {oos && <div className="shop-card__oos-overlay"><span>Out of Stock</span></div>}
         {recommended && <div className="shop-card__highlight-ring" />}
       </div>
@@ -177,36 +204,7 @@ function ProductCard({ product: p, recommended, dimmed, expanded, onExpand }: Pr
         <h3 className="shop-card__name">{p.name}</h3>
         <p className="shop-card__desc">{p.description}</p>
 
-        {/* Extra detail shown only when expanded */}
-        {expanded && (
-          <div className="shop-card__detail">
-            {p.colors.length > 0 && (
-              <div className="shop-card__colors-row">
-                <span className="shop-card__detail-label">Colors</span>
-                <div className="shop-card__colors">
-                  {p.colors.map(c => <ColorDot key={c} color={c} />)}
-                </div>
-              </div>
-            )}
-            {p.sizes.length > 0 && (
-              <div className="shop-card__sizes-row">
-                <span className="shop-card__detail-label">Sizes</span>
-                <div className="shop-card__sizes">
-                  {p.sizes.map(s => <span key={s} className="shop-card__size">{s}</span>)}
-                </div>
-              </div>
-            )}
-            <div className="shop-card__stock-row">
-              <span className="shop-card__detail-label">Stock</span>
-              <span className={oos ? 'shop-card__stock-oos' : 'shop-card__stock-ok'}>
-                {oos ? 'Out of stock' : `${p.stock} available`}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Colors summary when NOT expanded */}
-        {!expanded && p.colors.length > 0 && (
+        {p.colors.length > 0 && (
           <div className="shop-card__meta">
             <div className="shop-card__colors">
               {p.colors.slice(0, 4).map(c => <ColorDot key={c} color={c} />)}
@@ -220,7 +218,7 @@ function ProductCard({ product: p, recommended, dimmed, expanded, onExpand }: Pr
           <button
             className={`shop-card__cta${oos ? ' shop-card__cta--disabled' : ''}`}
             disabled={oos}
-            onClick={e => { e.stopPropagation(); }}
+            onClick={e => { e.stopPropagation(); onAddToCart(); }}
           >
             {oos ? 'Out of Stock' : 'Add to Cart'}
           </button>
@@ -229,6 +227,101 @@ function ProductCard({ product: p, recommended, dimmed, expanded, onExpand }: Pr
     </div>
   );
 }
+
+// ── Product Modal ─────────────────────────────────────────────────────────────
+
+interface ProductModalProps {
+  product: Product;
+  onClose: () => void;
+  onAddToCart: () => void;
+}
+
+function ProductModal({ product: p, onClose, onAddToCart }: ProductModalProps) {
+  const icon = CATEGORY_ICONS[p.category] ?? '📦';
+  const oos = p.stock === 0;
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div className="shop-modal-backdrop" onClick={onClose}>
+      <div className="shop-modal" onClick={e => e.stopPropagation()}>
+        <button className="shop-modal__close" onClick={onClose}>✕</button>
+
+        <div className="shop-modal__image">
+          <ProductImage id={p.id} icon={icon} large />
+          {oos && <div className="shop-card__oos-overlay"><span>Out of Stock</span></div>}
+        </div>
+
+        <div className="shop-modal__body">
+          <span className="shop-card__category">{p.category}</span>
+          <h2 className="shop-modal__name">{p.name}</h2>
+          <p className="shop-modal__desc">{p.description}</p>
+
+          {p.colors.length > 0 && (
+            <div className="shop-modal__row">
+              <span className="shop-card__detail-label">Colors</span>
+              <div className="shop-card__colors">
+                {p.colors.map(c => <ColorDot key={c} color={c} />)}
+              </div>
+            </div>
+          )}
+
+          {p.sizes.length > 0 && (
+            <div className="shop-modal__row">
+              <span className="shop-card__detail-label">Sizes</span>
+              <div className="shop-card__sizes">
+                {p.sizes.map(s => <span key={s} className="shop-card__size">{s}</span>)}
+              </div>
+            </div>
+          )}
+
+          <div className="shop-modal__row">
+            <span className="shop-card__detail-label">Stock</span>
+            <span className={oos ? 'shop-card__stock-oos' : 'shop-card__stock-ok'}>
+              {oos ? 'Out of stock' : `${p.stock} available`}
+            </span>
+          </div>
+
+          <div className="shop-modal__footer">
+            <span className="shop-modal__price">€{p.price.toFixed(2)}</span>
+            <button
+              className={`shop-card__cta shop-modal__cta${oos ? ' shop-card__cta--disabled' : ''}`}
+              disabled={oos}
+              onClick={onAddToCart}
+            >
+              {oos ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Product Image (photo or emoji fallback) ───────────────────────────────────
+
+function ProductImage({ id, icon, large }: { id: string; icon: string; large?: boolean }) {
+  const [hasPhoto, setHasPhoto] = useState(true);
+  return hasPhoto ? (
+    <img
+      src={`/products/${id}.jpg`}
+      alt={id}
+      className={large ? 'shop-modal__img' : 'shop-card__img'}
+      onError={() => setHasPhoto(false)}
+    />
+  ) : (
+    <div className="shop-card__image-placeholder">
+      <span className="shop-card__icon">{icon}</span>
+    </div>
+  );
+}
+
+// ── Color helpers ─────────────────────────────────────────────────────────────
 
 const COLOR_MAP: Record<string, string> = {
   black: '#111', white: '#f5f5f5', grey: '#888', gray: '#888',
@@ -248,7 +341,7 @@ function ColorDot({ color }: { color: string }) {
   );
 }
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
+// ── Icons ─────────────────────────────────────────────────────────────────────
 const BackIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />

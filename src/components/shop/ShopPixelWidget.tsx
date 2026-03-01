@@ -4,14 +4,14 @@ import CatAvatar from '../v2/CatAvatar';
 type DemoState = 'idle' | 'connecting' | 'connected' | 'error';
 type AgentThinkingState = 'listening' | 'thinking' | 'speaking' | null;
 
-const SILENCE_TIMEOUT_MS = 30_000;
 const MAX_CALL_MS = 3 * 60_000;
 
 interface ShopPixelWidgetProps {
-  onHighlight: (ids: string[]) => void;
+  onRecommend: (ids: string[]) => void;
+  onExpand: (id: string | null) => void;
 }
 
-export default function ShopPixelWidget({ onHighlight }: ShopPixelWidgetProps) {
+export default function ShopPixelWidget({ onRecommend, onExpand }: ShopPixelWidgetProps) {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
@@ -22,7 +22,6 @@ export default function ShopPixelWidget({ onHighlight }: ShopPixelWidgetProps) {
   const roomRef         = useRef<any>(null);
   const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef        = useRef<HTMLAudioElement | null>(null);
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopTimer = () => {
@@ -30,26 +29,17 @@ export default function ShopPixelWidget({ onHighlight }: ShopPixelWidgetProps) {
     setDuration(0);
   };
 
-  const clearAllTimers = () => {
-    if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
-    if (maxCallTimerRef.current) { clearTimeout(maxCallTimerRef.current); maxCallTimerRef.current = null; }
-  };
-
   const disconnect = useCallback(async () => {
     stopTimer();
-    clearAllTimers();
+    if (maxCallTimerRef.current) { clearTimeout(maxCallTimerRef.current); maxCallTimerRef.current = null; }
     if (roomRef.current) { await roomRef.current.disconnect(); roomRef.current = null; }
     if (audioRef.current) { audioRef.current.srcObject = null; }
     setAgentStream(null);
     setAgentThinkingState(null);
     setState('idle');
-    onHighlight([]);
-  }, [onHighlight]);
-
-  const resetSilenceTimer = useCallback((disc: () => void) => {
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    silenceTimerRef.current = setTimeout(() => disc(), SILENCE_TIMEOUT_MS);
-  }, []);
+    onRecommend([]);
+    onExpand(null);
+  }, [onRecommend, onExpand]);
 
   const connect = useCallback(async () => {
     setState('connecting');
@@ -89,17 +79,27 @@ export default function ShopPixelWidget({ onHighlight }: ShopPixelWidgetProps) {
 
       room.on(RoomEvent.TrackUnsubscribed, (track) => { track.detach(); });
       room.on(RoomEvent.Disconnected, () => { disconnect(); });
-      room.on(RoomEvent.ActiveSpeakersChanged, (speakers: any[]) => {
-        if (speakers.length > 0) resetSilenceTimer(disconnect);
-      });
+
       room.on(RoomEvent.ParticipantAttributesChanged, (attrs: Record<string, string>) => {
+        // Agent thinking state
         const s = attrs['lk.agent.state'] ?? attrs['agent_state'] ?? attrs['livekit.agent_state'];
         if (s) setAgentThinkingState(s as AgentThinkingState);
 
-        // Product highlight from agent
-        if ('highlighted_ids' in attrs) {
+        // Recommended products (ordered list → sort to top)
+        if ('recommended_ids' in attrs) {
+          const ids = attrs['recommended_ids'];
+          onRecommend(ids ? ids.split(',').filter(Boolean) : []);
+        }
+        // Also support legacy highlighted_ids from older agent builds
+        if ('highlighted_ids' in attrs && !('recommended_ids' in attrs)) {
           const ids = attrs['highlighted_ids'];
-          onHighlight(ids ? ids.split(',').filter(Boolean) : []);
+          onRecommend(ids ? ids.split(',').filter(Boolean) : []);
+        }
+
+        // Single product expanded inline
+        if ('expanded_id' in attrs) {
+          const eid = attrs['expanded_id'];
+          onExpand(eid || null);
         }
       });
 
@@ -115,7 +115,6 @@ export default function ShopPixelWidget({ onHighlight }: ShopPixelWidgetProps) {
 
       setState('connected');
       timerRef.current = setInterval(() => setDuration(d => d + 1), 1000);
-      resetSilenceTimer(disconnect);
       maxCallTimerRef.current = setTimeout(() => disconnect(), MAX_CALL_MS);
 
     } catch (err: any) {
@@ -123,7 +122,7 @@ export default function ShopPixelWidget({ onHighlight }: ShopPixelWidgetProps) {
       setState('error');
       roomRef.current = null;
     }
-  }, [disconnect, resetSilenceTimer, onHighlight]);
+  }, [disconnect, onRecommend, onExpand]);
 
   useEffect(() => { return () => { disconnect(); }; }, []);
 

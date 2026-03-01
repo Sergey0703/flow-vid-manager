@@ -268,11 +268,13 @@ class SalesManagerAgent(Agent):
         )
         logger.info(f"search_products result: {len(ids)} products, ids={ids}")
 
-        # Highlight matching cards on the frontend
+        # Send product IDs to frontend:
+        # recommended_ids → sort matching cards to top (ordered)
+        # expanded_id     → auto-expand card when only one result
         try:
-            await self._room.local_participant.set_attributes(
-                {"highlighted_ids": ",".join(ids)}
-            )
+            attrs: dict[str, str] = {"recommended_ids": ",".join(ids)}
+            attrs["expanded_id"] = ids[0] if len(ids) == 1 else ""
+            await self._room.local_participant.set_attributes(attrs)
         except Exception as e:
             logger.warning(f"set_attributes failed: {e}")
 

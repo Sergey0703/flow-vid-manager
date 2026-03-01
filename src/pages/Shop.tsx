@@ -30,7 +30,8 @@ export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [highlightedIds, setHighlightedIds] = useState<string[]>([]);
+  const [recommendedIds, setRecommendedIds] = useState<string[]>([]); // ordered by agent
+  const [expandedId, setExpandedId] = useState<string | null>(null);  // single product detail
 
   const toggleTheme = () => setIsLight(prev => {
     const next = !prev;
@@ -46,16 +47,30 @@ export default function Shop() {
       .finally(() => setLoading(false));
   }, [activeCategory]);
 
-  const handleHighlight = useCallback((ids: string[]) => {
-    setHighlightedIds(ids);
+  const handleRecommend = useCallback((ids: string[]) => {
+    setRecommendedIds(ids);
+    // If single result auto-expands, also scroll it into view
     if (ids.length > 0) {
-      // Scroll first highlighted card into view
       setTimeout(() => {
         const el = document.getElementById(`shop-card-${ids[0]}`);
         el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
     }
   }, []);
+
+  const handleExpand = useCallback((id: string | null) => {
+    setExpandedId(id);
+  }, []);
+
+  // Sort: recommended products first (in agent's order), rest after
+  const agentActive = recommendedIds.length > 0;
+  const sorted = agentActive
+    ? [
+        ...products.filter(p => recommendedIds.includes(p.id))
+                   .sort((a, b) => recommendedIds.indexOf(a.id) - recommendedIds.indexOf(b.id)),
+        ...products.filter(p => !recommendedIds.includes(p.id)),
+      ]
+    : products;
 
   return (
     <div className={`v2-scope${isLight ? ' v2-light' : ''}`}>
@@ -97,11 +112,14 @@ export default function Shop() {
           <div className="shop-empty">No products found.</div>
         ) : (
           <div className="shop-grid">
-            {products.map(p => (
+            {sorted.map(p => (
               <ProductCard
                 key={p.id}
                 product={p}
-                highlighted={highlightedIds.includes(p.id)}
+                recommended={agentActive && recommendedIds.includes(p.id)}
+                dimmed={agentActive && !recommendedIds.includes(p.id)}
+                expanded={expandedId === p.id}
+                onExpand={() => setExpandedId(id => id === p.id ? null : p.id)}
               />
             ))}
           </div>
@@ -109,27 +127,42 @@ export default function Shop() {
       </main>
 
       {/* Floating Pixel widget */}
-      <ShopPixelWidget onHighlight={handleHighlight} />
+      <ShopPixelWidget onRecommend={handleRecommend} onExpand={handleExpand} />
     </div>
   );
 }
 
-function ProductCard({ product: p, highlighted }: { product: Product; highlighted: boolean }) {
+interface ProductCardProps {
+  product: Product;
+  recommended: boolean;
+  dimmed: boolean;
+  expanded: boolean;
+  onExpand: () => void;
+}
+
+function ProductCard({ product: p, recommended, dimmed, expanded, onExpand }: ProductCardProps) {
   const icon = CATEGORY_ICONS[p.category] ?? '📦';
   const oos = p.stock === 0;
 
   return (
     <div
       id={`shop-card-${p.id}`}
-      className={`shop-card${highlighted ? ' shop-card--highlighted' : ''}${oos ? ' shop-card--oos' : ''}`}
+      className={[
+        'shop-card',
+        recommended ? 'shop-card--recommended' : '',
+        dimmed      ? 'shop-card--dimmed'      : '',
+        expanded    ? 'shop-card--expanded'    : '',
+        oos         ? 'shop-card--oos'         : '',
+      ].filter(Boolean).join(' ')}
+      onClick={onExpand}
     >
-      {/* Image placeholder */}
+      {/* Image */}
       <div className="shop-card__image">
         <div className="shop-card__image-placeholder">
           <span className="shop-card__icon">{icon}</span>
         </div>
         {oos && <div className="shop-card__oos-overlay"><span>Out of Stock</span></div>}
-        {highlighted && <div className="shop-card__highlight-ring" />}
+        {recommended && <div className="shop-card__highlight-ring" />}
       </div>
 
       {/* Info */}
@@ -138,25 +171,51 @@ function ProductCard({ product: p, highlighted }: { product: Product; highlighte
         <h3 className="shop-card__name">{p.name}</h3>
         <p className="shop-card__desc">{p.description}</p>
 
-        <div className="shop-card__meta">
-          {p.colors.length > 0 && (
+        {/* Extra detail shown only when expanded */}
+        {expanded && (
+          <div className="shop-card__detail">
+            {p.colors.length > 0 && (
+              <div className="shop-card__colors-row">
+                <span className="shop-card__detail-label">Colors</span>
+                <div className="shop-card__colors">
+                  {p.colors.map(c => <ColorDot key={c} color={c} />)}
+                </div>
+              </div>
+            )}
+            {p.sizes.length > 0 && (
+              <div className="shop-card__sizes-row">
+                <span className="shop-card__detail-label">Sizes</span>
+                <div className="shop-card__sizes">
+                  {p.sizes.map(s => <span key={s} className="shop-card__size">{s}</span>)}
+                </div>
+              </div>
+            )}
+            <div className="shop-card__stock-row">
+              <span className="shop-card__detail-label">Stock</span>
+              <span className={oos ? 'shop-card__stock-oos' : 'shop-card__stock-ok'}>
+                {oos ? 'Out of stock' : `${p.stock} available`}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Colors summary when NOT expanded */}
+        {!expanded && p.colors.length > 0 && (
+          <div className="shop-card__meta">
             <div className="shop-card__colors">
-              {p.colors.slice(0, 4).map(c => (
-                <ColorDot key={c} color={c} />
-              ))}
+              {p.colors.slice(0, 4).map(c => <ColorDot key={c} color={c} />)}
               {p.colors.length > 4 && <span className="shop-card__more-colors">+{p.colors.length - 4}</span>}
             </div>
-          )}
-          {p.sizes.length > 0 && (
-            <div className="shop-card__sizes">
-              {p.sizes.map(s => <span key={s} className="shop-card__size">{s}</span>)}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="shop-card__footer">
           <span className="shop-card__price">€{p.price.toFixed(2)}</span>
-          <button className={`shop-card__cta${oos ? ' shop-card__cta--disabled' : ''}`} disabled={oos}>
+          <button
+            className={`shop-card__cta${oos ? ' shop-card__cta--disabled' : ''}`}
+            disabled={oos}
+            onClick={e => { e.stopPropagation(); }}
+          >
             {oos ? 'Out of Stock' : 'Add to Cart'}
           </button>
         </div>

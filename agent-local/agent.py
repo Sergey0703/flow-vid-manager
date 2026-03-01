@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import aiohttp
@@ -127,6 +128,11 @@ async def search_knowledge(query: str) -> str:
         return ""
 
 
+SILENCE_PROMPT_DELAY = 20   # seconds of silence before agent checks in
+SILENCE_END_DELAY    = 20   # further seconds with no reply before goodbye
+SESSION_WARN_AT      = 150  # warn user at 2m30s (30s before 3-min hard limit)
+
+
 class AimediaflowAgent(Agent):
     def __init__(self, session_log: SessionLogger, ctx: JobContext):
         super().__init__(
@@ -148,6 +154,57 @@ class AimediaflowAgent(Agent):
         )
         self.session_log = session_log
         self._ctx = ctx
+        self._agent_session: AgentSession | None = None
+        self._silence_task: asyncio.Task | None = None
+        self._ending = False
+
+    def _reset_silence_watchdog(self):
+        """Cancel existing silence timer and start a fresh one."""
+        if self._silence_task and not self._silence_task.done():
+            self._silence_task.cancel()
+        self._silence_task = asyncio.ensure_future(self._silence_watchdog())
+
+    async def _silence_watchdog(self):
+        """After SILENCE_PROMPT_DELAY seconds of no user input, check in.
+        If still no reply after SILENCE_END_DELAY more seconds, say goodbye."""
+        try:
+            await asyncio.sleep(SILENCE_PROMPT_DELAY)
+        except asyncio.CancelledError:
+            return
+
+        if self._ending or self._agent_session is None:
+            return
+
+        logger.info("Silence watchdog: prompting user after inactivity")
+        await self._agent_session.generate_reply(
+            instructions=(
+                "The visitor has been quiet for a while. "
+                "Gently ask if they have any other questions, or if they are happy to wrap up. "
+                "Keep it to one short sentence."
+            )
+        )
+
+        try:
+            await asyncio.sleep(SILENCE_END_DELAY)
+        except asyncio.CancelledError:
+            return
+
+        if self._ending or self._agent_session is None:
+            return
+
+        logger.info("Silence watchdog: no response after prompt — ending session")
+        self._ending = True
+        await self._agent_session.generate_reply(
+            instructions=(
+                "The visitor has not responded. Say a brief warm goodbye "
+                "like 'It was lovely chatting, take care now!' and nothing else."
+            )
+        )
+        room_name = self._ctx.room.name
+        async def delayed_delete():
+            await asyncio.sleep(4)
+            await delete_room(room_name)
+        asyncio.ensure_future(delayed_delete())
 
     async def on_user_turn_completed(self, turn_ctx, new_message):
         user_text = new_message.text_content or ""
@@ -157,6 +214,9 @@ class AimediaflowAgent(Agent):
         lower = user_text.lower().strip().rstrip(".,!")
         is_farewell = any(w in lower for w in FAREWELL_WORDS)
 
+        # Any user message resets the silence watchdog
+        self._reset_silence_watchdog()
+
         context = await search_knowledge(user_text)
         if context:
             turn_ctx.add_message(
@@ -165,8 +225,8 @@ class AimediaflowAgent(Agent):
             )
         await super().on_user_turn_completed(turn_ctx, new_message)
 
-        if is_farewell:
-            import asyncio
+        if is_farewell and not self._ending:
+            self._ending = True
             logger.info(f"Farewell detected in: {repr(lower)} — scheduling room deletion")
             room_name = self._ctx.room.name
             async def delayed_delete():
@@ -218,6 +278,26 @@ async def entrypoint(ctx: JobContext):
     await session.generate_reply(
         instructions="Greet the visitor warmly. Say you are Aoife from AIMediaFlow and ask how you can help them today. Do not use Irish phrases."
     )
+
+    # Wire session into agent so it can call generate_reply
+    agent._agent_session = session
+    # Start silence watchdog after greeting
+    agent._reset_silence_watchdog()
+
+    # Warn about 3-minute session limit at 2m30s
+    async def time_limit_warning():
+        await asyncio.sleep(SESSION_WARN_AT)
+        if agent._ending:
+            return
+        logger.info("Session time warning: 30 seconds remaining")
+        await session.generate_reply(
+            instructions=(
+                "Politely let the visitor know this session is limited to 3 minutes "
+                "and they have about 30 seconds left. They can start a new session anytime. "
+                "Keep it very brief — one sentence."
+            )
+        )
+    asyncio.ensure_future(time_limit_warning())
 
 
 if __name__ == "__main__":

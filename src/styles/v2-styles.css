@@ -4628,3 +4628,188 @@
     font-size: 0.8rem;
     margin-left: 0.25rem;
 }
+
+/* ── Shop HUD widget (replaces plain avatar layout) ─────────────────────── */
+.v2-scope .shop-hud-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--v2-border);
+    background: rgba(8, 145, 178, 0.06);
+}
+
+.v2-scope .shop-hud-topbar-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--v2-cyan);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px var(--v2-cyan);
+}
+
+.v2-scope .shop-hud-topbar-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--v2-cyan);
+    flex: 1;
+}
+
+.v2-scope .shop-hud-topbar-sys {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--v2-muted);
+    font-family: monospace;
+}
+
+.v2-scope .shop-hud-body {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Avatar area */
+.v2-scope .shop-hud-avatar-wrap {
+    position: relative;
+    flex: 1;
+    background: linear-gradient(160deg, rgba(8, 145, 178, 0.08) 0%, rgba(168, 85, 247, 0.06) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Corner brackets */
+.v2-scope .shop-hud-corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: var(--v2-cyan);
+    border-style: solid;
+    opacity: 0.7;
+}
+.v2-scope .shop-hud-corner--tl { top: 6px; left: 6px;  border-width: 1px 0 0 1px; }
+.v2-scope .shop-hud-corner--tr { top: 6px; right: 6px; border-width: 1px 1px 0 0; }
+.v2-scope .shop-hud-corner--bl { bottom: 6px; left: 6px;  border-width: 0 0 1px 1px; }
+.v2-scope .shop-hud-corner--br { bottom: 6px; right: 6px; border-width: 0 1px 1px 0; }
+
+/* Side panel */
+.v2-scope .shop-hud-side {
+    width: 100px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--v2-border);
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0;
+    overflow: hidden;
+}
+
+.v2-scope .shop-hud-section {
+    padding: 0.3rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.v2-scope .shop-hud-label {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--v2-muted);
+    text-transform: uppercase;
+}
+
+.v2-scope .shop-hud-value {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--v2-text);
+}
+
+.v2-scope .shop-hud-mono {
+    font-family: monospace;
+    color: var(--v2-cyan);
+}
+
+.v2-scope .shop-hud-ok     { color: #4ade80; }
+.v2-scope .shop-hud-muted  { color: var(--v2-muted); }
+
+.v2-scope .shop-hud-last-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.65rem;
+    color: var(--v2-cyan);
+}
+
+.v2-scope .shop-hud-divider {
+    height: 1px;
+    background: var(--v2-border);
+    margin: 0.1rem 0;
+}
+
+/* Status dot + text */
+.v2-scope .shop-hud-state {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.v2-scope .shop-hud-state-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--v2-muted);
+}
+
+.v2-scope .shop-hud-state-text {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--v2-muted);
+}
+
+.v2-scope .shop-hud-state--ready .shop-hud-state-dot,
+.v2-scope .shop-hud-state--listening .shop-hud-state-dot {
+    background: #4ade80;
+    box-shadow: 0 0 5px #4ade80;
+}
+.v2-scope .shop-hud-state--ready .shop-hud-state-text,
+.v2-scope .shop-hud-state--listening .shop-hud-state-text { color: #4ade80; }
+
+.v2-scope .shop-hud-state--thinking .shop-hud-state-dot {
+    background: #facc15;
+    box-shadow: 0 0 5px #facc15;
+}
+.v2-scope .shop-hud-state--thinking .shop-hud-state-text { color: #facc15; }
+
+.v2-scope .shop-hud-state--speaking .shop-hud-state-dot {
+    background: var(--v2-cyan);
+    box-shadow: 0 0 5px var(--v2-cyan);
+    animation: hudPulse 1s ease-in-out infinite;
+}
+.v2-scope .shop-hud-state--speaking .shop-hud-state-text { color: var(--v2-cyan); }
+
+@keyframes hudPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Cart row in side panel */
+.v2-scope .shop-hud-cart-row {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Footer */
+.v2-scope .shop-hud-footer {
+    padding: 0.6rem 0.75rem;
+    border-top: 1px solid var(--v2-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}

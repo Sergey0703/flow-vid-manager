@@ -20,7 +20,7 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
   const [duration, setDuration] = useState(0);
   const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
   const [agentThinkingState, setAgentThinkingState] = useState<AgentThinkingState>(null);
-  const [expanded, setExpanded] = useState(false); // mobile sheet open
+  const [expanded, setExpanded] = useState(false);
 
   const roomRef         = useRef<any>(null);
   const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -127,38 +127,88 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
 
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
+  const statusText = agentThinkingState === 'thinking'  ? 'Thinking'
+                   : agentThinkingState === 'speaking'  ? 'Speaking'
+                   : agentThinkingState === 'listening' ? 'Listening'
+                   : state === 'connected'              ? 'Ready'
+                   : state === 'connecting'             ? 'Init…'
+                   : 'Standby';
+  const statusKey = agentThinkingState ?? (state === 'connected' ? 'ready' : 'off');
 
   return (
     <>
-      {/* ── Desktop floating widget ──────────────────────────────────────── */}
+      {/* ── Desktop HUD widget ───────────────────────────────────────────── */}
       <div className="shop-pixel-widget">
 
-        {/* ── Widget header: last product preview + cart badge ── */}
-        <div className="shop-pixel-header">
-          {lastRecommended ? (
-            <div className="shop-pixel-last-product">
-              <ProductThumb id={lastRecommended.id} />
-              <div className="shop-pixel-last-info">
-                <span className="shop-pixel-last-name">{lastRecommended.name}</span>
-                <span className="shop-pixel-last-price">€{lastRecommended.price.toFixed(2)}</span>
+        {/* Top bar */}
+        <div className="shop-hud-topbar">
+          <span className="shop-hud-topbar-dot" />
+          <span className="shop-hud-topbar-title">PIXEL · AI STYLIST</span>
+          <span className="shop-hud-topbar-sys">
+            {state === 'connected' ? 'SYS:ONLINE' : state === 'connecting' ? 'SYS:INIT…' : 'SYS:STANDBY'}
+          </span>
+        </div>
+
+        {/* Body: avatar + side panel */}
+        <div className="shop-hud-body">
+
+          {/* Avatar with corner brackets */}
+          <div className="shop-hud-avatar-wrap">
+            <CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />
+            <span className="shop-hud-corner shop-hud-corner--tl" />
+            <span className="shop-hud-corner shop-hud-corner--tr" />
+            <span className="shop-hud-corner shop-hud-corner--bl" />
+            <span className="shop-hud-corner shop-hud-corner--br" />
+          </div>
+
+          {/* Side panel */}
+          <div className="shop-hud-side">
+            <div className="shop-hud-section">
+              <span className="shop-hud-label">AGENT</span>
+              <span className="shop-hud-value">Pixel</span>
+            </div>
+            <div className="shop-hud-divider" />
+            <div className="shop-hud-section">
+              <span className="shop-hud-label">STATUS</span>
+              <div className={`shop-hud-state shop-hud-state--${statusKey}`}>
+                <span className="shop-hud-state-dot" />
+                <span className="shop-hud-state-text">{statusText}</span>
               </div>
             </div>
-          ) : (
-            <span className="shop-pixel-header-label">Pixel's Shop</span>
-          )}
-          <div className="shop-pixel-cart">
-            <CartIcon />
-            {cartCount > 0 && <span className="shop-pixel-cart-badge">{cartCount}</span>}
+            {state === 'connected' && <>
+              <div className="shop-hud-divider" />
+              <div className="shop-hud-section">
+                <span className="shop-hud-label">SESSION</span>
+                <span className="shop-hud-value shop-hud-mono">{fmt(duration)}</span>
+              </div>
+            </>}
+            <div className="shop-hud-divider" />
+            <div className="shop-hud-section">
+              <span className="shop-hud-label">MODEL</span>
+              <span className="shop-hud-value">v1.0</span>
+            </div>
+            <div className="shop-hud-divider" />
+            <div className="shop-hud-section">
+              <span className="shop-hud-label">CART</span>
+              <div className="shop-hud-cart-row">
+                <CartIcon />
+                <span className={`shop-hud-value ${cartCount > 0 ? 'shop-hud-ok' : 'shop-hud-muted'}`}>
+                  {cartCount > 0 ? `${cartCount} item${cartCount > 1 ? 's' : ''}` : 'Empty'}
+                </span>
+              </div>
+            </div>
+            {lastRecommended && <>
+              <div className="shop-hud-divider" />
+              <div className="shop-hud-section">
+                <span className="shop-hud-label">LAST</span>
+                <span className="shop-hud-value shop-hud-last-name">{lastRecommended.name}</span>
+              </div>
+            </>}
           </div>
         </div>
 
-        {/* ── Avatar ── */}
-        <div className="shop-pixel-avatar-wrap">
-          <CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />
-        </div>
-
-        {/* ── Controls ── */}
-        <div className="shop-pixel-controls">
+        {/* Footer: action button */}
+        <div className="shop-hud-footer">
           {(state === 'idle' || state === 'error') && (
             <>
               <button className="shop-pixel-btn shop-pixel-btn--start" onClick={connect}>
@@ -171,20 +221,14 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
             <span className="shop-pixel-status">Connecting…</span>
           )}
           {state === 'connected' && (
-            <div className="shop-pixel-connected">
-              <div className="shop-pixel-status-row">
-                <span className="shop-pixel-pulse" />
-                <span className="shop-pixel-status">Pixel · {fmt(duration)}</span>
-              </div>
-              <button className="shop-pixel-btn shop-pixel-btn--end" onClick={disconnect}>
-                <PhoneOffIcon /> End
-              </button>
-            </div>
+            <button className="shop-pixel-btn shop-pixel-btn--end" onClick={disconnect}>
+              <PhoneOffIcon /> End call
+            </button>
           )}
         </div>
       </div>
 
-      {/* ── Mobile tab bar + sheet ────────────────────────────────────────── */}
+      {/* ── Mobile tab bar + sheet ───────────────────────────────────────── */}
       <div className="shop-pixel-tab" onClick={() => {
         if (state === 'idle' || state === 'error') connect();
         else setExpanded(e => !e);
@@ -215,19 +259,6 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
   );
 }
 
-function ProductThumb({ id }: { id: string }) {
-  const [hasPhoto, setHasPhoto] = useState(true);
-  if (!hasPhoto) return <span className="shop-pixel-last-thumb shop-pixel-last-thumb--fallback">📦</span>;
-  return (
-    <img
-      src={`/products/${id}.jpg`}
-      alt=""
-      className="shop-pixel-last-thumb"
-      onError={() => setHasPhoto(false)}
-    />
-  );
-}
-
 const MicIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" />
@@ -246,7 +277,7 @@ const PhoneOffIcon = () => (
 );
 
 const CartIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
   </svg>

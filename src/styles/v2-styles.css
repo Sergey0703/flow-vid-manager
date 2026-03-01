@@ -3992,6 +3992,7 @@
     flex-direction: column;
     transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
     position: relative;
+    cursor: pointer;
 }
 .v2-scope .shop-card:hover {
     transform: translateY(-2px);

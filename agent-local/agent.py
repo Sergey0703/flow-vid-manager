@@ -77,7 +77,7 @@ When the user says goodbye, bye, thanks bye, that's all, or clearly indicates th
 say a brief warm farewell like "It was lovely chatting, take care now!" and nothing else."""
 
 
-FAREWELL_WORDS = {"bye", "goodbye", "that's all", "that is all", "thanks bye", "thank you bye", "see you", "talk later", "take care", "have a good", "have a great", "cheers"}
+FAREWELL_WORDS = {"bye", "goodbye", "that's all", "that is all", "thanks bye", "thank you bye", "see you", "talk later", "have a good", "have a great", "cheers"}
 
 
 async def delete_room(room_name: str):

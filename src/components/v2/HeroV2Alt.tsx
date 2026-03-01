@@ -5,8 +5,7 @@ import GirlAvatar from "./GirlAvatar";
 type VoiceState = 'idle' | 'connecting' | 'connected' | 'ending' | 'error';
 type AgentThinkingState = 'listening' | 'thinking' | 'speaking' | null;
 
-const SILENCE_TIMEOUT_MS = 90_000; // auto-disconnect after 90s of no audio (agent handles silence prompts)
-const MAX_CALL_MS = 3 * 60_000;   // hard limit: 3 minutes per call
+const MAX_CALL_MS = 3 * 60_000;   // hard limit: 3 minutes per call (agent also warns at 2:30)
 
 interface HeroV2AltProps {
     agentName?: string; // undefined = use server default (aimediaflow-agent)
@@ -23,7 +22,6 @@ const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
     const roomRef = useRef<any>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -39,22 +37,13 @@ const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
         setDuration(0);
     };
 
-    const resetSilenceTimer = useCallback((disc: () => void) => {
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-        silenceTimerRef.current = setTimeout(() => {
-            console.log('[silence-timeout] 30s of silence → auto disconnect');
-            disc();
-        }, SILENCE_TIMEOUT_MS);
-    }, []);
-
-    const clearSilenceTimer = () => {
-        if (silenceTimerRef.current) { clearTimeout(silenceTimerRef.current); silenceTimerRef.current = null; }
+    const clearMaxCallTimer = () => {
         if (maxCallTimerRef.current) { clearTimeout(maxCallTimerRef.current); maxCallTimerRef.current = null; }
     };
 
     const disconnect = useCallback(async () => {
         stopTimer();
-        clearSilenceTimer();
+        clearMaxCallTimer();
         if (roomRef.current) {
             await roomRef.current.disconnect();
             roomRef.current = null;
@@ -102,9 +91,7 @@ const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
             });
             room.on(RoomEvent.TrackUnsubscribed, (track) => { track.detach(); });
             room.on(RoomEvent.Disconnected, () => { disconnect(); });
-            room.on(RoomEvent.ActiveSpeakersChanged, (speakers: any[]) => {
-                if (speakers.length > 0) resetSilenceTimer(disconnect);
-            });
+            room.on(RoomEvent.ActiveSpeakersChanged, (_speakers: any[]) => { /* silence managed by agent */ });
             room.on(RoomEvent.ParticipantAttributesChanged, (attrs: Record<string, string>, participant: any) => {
                 console.log('[Hero] ParticipantAttributesChanged — all attrs:', JSON.stringify(attrs), 'from:', participant?.identity);
                 const s = attrs['lk.agent.state'] ?? attrs['agent_state'] ?? attrs['livekit.agent_state'];
@@ -126,8 +113,7 @@ const HeroV2Alt = ({ agentName, onMicError }: HeroV2AltProps) => {
             await room.localParticipant.setMicrophoneEnabled(true);
             setState('connected');
             startTimer();
-            resetSilenceTimer(disconnect); // start 30s silence watchdog
-            // Hard 3-minute call limit
+            // Hard 3-minute call limit (agent warns at 2:30 and closes via delete_room)
             maxCallTimerRef.current = setTimeout(() => {
                 console.log('[max-call-limit] 3 min reached → auto disconnect');
                 disconnect();

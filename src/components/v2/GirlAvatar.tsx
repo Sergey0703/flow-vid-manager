@@ -44,7 +44,7 @@ const FRAME_H = 1120;
 const TOTAL_COLS = 9;
 
 // Minimum ms to hold the thinking frame before allowing speaking/listening to take over
-const THINKING_MIN_MS = 1500;
+const THINKING_MIN_MS = 0;
 
 const GirlAvatar = ({ agentStream, agentState, agentThinkingState }: GirlAvatarProps) => {
   const canvasRef  = useRef<HTMLCanvasElement>(null);

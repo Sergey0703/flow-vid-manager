@@ -128,8 +128,8 @@ async def search_knowledge(query: str) -> str:
         return ""
 
 
-SILENCE_PROMPT_DELAY = 20   # seconds of silence before agent checks in
-SILENCE_END_DELAY    = 20   # further seconds with no reply before goodbye
+SILENCE_PROMPT_DELAY = 30   # seconds of silence before agent checks in
+SILENCE_END_DELAY    = 25   # further seconds with no reply before goodbye
 SESSION_WARN_AT      = 150  # warn user at 2m30s (30s before 3-min hard limit)
 
 
@@ -272,6 +272,9 @@ async def entrypoint(ctx: JobContext):
             content = getattr(item, "text_content", "") or ""
             if content:
                 session_log.on_agent_text(content)
+                # Reset silence watchdog when agent responds — timer starts after agent finishes
+                if not agent._ending:
+                    agent._reset_silence_watchdog()
 
     await session.start(room=ctx.room, agent=agent)
 

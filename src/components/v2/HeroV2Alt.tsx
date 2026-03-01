@@ -5,7 +5,7 @@ import GirlAvatar from "./GirlAvatar";
 type VoiceState = 'idle' | 'connecting' | 'connected' | 'ending' | 'error';
 type AgentThinkingState = 'listening' | 'thinking' | 'speaking' | null;
 
-const SILENCE_TIMEOUT_MS = 30_000; // auto-disconnect after 30s of no audio
+const SILENCE_TIMEOUT_MS = 90_000; // auto-disconnect after 90s of no audio (agent handles silence prompts)
 const MAX_CALL_MS = 3 * 60_000;   // hard limit: 3 minutes per call
 
 interface HeroV2AltProps {

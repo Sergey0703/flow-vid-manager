@@ -60,6 +60,13 @@ export default function Shop() {
   const handleRecommend = useCallback((ids: string[]) => {
     setRecommendedIds(ids);
     if (ids.length > 0) {
+      // Cache any recommended products that aren't already in allProductsRef
+      // so cart_action can resolve them even if the active tab differs
+      ids.forEach(id => {
+        if (!allProductsRef.current.has(id)) {
+          getProductById(id).then(p => { if (p) allProductsRef.current.set(p.id, p); });
+        }
+      });
       setTimeout(() => {
         const el = document.getElementById(`shop-card-${ids[0]}`);
         el?.scrollIntoView({ behavior: 'smooth', block: 'center' });

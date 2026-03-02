@@ -132,8 +132,13 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
     <>
       {/* ── Header inline widget ─────────────────────────────────────────── */}
       <div className="shop-header-widget">
-        {/* Cat avatar */}
-        <div className="shop-header-widget__avatar">
+        {/* Cat avatar — clickable */}
+        <div
+          className="shop-header-widget__avatar"
+          onClick={state === 'idle' || state === 'error' ? connect : disconnect}
+          title={state === 'connected' ? 'End call' : 'Ask Pixel'}
+          style={{ cursor: 'pointer' }}
+        >
           <CatAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />
         </div>
 

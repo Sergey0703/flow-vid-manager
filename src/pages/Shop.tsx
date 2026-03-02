@@ -33,6 +33,7 @@ export default function Shop() {
     return next;
   });
   const [activeCategory, setActiveCategory] = useState('all');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
@@ -98,6 +99,7 @@ export default function Shop() {
       <div className="shop-topbar">
         {/* Left column: header row + tabs row */}
         <div className="shop-topbar__left">
+          {/* Desktop: row1 = back + title + theme */}
           <div className="shop-topbar__row1">
             <Link to="/" className="shop-back-link">
               <BackIcon /> AIMediaFlow
@@ -107,7 +109,8 @@ export default function Shop() {
               {isLight ? <MoonIcon /> : <SunIcon />}
             </button>
           </div>
-          <div className="shop-topbar__row2">
+          {/* Desktop: row2 = category tabs */}
+          <div className="shop-topbar__row2 shop-topbar__row2--desktop">
             {CATEGORIES.map(c => (
               <button
                 key={c.key}
@@ -118,6 +121,37 @@ export default function Shop() {
               </button>
             ))}
           </div>
+          {/* Mobile: single row = back + title + burger */}
+          <div className="shop-topbar__mobile-row">
+            <Link to="/" className="shop-back-link">
+              <BackIcon />
+            </Link>
+            <span className="shop-title">PIXEL'S SHOP</span>
+            <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+              {isLight ? <MoonIcon /> : <SunIcon />}
+            </button>
+            <button
+              className={`shop-burger${menuOpen ? ' shop-burger--open' : ''}`}
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label="Menu"
+            >
+              <BurgerIcon open={menuOpen} />
+            </button>
+          </div>
+          {/* Mobile: dropdown menu */}
+          {menuOpen && (
+            <div className="shop-burger-menu">
+              {CATEGORIES.map(c => (
+                <button
+                  key={c.key}
+                  className={`shop-burger-item${activeCategory === c.key ? ' shop-burger-item--active' : ''}`}
+                  onClick={() => { setActiveCategory(c.key); setMenuOpen(false); }}
+                >
+                  {CATEGORY_ICONS[c.key] ?? '🛍️'} {c.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right column: cat widget spanning both rows */}
@@ -362,5 +396,14 @@ const SunIcon = () => (
 const MoonIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+);
+const BurgerIcon = ({ open }: { open: boolean }) => open ? (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+) : (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
   </svg>
 );

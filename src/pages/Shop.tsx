@@ -94,16 +94,34 @@ export default function Shop() {
 
   return (
     <div className={`v2-scope${isLight ? ' v2-light' : ''}`}>
-      {/* Header */}
-      <header className="shop-header">
-        <Link to="/" className="shop-back-link">
-          <BackIcon /> AIMediaFlow
-        </Link>
-        <span className="shop-title">PIXEL'S SHOP</span>
-        <div className="shop-header-right">
-          <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-            {isLight ? <MoonIcon /> : <SunIcon />}
-          </button>
+      {/* Sticky topbar: header + tabs merged, cat on the right */}
+      <div className="shop-topbar">
+        {/* Left column: header row + tabs row */}
+        <div className="shop-topbar__left">
+          <div className="shop-topbar__row1">
+            <Link to="/" className="shop-back-link">
+              <BackIcon /> AIMediaFlow
+            </Link>
+            <span className="shop-title">PIXEL'S SHOP</span>
+            <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+              {isLight ? <MoonIcon /> : <SunIcon />}
+            </button>
+          </div>
+          <div className="shop-topbar__row2">
+            {CATEGORIES.map(c => (
+              <button
+                key={c.key}
+                className={`shop-cat-tab${activeCategory === c.key ? ' shop-cat-tab--active' : ''}`}
+                onClick={() => setActiveCategory(c.key)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right column: cat widget spanning both rows */}
+        <div className="shop-topbar__right">
           <ShopPixelWidget
             onRecommend={handleRecommend}
             onExpand={handleExpand}
@@ -111,19 +129,6 @@ export default function Shop() {
             cartCount={cartCount}
           />
         </div>
-      </header>
-
-      {/* Category tabs */}
-      <div className="shop-category-tabs">
-        {CATEGORIES.map(c => (
-          <button
-            key={c.key}
-            className={`shop-cat-tab${activeCategory === c.key ? ' shop-cat-tab--active' : ''}`}
-            onClick={() => setActiveCategory(c.key)}
-          >
-            {c.label}
-          </button>
-        ))}
       </div>
 
       {/* Product grid */}

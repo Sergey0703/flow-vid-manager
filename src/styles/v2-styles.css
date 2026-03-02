@@ -3960,7 +3960,7 @@
 
 /* ── Main / grid ────────────────────────────────────────────────────────── */
 .v2-scope .shop-main {
-    padding: 1.5rem;
+    padding: 0.75rem 1.5rem 1.5rem;
     min-height: calc(100vh - 120px);
 }
 
@@ -4932,11 +4932,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     width: 100%;
     height: 100%;
-    padding: 0.4rem 0.5rem;
-    gap: 0.3rem;
+    padding: 0 0.3rem 0.3rem;
+    gap: 0.2rem;
 }
 
 .v2-scope .shop-header-widget__avatar {

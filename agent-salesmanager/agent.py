@@ -337,7 +337,10 @@ class SalesManagerAgent(Agent):
             return "Could not expand product."
 
     @llm.function_tool
-    async def close_product(self) -> str:
+    async def close_product(
+        self,
+        confirm: Annotated[str, "Always pass empty string."] = "",
+    ) -> str:
         """Close the currently open product card. Call this when the user says 'close it', 'close the card', 'close that', 'go back', 'never mind', or any variation meaning they want to stop viewing a product detail."""
         logger.info("close_product called")
         try:

@@ -1,0 +1,96 @@
+{
+  "settings": {
+    "pause_between_messages_sec": 3.5,
+    "pause_after_tool_call_sec": 1.5,
+    "pause_between_scenarios_sec": 5.0
+  },
+  "scenarios": [
+    {
+      "id": "browse_hoodies",
+      "persona": "Casual browser looking for hoodies",
+      "messages": [
+        "hey, what do you have in hoodies?",
+        "show me something black",
+        "do you have size L?",
+        "what's the cheapest one?",
+        "show me that one",
+        "ok thanks bye"
+      ]
+    },
+    {
+      "id": "price_hunter",
+      "persona": "Budget shopper with price limit",
+      "messages": [
+        "hi, I'm looking for something under 40 euro",
+        "what about jackets under 60?",
+        "show me the navy one",
+        "is it in stock?",
+        "ok close that, show me bottoms",
+        "bye"
+      ]
+    },
+    {
+      "id": "size_color_specific",
+      "persona": "Shopper with specific size and color requirements",
+      "messages": [
+        "do you have anything in white, size M?",
+        "what about tshirts in white?",
+        "show me the first result",
+        "what sizes does it come in?",
+        "ok show me sweatshirts instead",
+        "thanks bye"
+      ]
+    },
+    {
+      "id": "product_detail",
+      "persona": "Shopper wanting to open and close product cards",
+      "messages": [
+        "show me your accessories",
+        "open the second one",
+        "close it, show me all jackets",
+        "tell me more about the first one",
+        "show me the card for that",
+        "ok I'm done, bye"
+      ]
+    },
+    {
+      "id": "faq_and_policy",
+      "persona": "Customer asking about policies and shipping",
+      "messages": [
+        "what's your return policy?",
+        "how long does shipping take?",
+        "do you ship to Ireland?",
+        "what payment methods do you accept?",
+        "ok show me some hoodies then",
+        "bye"
+      ]
+    },
+    {
+      "id": "mixed_conversation",
+      "persona": "Natural mixed shopping session",
+      "messages": [
+        "hi, I need a gift for my friend",
+        "she likes streetwear, size S",
+        "what colors do you have in hoodies?",
+        "show me the forest green one",
+        "how much is it?",
+        "is there a discount?",
+        "ok I'll take it, how do I buy?",
+        "thanks, bye"
+      ]
+    },
+    {
+      "id": "multi_product_compare",
+      "persona": "Shopper comparing multiple products",
+      "messages": [
+        "show me all sweatshirts",
+        "which one is cheapest?",
+        "open the cheapest one",
+        "now show me the most expensive",
+        "open that one",
+        "close it, show me everything under 50",
+        "bye"
+      ]
+    }
+  ]
+}

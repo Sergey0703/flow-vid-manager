@@ -5,3 +5,4 @@ aiohttp==3.12.15
 pedalboard==0.9.17
 httpx==0.27.2
 numpy
+groq>=0.9.0

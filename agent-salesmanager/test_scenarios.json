@@ -6,89 +6,157 @@
   },
   "scenarios": [
     {
-      "id": "browse_hoodies",
-      "persona": "Casual browser looking for hoodies",
+      "id": "hoodie_browse",
+      "persona": "Customer looking for hoodies, wants to see details then close",
       "messages": [
-        "hey, what do you have in hoodies?",
-        "show me something black",
-        "do you have size L?",
-        "what's the cheapest one?",
-        "show me that one",
-        "ok thanks bye"
-      ]
-    },
-    {
-      "id": "price_hunter",
-      "persona": "Budget shopper with price limit",
-      "messages": [
-        "hi, I'm looking for something under 40 euro",
-        "what about jackets under 60?",
-        "show me the navy one",
-        "is it in stock?",
-        "ok close that, show me bottoms",
+        "hey, do you have any hoodies?",
+        "which one is cheapest?",
+        "show me the Classic Hoodie",
+        "what colors does it come in?",
+        "ok close that, show me the Oversized Hoodie instead",
+        "does it come in cream?",
+        "ok thanks, close it",
         "bye"
       ]
     },
     {
-      "id": "size_color_specific",
-      "persona": "Shopper with specific size and color requirements",
+      "id": "out_of_stock_handling",
+      "persona": "Customer asking for items that are out of stock",
       "messages": [
-        "do you have anything in white, size M?",
-        "what about tshirts in white?",
-        "show me the first result",
-        "what sizes does it come in?",
-        "ok show me sweatshirts instead",
-        "thanks bye"
+        "I want a Zip-Up Hoodie in black",
+        "is the Graphic Tee available?",
+        "ok what tshirts do you have in stock then?",
+        "show me the Oversized Tee",
+        "what sizes are available?",
+        "close the card please",
+        "bye"
       ]
     },
     {
-      "id": "product_detail",
-      "persona": "Shopper wanting to open and close product cards",
+      "id": "price_filter",
+      "persona": "Budget shopper with strict price limit",
       "messages": [
-        "show me your accessories",
-        "open the second one",
-        "close it, show me all jackets",
-        "tell me more about the first one",
-        "show me the card for that",
-        "ok I'm done, bye"
+        "what do you have under 25 euro?",
+        "show me the Dad Cap",
+        "is it adjustable?",
+        "close it, what else is under 25?",
+        "show me the Beanie",
+        "what colors for the beanie?",
+        "ok close that",
+        "do you have anything under 30 in clothing?",
+        "bye"
       ]
     },
     {
-      "id": "faq_and_policy",
-      "persona": "Customer asking about policies and shipping",
+      "id": "jacket_detail",
+      "persona": "Customer comparing jackets",
+      "messages": [
+        "show me your jackets",
+        "what's the difference between the Bomber and the Track Jacket?",
+        "open the Bomber Jacket",
+        "is it available in olive?",
+        "how many sizes do you have?",
+        "close it, open the Track Jacket",
+        "does it come in burgundy?",
+        "close the card",
+        "which one would you recommend?",
+        "bye"
+      ]
+    },
+    {
+      "id": "size_specific",
+      "persona": "Shopper who needs XXL size",
+      "messages": [
+        "do you have anything in XXL?",
+        "show me the Oversized Hoodie in XXL",
+        "what colors in XXL?",
+        "close it",
+        "what about XXL in sweatshirts?",
+        "show me the Essential Sweatshirt",
+        "wait does it come in XXL?",
+        "close the card please",
+        "bye"
+      ]
+    },
+    {
+      "id": "accessories_full",
+      "persona": "Customer browsing accessories one by one",
+      "messages": [
+        "what accessories do you have?",
+        "show me the Beanie",
+        "what colors?",
+        "close it, show me the Dad Cap",
+        "is it one size fits all?",
+        "close the card",
+        "show me the Canvas Tote Bag",
+        "how big is it?",
+        "close it",
+        "what's the most expensive accessory?",
+        "bye"
+      ]
+    },
+    {
+      "id": "color_hunt",
+      "persona": "Customer looking for specific colors across categories",
+      "messages": [
+        "do you have anything in forest green?",
+        "show me the forest green beanie",
+        "close it",
+        "what about forest green sweatshirts?",
+        "open the Essential Sweatshirt",
+        "close it please",
+        "any navy items?",
+        "show me the Classic Hoodie in navy",
+        "close the card",
+        "bye"
+      ]
+    },
+    {
+      "id": "gift_shopping",
+      "persona": "Buying a gift, unsure what to get",
+      "messages": [
+        "I'm looking for a gift for a friend who likes streetwear",
+        "she wears size S and likes neutral colors",
+        "show me the Basic Tee",
+        "nice, close it and show me sweatshirts in size S",
+        "open the Graphic Sweatshirt",
+        "how many are left in stock?",
+        "close it",
+        "what would you recommend as a gift under 50?",
+        "show me that one",
+        "great, close the card",
+        "bye"
+      ]
+    },
+    {
+      "id": "faq_and_shop",
+      "persona": "Customer asking policy questions then shopping",
       "messages": [
         "what's your return policy?",
-        "how long does shipping take?",
         "do you ship to Ireland?",
+        "how long does delivery take?",
+        "ok show me hoodies then",
+        "open the Oversized Hoodie",
+        "close it",
         "what payment methods do you accept?",
-        "ok show me some hoodies then",
         "bye"
       ]
     },
     {
-      "id": "mixed_conversation",
-      "persona": "Natural mixed shopping session",
+      "id": "expand_close_stress",
+      "persona": "Customer rapidly opening and closing multiple cards",
       "messages": [
-        "hi, I need a gift for my friend",
-        "she likes streetwear, size S",
-        "what colors do you have in hoodies?",
-        "show me the forest green one",
-        "how much is it?",
-        "is there a discount?",
-        "ok I'll take it, how do I buy?",
-        "thanks, bye"
-      ]
-    },
-    {
-      "id": "multi_product_compare",
-      "persona": "Shopper comparing multiple products",
-      "messages": [
-        "show me all sweatshirts",
-        "which one is cheapest?",
-        "open the cheapest one",
-        "now show me the most expensive",
-        "open that one",
-        "close it, show me everything under 50",
+        "show me all tshirts",
+        "open the Basic Tee",
+        "close it, open the Oversized Tee",
+        "close that too, show me the Graphic Tee",
+        "is it in stock?",
+        "close it",
+        "show me sweatshirts",
+        "open the first one",
+        "close the card",
+        "open the second one",
+        "close it please",
         "bye"
       ]
     }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/v2-styles.css';
-import { getProducts, type Product } from '../lib/shopApi';
+import { getProducts, getProductById, type Product } from '../lib/shopApi';
 import ShopPixelWidget from '../components/shop/ShopPixelWidget';
 
 const THEME_KEY = 'v2-theme';
@@ -42,11 +42,17 @@ export default function Shop() {
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutDone, setCheckoutDone] = useState(false);
   const liveKitRoomRef = useRef<any>(null);
+  // Cache of all products seen across category switches — needed so cart_action
+  // can resolve a product even when the active category tab doesn't include it
+  const allProductsRef = useRef<Map<string, Product>>(new Map());
 
   useEffect(() => {
     setLoading(true);
     getProducts('*', activeCategory)
-      .then(setProducts)
+      .then(p => {
+        setProducts(p);
+        p.forEach(prod => allProductsRef.current.set(prod.id, prod));
+      })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, [activeCategory]);
@@ -102,12 +108,17 @@ export default function Shop() {
     });
   }, [syncCart]);
 
-  const handleCartAction = useCallback((action: { action: 'add' | 'remove'; id: string; qty?: number }) => {
-    const product = products.find(p => p.id === action.id);
-    if (!product) return;
-    if (action.action === 'add') handleAddToCart(product);
-    else if (action.action === 'remove') handleRemoveFromCart(action.id);
-  }, [products, handleAddToCart, handleRemoveFromCart]);
+  const handleCartAction = useCallback(async (action: { action: 'add' | 'remove'; id: string; qty?: number }) => {
+    if (action.action === 'remove') { handleRemoveFromCart(action.id); return; }
+    // Use allProductsRef so cart works even if active category tab changed since agent search
+    let product = allProductsRef.current.get(action.id);
+    if (!product) {
+      // Fallback: product not yet loaded (user never visited that category tab)
+      product = await getProductById(action.id) ?? undefined;
+      if (product) allProductsRef.current.set(product.id, product);
+    }
+    if (product) handleAddToCart(product);
+  }, [handleAddToCart, handleRemoveFromCart]);
 
   const handleRoomReady = useCallback((room: any) => {
     liveKitRoomRef.current = room;

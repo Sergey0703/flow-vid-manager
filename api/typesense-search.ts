@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Typesense not configured' });
   }
 
-  const { q = '*', category, per_page = '20' } = req.query as Record<string, string>;
+  const { q = '*', category, id, per_page = '20' } = req.query as Record<string, string>;
 
   const params = new URLSearchParams({
     q,
@@ -27,7 +27,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     sort_by: '_text_match:desc',
   });
 
-  if (category && category !== 'all') {
+  if (id) {
+    params.set('filter_by', `id:=${id}`);
+  } else if (category && category !== 'all') {
     params.set('filter_by', `category:=${category}`);
   }
 

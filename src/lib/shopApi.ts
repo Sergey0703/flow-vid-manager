@@ -22,3 +22,11 @@ export async function getProducts(q?: string, category?: string): Promise<Produc
   const data = await res.json();
   return data.products as Product[];
 }
+
+export async function getProductById(id: string): Promise<Product | null> {
+  const params = new URLSearchParams({ q: '*', id });
+  const res = await fetch(`/api/typesense-search?${params}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return (data.products as Product[]).find(p => p.id === id) ?? null;
+}

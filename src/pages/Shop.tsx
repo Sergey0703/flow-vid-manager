@@ -154,16 +154,17 @@ export default function Shop() {
           )}
         </div>
 
-        {/* Right column: cat widget spanning both rows */}
-        <div className="shop-topbar__right">
-          <ShopPixelWidget
-            onRecommend={handleRecommend}
-            onExpand={handleExpand}
-            lastRecommended={lastRecommended}
-            cartCount={cartCount}
-          />
-        </div>
+        {/* Right column placeholder — reserves space on desktop */}
+        <div className="shop-topbar__right" />
       </div>
+
+      {/* Cat widget — outside topbar so position:fixed works on mobile */}
+      <ShopPixelWidget
+        onRecommend={handleRecommend}
+        onExpand={handleExpand}
+        lastRecommended={lastRecommended}
+        cartCount={cartCount}
+      />
 
       {/* Product grid */}
       <main className="shop-main">

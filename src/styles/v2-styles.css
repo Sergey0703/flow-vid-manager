@@ -3989,25 +3989,28 @@
 
 .v2-scope .shop-cat-tab {
     flex-shrink: 0;
-    padding: 0.35rem 0.9rem;
-    border-radius: 20px;
-    border: 1px solid var(--v2-border);
+    padding: 0.5rem 1.4rem;
+    border-radius: 24px;
+    border: 1.5px solid var(--v2-border);
     background: transparent;
     color: var(--v2-muted);
-    font-size: 0.82rem;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    letter-spacing: 0.02em;
 }
 .v2-scope .shop-cat-tab:hover {
     border-color: var(--v2-cyan);
     color: var(--v2-text);
+    background: rgba(8, 145, 178, 0.06);
 }
 .v2-scope .shop-cat-tab--active {
     background: var(--v2-cyan);
     border-color: var(--v2-cyan);
     color: #000;
     font-weight: 700;
+    box-shadow: 0 2px 12px rgba(8, 145, 178, 0.35);
 }
 
 /* ── Main / grid ────────────────────────────────────────────────────────── */
@@ -4505,33 +4508,53 @@
 }
 
 @media (max-width: 768px) {
-    /* Hide desktop rows, show mobile row + cat in topbar */
+    /* Hide desktop rows, show mobile row */
     .v2-scope .shop-topbar__row1          { display: none; }
     .v2-scope .shop-topbar__row2--desktop { display: none; }
-    .v2-scope .shop-topbar__mobile-row    {
+    .v2-scope .shop-topbar__mobile-row {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        padding: 0.5rem 1rem;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
     }
-    /* Show cat widget on mobile too (smaller) */
-    .v2-scope .shop-topbar__right {
-        display: flex;
+    /* Hide cat from topbar on mobile — it becomes floating */
+    .v2-scope .shop-topbar__right { display: none; }
+
+    /* Cat widget: fixed floating bottom-right on mobile */
+    .v2-scope .shop-header-widget {
+        position: fixed;
+        bottom: 1rem;
+        right: 0.75rem;
         width: 90px;
+        height: auto;
+        padding: 0;
+        gap: 0.2rem;
+        z-index: 200;
+        background: transparent;
     }
-    /* No bottom tab on mobile — using topbar widget */
+    .v2-scope .shop-header-widget__avatar {
+        width: 90px;
+        height: 90px;
+        flex: none;
+    }
+    .v2-scope .shop-header-widget__controls {
+        width: 100%;
+        justify-content: center;
+    }
+    .v2-scope .shop-header-widget__cta {
+        font-size: 0.68rem;
+        padding: 0.3rem 0.6rem;
+        width: 100%;
+        justify-content: center;
+    }
+
     .v2-scope .shop-pixel-tab   { display: none; }
     .v2-scope .shop-pixel-sheet { display: flex; }
     .v2-scope .shop-main {
         padding: 0.75rem;
-        padding-bottom: 1rem;
+        padding-bottom: 7rem; /* space for floating cat */
     }
     .v2-scope .shop-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-    /* Smaller cat on mobile */
-    .v2-scope .shop-header-widget__cta {
-        font-size: 0.7rem;
-        padding: 0.3rem 0.6rem;
-    }
 }
 
 @media (max-width: 480px) {

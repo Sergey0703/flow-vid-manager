@@ -121,21 +121,21 @@ export default function Shop() {
               </button>
             ))}
           </div>
-          {/* Mobile: single row = back + title + burger */}
+          {/* Mobile: single row = back + burger + title + theme */}
           <div className="shop-topbar__mobile-row">
             <Link to="/" className="shop-back-link">
               <BackIcon />
             </Link>
-            <span className="shop-title">PIXEL'S SHOP</span>
-            <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-              {isLight ? <MoonIcon /> : <SunIcon />}
-            </button>
             <button
               className={`shop-burger${menuOpen ? ' shop-burger--open' : ''}`}
               onClick={() => setMenuOpen(o => !o)}
               aria-label="Menu"
             >
               <BurgerIcon open={menuOpen} />
+            </button>
+            <span className="shop-title">PIXEL'S SHOP</span>
+            <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+              {isLight ? <MoonIcon /> : <SunIcon />}
             </button>
           </div>
           {/* Mobile: dropdown menu */}

@@ -10,11 +10,13 @@ const MAX_CALL_MS = 3 * 60_000;
 interface ShopPixelWidgetProps {
   onRecommend: (ids: string[]) => void;
   onExpand: (id: string | null) => void;
+  onCartAction: (action: { action: 'add' | 'remove'; id: string; qty?: number }) => void;
+  onRoomReady: (room: any) => void;
   lastRecommended: Product | null;
   cartCount: number;
 }
 
-export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended, cartCount }: ShopPixelWidgetProps) {
+export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, onRoomReady, lastRecommended, cartCount }: ShopPixelWidgetProps) {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
@@ -42,6 +44,7 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
     setState('idle');
     onRecommend([]);
     onExpand(null);
+    onRoomReady(null);
   }, [onRecommend, onExpand]);
 
   const connect = useCallback(async () => {
@@ -100,10 +103,18 @@ export default function ShopPixelWidget({ onRecommend, onExpand, lastRecommended
           const eid = attrs['expanded_id'];
           onExpand(eid || null);
         }
+
+        if ('cart_action' in attrs && attrs['cart_action']) {
+          try {
+            const parsed = JSON.parse(attrs['cart_action']);
+            if (parsed.action && parsed.id) onCartAction(parsed);
+          } catch { /* ignore malformed */ }
+        }
       });
 
       micStream.getTracks().forEach(t => t.stop());
       await room.connect(data.wsUrl, data.token);
+      onRoomReady(room);
 
       room.registerRpcMethod('end_call', async () => {
         setTimeout(() => disconnect(), 2000);

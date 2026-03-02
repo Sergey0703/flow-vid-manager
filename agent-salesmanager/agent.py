@@ -96,6 +96,12 @@ CLOSING PRODUCT CARD:
 AVAILABLE CATEGORIES (exact values for search_products category parameter):
 {categories_exact}
 
+SHOPPING CART:
+- add_to_cart(product_id, qty): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
+- remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
+- read_cart(): when user asks "what's in my cart?", "what did I select?", "my basket", "show cart", "total"
+Always confirm additions aloud: "Added! You now have X items in your cart."
+
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that is all, or clearly indicates they are done,
 say a short warm farewell like "Bye! Come back anytime!" and nothing else."""
@@ -349,6 +355,77 @@ class SalesManagerAgent(Agent):
         except Exception as e:
             logger.warning(f"close_product set_attributes failed: {e}")
             return "Could not close product card."
+
+    def _get_visitor_cart(self) -> list[dict]:
+        """Read cart_json attribute from the visitor participant. Returns parsed list or []."""
+        import json
+        try:
+            for p in self._room.remote_participants.values():
+                cart_json = p.attributes.get("cart_json", "")
+                if cart_json:
+                    return json.loads(cart_json)
+            return []
+        except Exception:
+            return []
+
+    @llm.function_tool
+    async def add_to_cart(
+        self,
+        product_id: Annotated[str, "Product ID to add, e.g. 'p002'. Use the id from the most recent search result."],
+        qty: Annotated[int, "Quantity to add. Default is 1."] = 1,
+    ) -> str:
+        """Add a product to the customer's shopping cart. Call when user says 'add to cart', 'I'll take it', 'buy this', or similar."""
+        import json
+        logger.info(f"add_to_cart: product_id={repr(product_id)} qty={qty}")
+        # Signal frontend to add the item via cart_action attribute
+        action_payload = json.dumps({"action": "add", "id": product_id, "qty": qty})
+        try:
+            await self._room.local_participant.set_attributes({"cart_action": action_payload})
+        except Exception as e:
+            logger.warning(f"add_to_cart set_attributes failed: {e}")
+        # Count current cart items for confirmation (read before frontend updates)
+        cart = self._get_visitor_cart()
+        total_qty = sum(i.get("qty", 1) for i in cart) + qty
+        return f"Added to cart. Customer now has approximately {total_qty} item(s) in cart."
+
+    @llm.function_tool
+    async def remove_from_cart(
+        self,
+        product_id: Annotated[str, "Product ID to remove from the cart, e.g. 'p002'."],
+    ) -> str:
+        """Remove a product from the customer's shopping cart. Call when user says 'remove', 'take it out', 'I changed my mind'."""
+        import json
+        logger.info(f"remove_from_cart: product_id={repr(product_id)}")
+        action_payload = json.dumps({"action": "remove", "id": product_id})
+        try:
+            await self._room.local_participant.set_attributes({"cart_action": action_payload})
+        except Exception as e:
+            logger.warning(f"remove_from_cart set_attributes failed: {e}")
+        cart = self._get_visitor_cart()
+        remaining = sum(i.get("qty", 1) for i in cart if i.get("id") != product_id)
+        return f"Removed from cart. Customer has {remaining} item(s) remaining."
+
+    @llm.function_tool
+    async def read_cart(
+        self,
+        confirm: Annotated[str, "Always pass empty string."] = "",
+    ) -> str:
+        """Read the current contents of the customer's shopping cart. Call when user asks 'what's in my cart?', 'show my basket', 'what did I add?', 'what's my total?'."""
+        logger.info("read_cart called")
+        cart = self._get_visitor_cart()
+        if not cart:
+            return "The cart is empty."
+        lines = []
+        total = 0.0
+        for item in cart:
+            name = item.get("name", item.get("id", "item"))
+            price = float(item.get("price", 0))
+            qty = int(item.get("qty", 1))
+            subtotal = price * qty
+            total += subtotal
+            lines.append(f"{name} x{qty} (€{subtotal:.2f})")
+        items_str = ", ".join(lines)
+        return f"Cart: {items_str}. Total: €{total:.2f}."
 
     @llm.function_tool
     async def search_faq(

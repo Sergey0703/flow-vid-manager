@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/v2-styles.css';
 import { getProducts, type Product } from '../lib/shopApi';
@@ -39,7 +39,9 @@ export default function Shop() {
   const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<{ product: Product; qty: number }[]>([]);
-
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutDone, setCheckoutDone] = useState(false);
+  const liveKitRoomRef = useRef<any>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -63,17 +65,60 @@ export default function Shop() {
     setExpandedId(id);
   }, []);
 
+  const syncCart = useCallback((items: { product: Product; qty: number }[]) => {
+    const room = liveKitRoomRef.current;
+    if (!room) return;
+    const compact = items.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, qty: i.qty }));
+    room.localParticipant.setAttributes({ cart_json: items.length ? JSON.stringify(compact) : '' });
+  }, []);
+
   const handleAddToCart = useCallback((product: Product) => {
     setCartItems(prev => {
       const existing = prev.find(i => i.product.id === product.id);
-      if (existing) {
-        return prev.map(i => i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i);
-      }
-      return [...prev, { product, qty: 1 }];
+      const next = existing
+        ? prev.map(i => i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i)
+        : [...prev, { product, qty: 1 }];
+      syncCart(next);
+      return next;
     });
-  }, []);
+  }, [syncCart]);
+
+  const handleRemoveFromCart = useCallback((productId: string) => {
+    setCartItems(prev => {
+      const next = prev.filter(i => i.product.id !== productId);
+      syncCart(next);
+      return next;
+    });
+  }, [syncCart]);
+
+  const handleQtyChange = useCallback((productId: string, delta: number) => {
+    setCartItems(prev => {
+      const next = prev.map(i => i.product.id === productId
+        ? { ...i, qty: Math.max(1, i.qty + delta) }
+        : i
+      );
+      syncCart(next);
+      return next;
+    });
+  }, [syncCart]);
+
+  const handleCartAction = useCallback((action: { action: 'add' | 'remove'; id: string; qty?: number }) => {
+    const product = products.find(p => p.id === action.id);
+    if (!product) return;
+    if (action.action === 'add') handleAddToCart(product);
+    else if (action.action === 'remove') handleRemoveFromCart(action.id);
+  }, [products, handleAddToCart, handleRemoveFromCart]);
+
+  const handleRoomReady = useCallback((room: any) => {
+    liveKitRoomRef.current = room;
+    // If cart already has items when room connects, sync them immediately
+    if (room) {
+      setCartItems(prev => { syncCart(prev); return prev; });
+    }
+  }, [syncCart]);
 
   const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
+  const cartTotal = cartItems.reduce((sum, i) => sum + i.product.price * i.qty, 0);
 
   // Sort: recommended first in agent order, rest after
   const agentActive = recommendedIds.length > 0;
@@ -162,9 +207,72 @@ export default function Shop() {
       <ShopPixelWidget
         onRecommend={handleRecommend}
         onExpand={handleExpand}
+        onCartAction={handleCartAction}
+        onRoomReady={handleRoomReady}
         lastRecommended={lastRecommended}
         cartCount={cartCount}
       />
+
+      {/* Cart button (fixed, top-right on desktop) */}
+      <button
+        className={`shop-cart-btn${cartCount > 0 ? ' shop-cart-btn--has-items' : ''}`}
+        onClick={() => setCartOpen(o => !o)}
+        aria-label="Open cart"
+      >
+        <CartIcon />
+        {cartCount > 0 && <span className="shop-cart-badge">{cartCount}</span>}
+      </button>
+
+      {/* Cart panel */}
+      <div className={`shop-cart-panel${cartOpen ? ' shop-cart-panel--open' : ''}`}>
+        <div className="shop-cart-panel__header">
+          <span>🛒 Your Cart</span>
+          <button className="shop-cart-panel__close" onClick={() => setCartOpen(false)}>✕</button>
+        </div>
+
+        {cartItems.length === 0 ? (
+          <div className="shop-cart-empty">Your cart is empty.</div>
+        ) : (
+          <>
+            <div className="shop-cart-items">
+              {cartItems.map(({ product: p, qty }) => (
+                <div key={p.id} className="shop-cart-item">
+                  <div className="shop-cart-item__info">
+                    <span className="shop-cart-item__name">{p.name}</span>
+                    <span className="shop-cart-item__price">€{(p.price * qty).toFixed(2)}</span>
+                  </div>
+                  <div className="shop-cart-item__controls">
+                    <button className="shop-cart-qty-btn" onClick={() => handleQtyChange(p.id, -1)}>−</button>
+                    <span className="shop-cart-item__qty">{qty}</span>
+                    <button className="shop-cart-qty-btn" onClick={() => handleQtyChange(p.id, 1)}>+</button>
+                    <button className="shop-cart-remove-btn" onClick={() => handleRemoveFromCart(p.id)} title="Remove">🗑</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="shop-cart-panel__footer">
+              <div className="shop-cart-total">
+                <span>Total</span>
+                <span>€{cartTotal.toFixed(2)}</span>
+              </div>
+              <div className="shop-cart-panel__actions">
+                <button className="shop-cart-clear-btn" onClick={() => { setCartItems([]); syncCart([]); }}>
+                  Clear
+                </button>
+                <button
+                  className="shop-cart-checkout-btn"
+                  onClick={() => { setCheckoutDone(true); setTimeout(() => setCheckoutDone(false), 3000); }}
+                >
+                  {checkoutDone ? '✅ Order noted!' : 'Checkout →'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Cart panel backdrop */}
+      {cartOpen && <div className="shop-cart-backdrop" onClick={() => setCartOpen(false)} />}
 
       {/* Product grid */}
       <main className="shop-main">
@@ -380,6 +488,12 @@ function ColorDot({ color }: { color: string }) {
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
+const CartIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+  </svg>
+);
 const BackIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />

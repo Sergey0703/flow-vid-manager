@@ -4539,7 +4539,7 @@
     .v2-scope .shop-topbar__right { display: none; }
 
     .v2-scope .shop-pixel-tab   { display: none; }
-    .v2-scope .shop-pixel-sheet { display: flex; }
+    .v2-scope .shop-pixel-sheet { display: none; } /* cat is already fixed top-right */
     .v2-scope .shop-main {
         padding: 0.75rem;
         padding-bottom: 7rem; /* space for floating cat */

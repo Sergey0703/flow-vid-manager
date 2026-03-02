@@ -101,7 +101,7 @@ These simulate realistic voice conversation pacing. Use `--no-pause` to skip for
 - `→ no tool call` — LLM answered from context (expected for follow-up questions)
 - `UI state:` — cumulative state after all tool calls in this turn
 
-### Scenarios (10 total)
+### Scenarios (13 total)
 
 | ID | Persona | Key checks |
 |----|---------|------------|
@@ -115,6 +115,36 @@ These simulate realistic voice conversation pacing. Use `--no-pause` to skip for
 | `gift_shopping` | Buying a gift | neutral colors, size S, price limit |
 | `faq_and_shop` | Policy questions then shopping | search_faq → search_products transition |
 | `expand_close_stress` | Rapid open/close stress test | 12 messages, multiple expand/close cycles |
+| `cart_add_read` | Adding items and checking cart | `add_to_cart`, `read_cart`, total sum |
+| `cart_remove` | Add then remove items | `add_to_cart`, `remove_from_cart`, `read_cart` |
+| `cart_full_flow` | Full browse→expand→add→remove flow | all cart tools combined with product tools |
+
+### Cart tool output in text mode
+
+Text mode simulates cart state via a local dict (no real LiveKit frontend). What to look for:
+
+```
+[You #2]: add the Classic Hoodie to my cart
+  → TOOL: add_to_cart(product_id='p001', qty=1)    ← correct tool called
+  → CART: added p001 qty=1 | cart=[p001 x1]        ← cart state updated
+[Pixel]: Added! You now have 1 item in your cart.
+
+[You #3]: what's in my cart?
+  → TOOL: read_cart()
+  → CART READ: [p001 x1]
+[Pixel]: You have the Classic Hoodie in your cart. Total is €49.99.
+
+[You #5]: remove the hoodie
+  → TOOL: remove_from_cart(product_id='p001')
+  → CART: removed p001 | cart=[]
+[Pixel]: Done, it's out of your cart.
+```
+
+Key checks:
+- `→ TOOL: add_to_cart(...)` — correct product_id passed (not the name)
+- `→ TOOL: read_cart()` — called on "what's in my cart", "total", "basket"
+- `→ TOOL: remove_from_cart(...)` — correct id, not just any product
+- Agent's spoken reply matches cart state (e.g. correct total)
 
 ### Adding new scenarios
 
@@ -245,3 +275,5 @@ ssh -i .ssh_hetzner_key root@46.62.246.93 "docker cp /tmp/voice_test_agent.py ai
 |------|------|-----------|--------|
 | 2026-03-02 | Text (headless) | 10/10 | ✅ All passed — close_product and named search fixes verified |
 | 2026-03-02 | Voice (LiveKit) | 1/10 (hoodie_browse) | ✅ STT, tool calls, UI state all working end-to-end |
+| 2026-03-02 | Text (headless) | cart_full_flow | ✅ add_to_cart, expand, close, remove, read_cart — all tools correct, prices correct |
+| 2026-03-02 | Voice (LiveKit) | cart_full_flow | ✅ Full voice flow: STT, product search, expand/close, cart voice commands end-to-end |

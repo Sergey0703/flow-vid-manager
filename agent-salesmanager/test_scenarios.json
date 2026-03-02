@@ -159,6 +159,50 @@
         "close it please",
         "bye"
       ]
+    },
+    {
+      "id": "cart_add_read",
+      "persona": "Customer adding items to cart and checking cart contents",
+      "messages": [
+        "show me hoodies",
+        "add the Classic Hoodie to my cart",
+        "what's in my cart?",
+        "show me tshirts",
+        "add the Oversized Tee to my cart",
+        "what's in my cart now?",
+        "add another Oversized Tee please",
+        "what's the total?",
+        "bye"
+      ]
+    },
+    {
+      "id": "cart_remove",
+      "persona": "Customer adding then removing items from cart",
+      "messages": [
+        "show me accessories",
+        "add the first one to my cart",
+        "add the second one to my cart too",
+        "what's in my cart?",
+        "actually remove the first one, I changed my mind",
+        "what do I have left in cart?",
+        "bye"
+      ]
+    },
+    {
+      "id": "cart_full_flow",
+      "persona": "Full shopping flow: browse, expand, add to cart, check out",
+      "messages": [
+        "show me jackets",
+        "open the first one",
+        "add it to my cart",
+        "close the card",
+        "show me sweatshirts",
+        "add the first sweatshirt to my cart",
+        "what's in my cart?",
+        "remove the jacket from my cart",
+        "what's left in cart?",
+        "ok that's all, bye"
+      ]
     }
   ]
 }

@@ -179,6 +179,12 @@ async def _fetch_categories():
 # Tracks UI state (what would be sent via set_attributes)
 ui_state = {"recommended_ids": "", "expanded_id": ""}
 
+# Simulated cart (product_id → {name, price, qty})
+cart_state: dict[str, dict] = {}
+
+# Product catalogue cache (id → document) populated on first search_products call
+_product_catalog: dict[str, dict] = {}
+
 
 async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
     """Execute a tool call and return (result_text, ui_changes)."""
@@ -203,6 +209,14 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
         ui_changes["recommended_ids"] = ",".join(ids)
         ui_changes["expanded_id"]     = ids[0] if len(ids) == 1 else ""
         ui_state.update(ui_changes)
+        # Cache product docs for cart tool use
+        # Re-run raw to get hits with documents
+        filter_by = _build_filter(category, colors, sizes, None, price_max_val, stock_only=False)
+        hits_for_cache = await _do_search(keywords or "*", filter_by)
+        for h in hits_for_cache:
+            d = h.get("document", {})
+            if d.get("id"):
+                _product_catalog[d["id"]] = d
         return context or "No products found for that query.", ui_changes
 
     elif name == "expand_product":
@@ -221,6 +235,40 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
         query = args.get("query", "")
         result = await _search_faq_raw(query)
         return result or "No relevant information found.", ui_changes
+
+    elif name == "add_to_cart":
+        product_id = args.get("product_id", "")
+        qty = int(args.get("qty", 1))
+        # Try to get product info from catalog cache
+        doc = _product_catalog.get(product_id, {})
+        name_str = doc.get("name", product_id)
+        price = float(doc.get("price", 0))
+        if product_id in cart_state:
+            cart_state[product_id]["qty"] += qty
+        else:
+            cart_state[product_id] = {"name": name_str, "price": price, "qty": qty}
+        cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values())
+        ui_changes["cart_action"] = f"add:{product_id}:{qty}"
+        total_qty = sum(v["qty"] for v in cart_state.values())
+        return f"Added to cart. Cart: [{cart_summary}]. Total items: {total_qty}.", ui_changes
+
+    elif name == "remove_from_cart":
+        product_id = args.get("product_id", "")
+        removed_name = cart_state.pop(product_id, {}).get("name", product_id)
+        cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values()) or "empty"
+        ui_changes["cart_action"] = f"remove:{product_id}"
+        return f"Removed {removed_name}. Cart: [{cart_summary}].", ui_changes
+
+    elif name == "read_cart":
+        if not cart_state:
+            return "The cart is empty.", ui_changes
+        lines = []
+        total = 0.0
+        for item in cart_state.values():
+            subtotal = item["price"] * item["qty"]
+            total += subtotal
+            lines.append(f"{item['name']} x{item['qty']} (€{subtotal:.2f})")
+        return f"Cart: {', '.join(lines)}. Total: €{total:.2f}.", ui_changes
 
     return f"Unknown tool: {name}", ui_changes
 
@@ -308,6 +356,56 @@ TOOLS = [
                 "required": ["query"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "add_to_cart",
+            "description": "Add a product to the customer's shopping cart. Call when user says 'add to cart', 'I'll take it', 'buy this', 'add one', 'get it'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "string",
+                        "description": "Product ID to add, e.g. 'p002'. Use the id from the most recent search result."
+                    },
+                    "qty": {
+                        "type": "integer",
+                        "description": "Quantity to add. Default is 1."
+                    }
+                },
+                "required": ["product_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "remove_from_cart",
+            "description": "Remove a product from the shopping cart. Call when user says 'remove', 'take it out', 'I changed my mind', 'don't want it'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "string",
+                        "description": "Product ID to remove from cart, e.g. 'p002'."
+                    }
+                },
+                "required": ["product_id"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_cart",
+            "description": "Read current cart contents aloud. Call when user asks 'what's in my cart?', 'my basket', 'what did I add?', 'what's my total?', 'show cart'.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
     }
 ]
 
@@ -359,6 +457,12 @@ CLOSING PRODUCT CARD:
 
 AVAILABLE CATEGORIES (exact values for search_products category parameter):
 {cats_exact}
+
+SHOPPING CART:
+- add_to_cart(product_id, qty): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
+- remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
+- read_cart(): when user asks "what's in my cart?", "what did I select?", "my basket", "show cart", "total"
+Always confirm additions aloud: "Added! You now have X items in your cart."
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that is all, say a short warm farewell."""
@@ -445,6 +549,9 @@ When the user says goodbye, bye, thanks bye, that is all, say a short warm farew
                     if "expanded_id" in ui_changes:
                         exp = ui_changes["expanded_id"]
                         ui_parts.append(f"expanded: {exp if exp else 'CLOSED'}")
+                    if "cart_action" in ui_changes:
+                        cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values()) or "empty"
+                        ui_parts.append(f"cart: [{cart_summary}]")
                     if ui_parts:
                         self._print(f"  {C.BLUE}→ UI: {' | '.join(ui_parts)}{C.RESET}")
 
@@ -498,9 +605,11 @@ async def run_scenario(scenario: dict, categories: list[str], pauses: dict,
 
     session = TestSession(categories, log_lines, no_pause)
 
-    # Reset UI state for each scenario
+    # Reset UI + cart state for each scenario
     ui_state["recommended_ids"] = ""
     ui_state["expanded_id"]     = ""
+    cart_state.clear()
+    _product_catalog.clear()
 
     # Initial greeting
     greeting_resp = await session.client.chat.completions.create(
@@ -527,13 +636,17 @@ async def run_scenario(scenario: dict, categories: list[str], pauses: dict,
         print(f"{C.GREEN}[Pixel]{C.RESET}: {reply}")
         log_lines.append(f"[Pixel]: {reply}")
 
-        # Show current UI state after each turn
+        # Show current UI + cart state after each turn
         rec = ui_state.get("recommended_ids", "")
         exp = ui_state.get("expanded_id", "")
-        if rec or exp:
-            state_parts = []
-            if rec: state_parts.append(f"recommended=[{rec}]")
-            if exp: state_parts.append(f"expanded={exp}")
+        state_parts = []
+        if rec: state_parts.append(f"recommended=[{rec}]")
+        if exp: state_parts.append(f"expanded={exp}")
+        if cart_state:
+            cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values())
+            cart_total = sum(v["price"] * v["qty"] for v in cart_state.values())
+            state_parts.append(f"cart=[{cart_summary}] total=€{cart_total:.2f}")
+        if state_parts:
             print(f"  {C.DIM}UI state: {' | '.join(state_parts)}{C.RESET}")
 
 

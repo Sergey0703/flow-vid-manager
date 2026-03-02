@@ -162,6 +162,15 @@ class VoiceTestSession:
                     parts.append(f"recommended: [{rec}]")
                 if "expanded_id" in changed_attributes:
                     parts.append(f"expanded: {exp if exp else 'CLOSED'}")
+                if "cart_action" in changed_attributes:
+                    action_raw = changed_attributes["cart_action"]
+                    if action_raw:
+                        try:
+                            import json as _json
+                            a = _json.loads(action_raw)
+                            parts.append(f"cart_action: {a.get('action')}({a.get('id')},qty={a.get('qty',1)})")
+                        except Exception:
+                            parts.append(f"cart_action: {action_raw}")
                 if parts:
                     self._print(f"  {C.BLUE}→ UI: {' | '.join(parts)}{C.RESET}")
 

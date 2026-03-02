@@ -186,6 +186,33 @@ cart_state: dict[str, dict] = {}
 _product_catalog: dict[str, dict] = {}
 
 
+def _validate_args(tool_name: str, args: dict) -> list[str]:
+    """Validate LLM-provided args against TOOLS schema. Returns list of warnings."""
+    warnings = []
+    schema = next((t["function"]["parameters"] for t in TOOLS if t["function"]["name"] == tool_name), None)
+    if not schema:
+        return warnings
+    props = schema.get("properties", {})
+    required = schema.get("required", [])
+    # Check required fields present
+    for req in required:
+        if req not in args:
+            warnings.append(f"missing required param '{req}'")
+    # Check types
+    type_map = {"string": str, "integer": int, "number": (int, float), "boolean": bool, "array": list, "object": dict}
+    for key, val in args.items():
+        prop = props.get(key)
+        if not prop:
+            continue
+        expected_type = prop.get("type")
+        if not expected_type or expected_type not in type_map:
+            continue
+        expected_py = type_map[expected_type]
+        if not isinstance(val, expected_py):
+            warnings.append(f"param '{key}' expected {expected_type} but got {type(val).__name__}={repr(val)}")
+    return warnings
+
+
 async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
     """Execute a tool call and return (result_text, ui_changes)."""
     ui_changes = {}
@@ -238,7 +265,7 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
 
     elif name == "add_to_cart":
         product_id = args.get("product_id", "")
-        qty = int(args.get("qty", 1))
+        qty = int(str(args.get("qty", 1)))  # accept string or int (Groq may return either)
         # Try to get product info from catalog cache
         doc = _product_catalog.get(product_id, {})
         name_str = doc.get("name", product_id)
@@ -248,7 +275,7 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
         else:
             cart_state[product_id] = {"name": name_str, "price": price, "qty": qty}
         cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values())
-        ui_changes["cart_action"] = f"add:{product_id}:{qty}"
+        ui_changes["cart_action"] = json.dumps({"action": "add", "id": product_id, "qty": qty})
         total_qty = sum(v["qty"] for v in cart_state.values())
         return f"Added to cart. Cart: [{cart_summary}]. Total items: {total_qty}.", ui_changes
 
@@ -256,7 +283,7 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
         product_id = args.get("product_id", "")
         removed_name = cart_state.pop(product_id, {}).get("name", product_id)
         cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values()) or "empty"
-        ui_changes["cart_action"] = f"remove:{product_id}"
+        ui_changes["cart_action"] = json.dumps({"action": "remove", "id": product_id})
         return f"Removed {removed_name}. Cart: [{cart_summary}].", ui_changes
 
     elif name == "read_cart":
@@ -370,7 +397,7 @@ TOOLS = [
                         "description": "Product ID to add, e.g. 'p002'. Use the id from the most recent search result."
                     },
                     "qty": {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Quantity to add. Default is 1."
                     }
                 },
@@ -531,6 +558,11 @@ When the user says goodbye, bye, thanks bye, that is all, say a short warm farew
                 args_display = ", ".join(f"{k}={repr(v)}" for k, v in tool_args.items() if v not in ([], "", -1, None))
                 self._print(f"  {C.MAGENTA}→ TOOL: {tool_name}({args_display}){C.RESET}")
 
+                # Schema validation — catches type mismatches that would fail LiveKit plugin
+                schema_warns = _validate_args(tool_name, tool_args)
+                for w in schema_warns:
+                    self._print(f"  {C.RED}[SCHEMA WARN] {tool_name}: {w}{C.RESET}")
+
                 await self._pause(pauses.get("pause_after_tool_call_sec", 1.0))
 
                 result, ui_changes = await execute_tool(tool_name, tool_args)
@@ -550,8 +582,20 @@ When the user says goodbye, bye, thanks bye, that is all, say a short warm farew
                         exp = ui_changes["expanded_id"]
                         ui_parts.append(f"expanded: {exp if exp else 'CLOSED'}")
                     if "cart_action" in ui_changes:
+                        raw = ui_changes["cart_action"]
+                        # Validate cart_action is parseable JSON with expected keys
+                        try:
+                            ca = json.loads(raw) if raw.startswith("{") else None
+                            if ca and {"action", "id"} <= ca.keys():
+                                action_str = f"{ca['action']}({ca['id']}, qty={ca.get('qty', 1)})"
+                            else:
+                                action_str = repr(raw)
+                                self._print(f"  {C.RED}[SCHEMA WARN] cart_action: unexpected format {repr(raw)}{C.RESET}")
+                        except Exception:
+                            action_str = repr(raw)
+                            self._print(f"  {C.RED}[SCHEMA WARN] cart_action: not valid JSON {repr(raw)}{C.RESET}")
                         cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values()) or "empty"
-                        ui_parts.append(f"cart: [{cart_summary}]")
+                        ui_parts.append(f"cart_action: {action_str} → [{cart_summary}]")
                     if ui_parts:
                         self._print(f"  {C.BLUE}→ UI: {' | '.join(ui_parts)}{C.RESET}")
 

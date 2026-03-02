@@ -372,20 +372,21 @@ class SalesManagerAgent(Agent):
     async def add_to_cart(
         self,
         product_id: Annotated[str, "Product ID to add, e.g. 'p002'. Use the id from the most recent search result."],
-        qty: Annotated[int, "Quantity to add. Default is 1."] = 1,
+        qty: Annotated[str, "Quantity to add. Default is 1."] = "1",
     ) -> str:
         """Add a product to the customer's shopping cart. Call when user says 'add to cart', 'I'll take it', 'buy this', or similar."""
         import json
-        logger.info(f"add_to_cart: product_id={repr(product_id)} qty={qty}")
+        qty_int = int(qty) if str(qty).isdigit() else 1
+        logger.info(f"add_to_cart: product_id={repr(product_id)} qty={qty_int}")
         # Signal frontend to add the item via cart_action attribute
-        action_payload = json.dumps({"action": "add", "id": product_id, "qty": qty})
+        action_payload = json.dumps({"action": "add", "id": product_id, "qty": qty_int})
         try:
             await self._room.local_participant.set_attributes({"cart_action": action_payload})
         except Exception as e:
             logger.warning(f"add_to_cart set_attributes failed: {e}")
         # Count current cart items for confirmation (read before frontend updates)
         cart = self._get_visitor_cart()
-        total_qty = sum(i.get("qty", 1) for i in cart) + qty
+        total_qty = sum(i.get("qty", 1) for i in cart) + qty_int
         return f"Added to cart. Customer now has approximately {total_qty} item(s) in cart."
 
     @llm.function_tool

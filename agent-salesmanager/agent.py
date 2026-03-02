@@ -387,6 +387,7 @@ class SalesManagerAgent(Agent):
             logger.warning(f"add_to_cart set_attributes failed: {e}")
         # Count current cart items for confirmation (read before frontend updates)
         cart = self._get_visitor_cart()
+        logger.info(f"add_to_cart: visitor cart_json after signal = {cart}")
         total_qty = sum(i.get("qty", 1) for i in cart) + qty_int
         return f"Added to cart. Customer now has approximately {total_qty} item(s) in cart."
 
@@ -415,6 +416,7 @@ class SalesManagerAgent(Agent):
         """Read the current contents of the customer's shopping cart. Call when user asks 'what's in my cart?', 'show my basket', 'what did I add?', 'what's my total?'."""
         logger.info("read_cart called")
         cart = self._get_visitor_cart()
+        logger.info(f"read_cart: visitor cart_json = {cart}")
         if not cart:
             return "The cart is empty."
         lines = []

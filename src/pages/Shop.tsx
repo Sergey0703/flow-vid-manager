@@ -116,15 +116,21 @@ export default function Shop() {
   }, [syncCart]);
 
   const handleCartAction = useCallback(async (action: { action: 'add' | 'remove'; id: string; qty?: number }) => {
+    console.log('[cart] handleCartAction', action, 'room=', !!liveKitRoomRef.current);
     if (action.action === 'remove') { handleRemoveFromCart(action.id); return; }
-    // Use allProductsRef so cart works even if active category tab changed since agent search
     let product = allProductsRef.current.get(action.id);
+    console.log('[cart] product from ref:', product?.name ?? 'NOT FOUND');
     if (!product) {
-      // Fallback: product not yet loaded (user never visited that category tab)
       product = await getProductById(action.id) ?? undefined;
+      console.log('[cart] product from API:', product?.name ?? 'NOT FOUND');
       if (product) allProductsRef.current.set(product.id, product);
     }
-    if (product) handleAddToCart(product);
+    if (product) {
+      console.log('[cart] calling handleAddToCart for', product.name);
+      handleAddToCart(product);
+    } else {
+      console.error('[cart] product not found for id:', action.id);
+    }
   }, [handleAddToCart, handleRemoveFromCart]);
 
   const handleRoomReady = useCallback((room: any) => {

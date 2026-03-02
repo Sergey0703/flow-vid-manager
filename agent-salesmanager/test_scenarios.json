@@ -161,6 +161,17 @@
       ]
     },
     {
+      "id": "cart_cap_bug",
+      "persona": "Customer asking for a cap directly (no tab switch), adds it, checks cart",
+      "messages": [
+        "do you have a cap?",
+        "show me the Dad Cap",
+        "add it to my cart",
+        "what's in my cart?",
+        "bye"
+      ]
+    },
+    {
       "id": "cart_add_read",
       "persona": "Customer adding items to cart and checking cart contents",
       "messages": [

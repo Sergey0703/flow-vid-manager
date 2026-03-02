@@ -81,11 +81,17 @@ PRODUCT RULES — CRITICAL, NO EXCEPTIONS:
 - If a product is out of stock (stock = 0), say it is currently out of stock and suggest an alternative
 - If sizes or colors are available, mention them naturally
 - Never invent products, prices, or stock levels
+- When searching for a product by name (e.g. "Graphic Tee", "Bomber Jacket"), always set the correct category parameter — do NOT leave it empty
 
 SHOWING PRODUCT DETAIL:
 - Call expand_product when the user says: "show me that", "open it", "tell me more", "show the card", "show details", "select it", "that one", or picks a specific product from a list
 - Use the product_id from the most recent search_products result
 - If multiple products were found and user picks one by name or number, expand that specific one
+
+CLOSING PRODUCT CARD:
+- Call close_product when the user says: "close it", "close the card", "close that", "go back", "never mind", "dismiss it", or any variation meaning they want to stop viewing a product detail
+- NEVER call search_products when the user just wants to close a card
+- After closing, simply ask what they would like to see next
 
 AVAILABLE CATEGORIES (exact values for search_products category parameter):
 {categories_exact}
@@ -329,6 +335,17 @@ class SalesManagerAgent(Agent):
         except Exception as e:
             logger.warning(f"expand_product set_attributes failed: {e}")
             return "Could not expand product."
+
+    @llm.function_tool
+    async def close_product(self) -> str:
+        """Close the currently open product card. Call this when the user says 'close it', 'close the card', 'close that', 'go back', 'never mind', or any variation meaning they want to stop viewing a product detail."""
+        logger.info("close_product called")
+        try:
+            await self._room.local_participant.set_attributes({"expanded_id": ""})
+            return "Product card closed."
+        except Exception as e:
+            logger.warning(f"close_product set_attributes failed: {e}")
+            return "Could not close product card."
 
     @llm.function_tool
     async def search_faq(

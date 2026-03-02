@@ -212,6 +212,11 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
         ui_state.update(ui_changes)
         return f"Product {product_id} is now shown in detail on the page.", ui_changes
 
+    elif name == "close_product":
+        ui_changes["expanded_id"] = ""
+        ui_state["expanded_id"] = ""
+        return "Product card closed.", ui_changes
+
     elif name == "search_faq":
         query = args.get("query", "")
         result = await _search_faq_raw(query)
@@ -278,6 +283,18 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "close_product",
+            "description": "Close the currently open product card. Call this when the user says 'close it', 'close the card', 'close that', 'go back', 'never mind', or any variation meaning they want to stop viewing a product detail.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "search_faq",
             "description": "Search shop FAQ and policies. Call this for questions about shipping, returns, payment, sizing guides, or anything not about specific products.",
             "parameters": {
@@ -328,11 +345,17 @@ PRODUCT RULES — CRITICAL, NO EXCEPTIONS:
 - If a product is out of stock (stock = 0), say it is currently out of stock and suggest an alternative
 - If sizes or colors are available, mention them naturally
 - Never invent products, prices, or stock levels
+- When searching for a product by name (e.g. "Graphic Tee", "Bomber Jacket"), always set the correct category parameter — do NOT leave it empty
 
 SHOWING PRODUCT DETAIL:
 - Call expand_product when the user says: "show me that", "open it", "tell me more", "show the card", "show details", "select it", "that one", or picks a specific product from a list
 - Use the product_id from the most recent search_products result
 - If multiple products were found and user picks one by name or number, expand that specific one
+
+CLOSING PRODUCT CARD:
+- Call close_product when the user says: "close it", "close the card", "close that", "go back", "never mind", "dismiss it", or any variation meaning they want to stop viewing a product detail
+- NEVER call search_products when the user just wants to close a card
+- After closing, simply ask what they would like to see next
 
 AVAILABLE CATEGORIES (exact values for search_products category parameter):
 {cats_exact}
@@ -412,11 +435,16 @@ When the user says goodbye, bye, thanks bye, that is all, say a short warm farew
                 # Show UI state changes
                 if ui_changes:
                     ui_parts = []
-                    if ui_changes.get("recommended_ids"):
-                        ids = ui_changes["recommended_ids"].split(",")
-                        ui_parts.append(f"recommended: [{', '.join(ids)}]")
-                    if ui_changes.get("expanded_id"):
-                        ui_parts.append(f"expanded: {ui_changes['expanded_id']}")
+                    if "recommended_ids" in ui_changes:
+                        ids_str = ui_changes["recommended_ids"]
+                        if ids_str:
+                            ids = ids_str.split(",")
+                            ui_parts.append(f"recommended: [{', '.join(ids)}]")
+                        else:
+                            ui_parts.append("recommended: cleared")
+                    if "expanded_id" in ui_changes:
+                        exp = ui_changes["expanded_id"]
+                        ui_parts.append(f"expanded: {exp if exp else 'CLOSED'}")
                     if ui_parts:
                         self._print(f"  {C.BLUE}→ UI: {' | '.join(ui_parts)}{C.RESET}")
 

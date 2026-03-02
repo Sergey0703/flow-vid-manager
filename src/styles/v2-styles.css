@@ -3863,9 +3863,14 @@
    SHOP PAGE
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Shop page: fix overflow-x so position:sticky and position:fixed work ── */
+/* ── Shop page: reset overflow-x so sticky + fixed both work ── */
+/* v2-scope has overflow-x:hidden which breaks sticky; we reset it here.
+   Horizontal overflow is prevented by shop-main instead. */
 .v2-scope.shop-page {
-    overflow-x: clip; /* clip doesn't break sticky/fixed, unlike hidden */
+    overflow-x: visible;
+}
+.v2-scope.shop-page .shop-main {
+    overflow-x: hidden;
 }
 
 /* .shop-float-cat not used — widget stays in topbar */
@@ -3940,32 +3945,36 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--v2-card-bg);
-    border-bottom: 1px solid var(--v2-border);
+    background: #1a2035;
+    border-bottom: 2px solid var(--v2-border);
     display: flex;
     flex-direction: column;
     z-index: 60;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.7);
 }
 
 .v2-scope .shop-burger-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.85rem 1.25rem;
+    padding: 0.9rem 1.25rem;
     background: none;
     border: none;
-    border-bottom: 1px solid var(--v2-border);
-    color: var(--v2-text);
-    font-size: 0.95rem;
-    font-weight: 500;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    color: #f0f6fc;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     text-align: left;
+    letter-spacing: 0.01em;
 }
 .v2-scope .shop-burger-item:last-child { border-bottom: none; }
-.v2-scope .shop-burger-item:hover { background: rgba(255,255,255,0.05); }
-.v2-scope .shop-burger-item--active { color: var(--v2-cyan); font-weight: 700; }
+.v2-scope .shop-burger-item:hover { background: rgba(255,255,255,0.08); }
+.v2-scope .shop-burger-item--active {
+    color: var(--v2-cyan);
+    font-weight: 700;
+    background: rgba(0,200,224,0.08);
+}
 
 .v2-scope .shop-back-link {
     display: flex;
@@ -4527,15 +4536,14 @@
     /* Hide topbar right column on mobile */
     .v2-scope .shop-topbar__right { display: none; }
 
-    /* Cat widget: fixed top-right on mobile
-       (overflow-x: clip on .shop-page doesn't break position:fixed) */
+    /* Cat widget: fixed top-right on mobile */
     .v2-scope .shop-header-widget {
         position: fixed;
-        top: 4.5rem;
-        right: 0.5rem;
+        top: 4rem;
+        right: 0.4rem;
         bottom: auto;
         left: auto;
-        width: 90px;
+        width: 84px;
         height: auto;
         padding: 0;
         gap: 0.2rem;
@@ -4545,19 +4553,36 @@
         flex-direction: column;
         align-items: center;
         border: none;
+        overflow: visible;
     }
     .v2-scope .shop-header-widget__avatar {
-        width: 90px;
-        height: 90px;
+        width: 84px;
+        height: 84px;
         flex: none;
+        overflow: hidden;
+        position: relative;
+    }
+    /* Force canvas to fit the 84×84 box */
+    .v2-scope .shop-header-widget__avatar .cat-avatar-wrap {
+        width: 84px !important;
+        height: 84px !important;
+        overflow: hidden !important;
+        background: transparent !important;
+    }
+    .v2-scope .shop-header-widget__avatar .cat-avatar-canvas {
+        width: 84px !important;
+        height: 84px !important;
+    }
+    .v2-scope .shop-header-widget__avatar .cat-avatar-label {
+        display: none;
     }
     .v2-scope .shop-header-widget__controls {
         width: 100%;
         justify-content: center;
     }
     .v2-scope .shop-header-widget__cta {
-        font-size: 0.68rem;
-        padding: 0.3rem 0.6rem;
+        font-size: 0.65rem;
+        padding: 0.25rem 0.5rem;
         width: 100%;
         justify-content: center;
     }

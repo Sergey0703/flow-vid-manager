@@ -94,7 +94,7 @@ export default function Shop() {
   const modalProduct = expandedId ? products.find(p => p.id === expandedId) ?? null : null;
 
   return (
-    <div className={`v2-scope${isLight ? ' v2-light' : ''}`}>
+    <div className={`v2-scope shop-page${isLight ? ' v2-light' : ''}`}>
       {/* Sticky topbar: header + tabs merged, cat on the right */}
       <div className="shop-topbar">
         {/* Left column: header row + tabs row */}

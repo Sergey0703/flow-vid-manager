@@ -202,15 +202,12 @@ export default function Shop() {
       <div className="shop-topbar">
         {/* Left column: header row + tabs row */}
         <div className="shop-topbar__left">
-          {/* Desktop: row1 = back + title + theme */}
+          {/* Desktop: row1 = back + title (centered) */}
           <div className="shop-topbar__row1">
             <Link to="/" className="shop-back-link">
               <BackIcon /> AIMediaFlow
             </Link>
             <span className="shop-title">PIXEL'S SHOP</span>
-            <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
-              {isLight ? <MoonIcon /> : <SunIcon />}
-            </button>
           </div>
           {/* Desktop: row2 = category tabs */}
           <div className="shop-topbar__row2 shop-topbar__row2--desktop">
@@ -257,8 +254,12 @@ export default function Shop() {
           )}
         </div>
 
-        {/* Right column placeholder — reserves space on desktop */}
-        <div className="shop-topbar__right" />
+        {/* Right column: theme toggle + space for cat widget overlay */}
+        <div className="shop-topbar__right">
+          <button className="v2-theme-toggle shop-topbar__theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
+            {isLight ? <MoonIcon /> : <SunIcon />}
+          </button>
+        </div>
       </div>
 
       {/* Cat widget — outside topbar so position:fixed works on mobile */}

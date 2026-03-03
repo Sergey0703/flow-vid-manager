@@ -3905,6 +3905,10 @@
     padding: 0.65rem 1.5rem;
     border-bottom: 1px solid var(--v2-border);
 }
+.v2-scope .shop-topbar__row1 .shop-title {
+    flex: 1;
+    text-align: center;
+}
 
 .v2-scope .shop-topbar__row2 {
     display: flex;
@@ -3920,7 +3924,13 @@
     flex-shrink: 0;
     border-left: 1px solid var(--v2-border);
     display: flex;
-    align-items: stretch;
+    align-items: center;
+    justify-content: center;
+}
+.v2-scope .shop-topbar__theme-btn {
+    /* The cat widget (position:fixed) overlaps this area — theme btn sits in the bottom half */
+    margin-top: auto;
+    margin-bottom: 0.4rem;
 }
 
 /* Mobile row — hidden on desktop */

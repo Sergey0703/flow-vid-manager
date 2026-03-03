@@ -365,11 +365,14 @@ class SalesManagerAgent(Agent):
         if self._visitor_id:
             return self._visitor_id
         for p in self._room.remote_participants.values():
-            vid = p.attributes.get("visitor_id", "")
+            all_attrs = dict(p.attributes)
+            logger.info(f"_get_visitor_id: scanning participant={p.identity} attrs={list(all_attrs.keys())}")
+            vid = all_attrs.get("visitor_id", "")
             if vid:
                 self._visitor_id = vid
                 logger.info(f"_get_visitor_id: found visitor_id={vid}")
                 return vid
+        logger.warning("_get_visitor_id: no visitor_id found in any participant")
         return None
 
     def update_visitor_id(self, attrs: dict) -> None:
@@ -555,10 +558,17 @@ async def entrypoint(ctx: JobContext):
     logger.info(f"Loaded categories from Typesense: {categories}")
     agent = SalesManagerAgent(session_log, ctx.room, ctx, categories=categories)
 
-    # Cache visitor_id as soon as the participant sets it (may arrive after connect)
+    # Cache visitor_id whenever participant attributes change
     @ctx.room.on("participant_attributes_changed")
     def on_attrs_changed(changed_attrs: dict, participant):
+        logger.info(f"participant_attributes_changed: participant={participant.identity} changed={list(changed_attrs.keys())}")
         agent.update_visitor_id(changed_attrs)
+
+    # Also scan on participant_connected (attributes may already be set)
+    @ctx.room.on("participant_connected")
+    def on_participant_connected(participant):
+        logger.info(f"participant_connected: identity={participant.identity} attrs={dict(participant.attributes)}")
+        agent.update_visitor_id(dict(participant.attributes))
 
     session = AgentSession(
         vad=silero.VAD.load(),

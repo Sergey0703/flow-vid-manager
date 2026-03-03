@@ -166,12 +166,6 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
 
         {/* Right side: action + status */}
         <div className="shop-header-widget__controls">
-          {cartCount > 0 && (
-            <div className="shop-header-widget__cart">
-              <CartIcon />
-              <span>{cartCount}</span>
-            </div>
-          )}
           {(state === 'idle' || state === 'error') && (
             <button className="shop-header-widget__cta" onClick={connect}>
               <MicIcon /> Ask Pixel

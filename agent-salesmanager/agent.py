@@ -79,6 +79,7 @@ PRODUCT RULES — CRITICAL, NO EXCEPTIONS:
 - Do NOT ask clarifying questions first — search first, then respond based on results
 - Do NOT say "let me check" or "I can check" — just call search_products silently and respond with results
 - Only mention products returned by search_products
+- Do NOT call search_products when the user says navigation words like "back", "go back", "return", "cancel", "never mind", "exit" — these are UI commands, not product searches
 - Always mention name and price when recommending a product
 - If a product is out of stock (stock = 0), say it is currently out of stock and suggest an alternative
 - If sizes or colors are available, mention them naturally
@@ -290,6 +291,7 @@ class SalesManagerAgent(Agent):
         self._room = room
         self._ctx = ctx
         self._ending = False
+        self._visitor_id: str | None = None  # cached from participant attributes
 
     @llm.function_tool
     async def search_products(
@@ -359,12 +361,23 @@ class SalesManagerAgent(Agent):
             return "Could not close product card."
 
     def _get_visitor_id(self) -> str | None:
-        """Read visitor_id from the remote participant's LiveKit attributes."""
+        """Return cached visitor_id, or scan remote participants to find it."""
+        if self._visitor_id:
+            return self._visitor_id
         for p in self._room.remote_participants.values():
             vid = p.attributes.get("visitor_id", "")
             if vid:
+                self._visitor_id = vid
+                logger.info(f"_get_visitor_id: found visitor_id={vid}")
                 return vid
         return None
+
+    def update_visitor_id(self, attrs: dict) -> None:
+        """Called by entrypoint on ParticipantAttributesChanged to cache visitor_id early."""
+        vid = attrs.get("visitor_id", "")
+        if vid and not self._visitor_id:
+            self._visitor_id = vid
+            logger.info(f"update_visitor_id: cached visitor_id={vid}")
 
     async def _get_visitor_cart(self) -> list[dict]:
         """Dual-path cart read.
@@ -440,13 +453,8 @@ class SalesManagerAgent(Agent):
                         logger.info(f"add_to_cart Cart API: {res.status}")
             except Exception as e:
                 logger.warning(f"add_to_cart Cart API failed: {e}")
-        # Read back cart for confirmation count
-        cart = await self._get_visitor_cart()
-        logger.info(f"add_to_cart: cart after signal = {cart}")
-        total_qty = sum(i.get("qty", 1) for i in cart)
-        if total_qty == 0:
-            total_qty = qty_int  # fallback if cart_json not yet propagated
-        return f"Added to cart. Customer now has approximately {total_qty} item(s) in cart."
+        logger.info(f"add_to_cart: signalled frontend and Cart API for product_id={product_id}")
+        return f"Added {qty_int} item(s) to cart."
 
     @llm.function_tool
     async def remove_from_cart(
@@ -546,6 +554,12 @@ async def entrypoint(ctx: JobContext):
     categories = await _fetch_categories()
     logger.info(f"Loaded categories from Typesense: {categories}")
     agent = SalesManagerAgent(session_log, ctx.room, ctx, categories=categories)
+
+    # Cache visitor_id as soon as the participant sets it (may arrive after connect)
+    @ctx.room.on("participant_attributes_changed")
+    def on_attrs_changed(changed_attrs: dict, participant):
+        agent.update_visitor_id(changed_attrs)
+
     session = AgentSession(
         vad=silero.VAD.load(),
         turn_detection=EnglishModel(),

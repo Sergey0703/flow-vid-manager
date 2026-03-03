@@ -12,12 +12,13 @@ interface ShopPixelWidgetProps {
   onExpand: (id: string | null) => void;
   onCartAction: (action: { action: 'add' | 'remove'; id: string; qty?: number }) => void;
   onRoomReady: (room: any) => void;
+  onCartOpen: (open: boolean) => void;
   lastRecommended: Product | null;
   cartCount: number;
   visitorId: string;
 }
 
-export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, onRoomReady, lastRecommended, cartCount, visitorId }: ShopPixelWidgetProps) {
+export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, onRoomReady, onCartOpen, lastRecommended, cartCount, visitorId }: ShopPixelWidgetProps) {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
@@ -34,10 +35,12 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
   const onExpandRef      = useRef(onExpand);
   const onCartActionRef  = useRef(onCartAction);
   const onRoomReadyRef   = useRef(onRoomReady);
+  const onCartOpenRef    = useRef(onCartOpen);
   useEffect(() => { onRecommendRef.current  = onRecommend;  }, [onRecommend]);
   useEffect(() => { onExpandRef.current     = onExpand;     }, [onExpand]);
   useEffect(() => { onCartActionRef.current = onCartAction; }, [onCartAction]);
   useEffect(() => { onRoomReadyRef.current  = onRoomReady;  }, [onRoomReady]);
+  useEffect(() => { onCartOpenRef.current   = onCartOpen;   }, [onCartOpen]);
 
   const stopTimer = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -119,6 +122,10 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
             const parsed = JSON.parse(attrs['cart_action']);
             if (parsed.action && parsed.id) onCartActionRef.current(parsed);
           } catch { /* ignore malformed */ }
+        }
+
+        if ('cart_ui' in attrs) {
+          onCartOpenRef.current(attrs['cart_ui'] === 'open');
         }
 
         if (attrs['session_ended'] === '1') {

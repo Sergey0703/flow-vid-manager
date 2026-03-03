@@ -268,6 +268,7 @@ export default function Shop() {
         onExpand={handleExpand}
         onCartAction={handleCartAction}
         onRoomReady={handleRoomReady}
+        onCartOpen={setCartOpen}
         lastRecommended={lastRecommended}
         cartCount={cartCount}
         visitorId={visitorIdRef.current}

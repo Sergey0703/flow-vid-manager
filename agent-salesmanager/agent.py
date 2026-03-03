@@ -102,7 +102,9 @@ AVAILABLE CATEGORIES (exact values for search_products category parameter):
 SHOPPING CART:
 - add_to_cart(product_id, qty): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
 - remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
-- read_cart(): when user asks "what's in my cart?", "what did I select?", "my basket", "show cart", "total"
+- read_cart(): when user asks "what's in my cart?", "what did I select?", "my basket", "total"
+- open_cart(): when user says "show my cart", "open cart", "show basket", "let me see my cart" — opens the cart panel visually AND read_cart to tell them what's in it
+- close_cart(): when user says "close cart", "hide cart", "close the basket"
 Always confirm additions aloud: "Added! You now have X items in your cart."
 
 ENDING THE CALL:
@@ -359,6 +361,34 @@ class SalesManagerAgent(Agent):
         except Exception as e:
             logger.warning(f"close_product set_attributes failed: {e}")
             return "Could not close product card."
+
+    @llm.function_tool
+    async def open_cart(
+        self,
+        confirm: Annotated[str, "Always pass empty string."] = "",
+    ) -> str:
+        """Open the shopping cart panel on the page. Call when user says 'show my cart', 'open cart', 'show basket', 'what did I add', or wants to see their cart visually."""
+        logger.info("open_cart called")
+        try:
+            await self._room.local_participant.set_attributes({"cart_ui": "open"})
+            return "Cart panel opened."
+        except Exception as e:
+            logger.warning(f"open_cart set_attributes failed: {e}")
+            return "Could not open cart."
+
+    @llm.function_tool
+    async def close_cart(
+        self,
+        confirm: Annotated[str, "Always pass empty string."] = "",
+    ) -> str:
+        """Close the shopping cart panel. Call when user says 'close cart', 'hide basket', or is done looking at the cart."""
+        logger.info("close_cart called")
+        try:
+            await self._room.local_participant.set_attributes({"cart_ui": "closed"})
+            return "Cart panel closed."
+        except Exception as e:
+            logger.warning(f"close_cart set_attributes failed: {e}")
+            return "Could not close cart."
 
     def _get_visitor_id(self) -> str | None:
         """Return cached visitor_id, or scan remote participants to find it."""

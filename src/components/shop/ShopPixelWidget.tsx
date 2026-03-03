@@ -28,6 +28,15 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
   const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef        = useRef<HTMLAudioElement | null>(null);
   const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keep prop callbacks in refs so LiveKit event handlers always call latest version
+  const onRecommendRef   = useRef(onRecommend);
+  const onExpandRef      = useRef(onExpand);
+  const onCartActionRef  = useRef(onCartAction);
+  const onRoomReadyRef   = useRef(onRoomReady);
+  useEffect(() => { onRecommendRef.current  = onRecommend;  }, [onRecommend]);
+  useEffect(() => { onExpandRef.current     = onExpand;     }, [onExpand]);
+  useEffect(() => { onCartActionRef.current = onCartAction; }, [onCartAction]);
+  useEffect(() => { onRoomReadyRef.current  = onRoomReady;  }, [onRoomReady]);
 
   const stopTimer = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -92,29 +101,29 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
 
         if ('recommended_ids' in attrs) {
           const ids = attrs['recommended_ids'];
-          onRecommend(ids ? ids.split(',').filter(Boolean) : []);
+          onRecommendRef.current(ids ? ids.split(',').filter(Boolean) : []);
         }
         if ('highlighted_ids' in attrs && !('recommended_ids' in attrs)) {
           const ids = attrs['highlighted_ids'];
-          onRecommend(ids ? ids.split(',').filter(Boolean) : []);
+          onRecommendRef.current(ids ? ids.split(',').filter(Boolean) : []);
         }
 
         if ('expanded_id' in attrs) {
           const eid = attrs['expanded_id'];
-          onExpand(eid || null);
+          onExpandRef.current(eid || null);
         }
 
         if ('cart_action' in attrs && attrs['cart_action']) {
           try {
             const parsed = JSON.parse(attrs['cart_action']);
-            if (parsed.action && parsed.id) onCartAction(parsed);
+            if (parsed.action && parsed.id) onCartActionRef.current(parsed);
           } catch { /* ignore malformed */ }
         }
       });
 
       micStream.getTracks().forEach(t => t.stop());
       await room.connect(data.wsUrl, data.token);
-      onRoomReady(room);
+      onRoomReadyRef.current(room);
 
       room.registerRpcMethod('end_call', async () => {
         setTimeout(() => disconnect(), 2000);

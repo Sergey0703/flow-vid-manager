@@ -102,9 +102,9 @@ AVAILABLE CATEGORIES (exact values for search_products category parameter):
 SHOPPING CART:
 - add_to_cart(product_id, qty): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
 - remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
-- read_cart(): when user asks "what's in my cart?", "what did I select?", "my basket", "total"
-- open_cart(): when user says "show my cart", "open cart", "show basket", "let me see my cart" — opens the cart panel visually AND read_cart to tell them what's in it
-- close_cart(): when user says "close cart", "hide cart", "close the basket"
+- read_cart(): ONLY when user asks about cart CONTENTS without wanting to see it: "what's in my cart?", "what's my total?", "how many items?"
+- show_hide_cart(state): state='open' when user says "show my cart", "open cart", "open my cart", "show me my cart" — then also call read_cart(); state='close' when user says "close cart", "hide cart", "close my cart"
+IMPORTANT: "show me my cart" = show_hide_cart(state='open') + read_cart(). Never use read_cart() alone for these phrases.
 Always confirm additions aloud: "Added! You now have X items in your cart."
 
 ENDING THE CALL:
@@ -363,32 +363,19 @@ class SalesManagerAgent(Agent):
             return "Could not close product card."
 
     @llm.function_tool
-    async def open_cart(
+    async def show_hide_cart(
         self,
-        confirm: Annotated[str, "Always pass empty string."] = "",
+        state: Annotated[str, "Pass 'open' to show the cart panel, 'close' to hide it"],
     ) -> str:
-        """Open the shopping cart panel on the page. Call when user says 'show my cart', 'open cart', 'show basket', 'what did I add', or wants to see their cart visually."""
-        logger.info("open_cart called")
+        """Show or hide the shopping cart panel on screen. Call with state='open' when user says 'show my cart', 'open cart', 'open my cart', 'show me my cart'. Call with state='close' when user says 'close cart', 'hide cart', 'close my cart'. After opening, also call read_cart()."""
+        logger.info(f"show_hide_cart: state={state}")
+        ui_val = "open" if state == "open" else "closed"
         try:
-            await self._room.local_participant.set_attributes({"cart_ui": "open"})
-            return "Cart panel opened."
+            await self._room.local_participant.set_attributes({"cart_ui": ui_val})
+            return f"Cart panel {state}ed."
         except Exception as e:
-            logger.warning(f"open_cart set_attributes failed: {e}")
-            return "Could not open cart."
-
-    @llm.function_tool
-    async def close_cart(
-        self,
-        confirm: Annotated[str, "Always pass empty string."] = "",
-    ) -> str:
-        """Close the shopping cart panel. Call when user says 'close cart', 'hide basket', or is done looking at the cart."""
-        logger.info("close_cart called")
-        try:
-            await self._room.local_participant.set_attributes({"cart_ui": "closed"})
-            return "Cart panel closed."
-        except Exception as e:
-            logger.warning(f"close_cart set_attributes failed: {e}")
-            return "Could not close cart."
+            logger.warning(f"show_hide_cart set_attributes failed: {e}")
+            return "Could not update cart panel."
 
     def _get_visitor_id(self) -> str | None:
         """Return cached visitor_id, or scan remote participants to find it."""
@@ -531,7 +518,7 @@ class SalesManagerAgent(Agent):
         self,
         confirm: Annotated[str, "Always pass empty string."] = "",
     ) -> str:
-        """Read the current contents of the customer's shopping cart. Call when user asks 'what's in my cart?', 'show my basket', 'what did I add?', 'what's my total?'."""
+        """Read cart contents aloud. Use for: 'what's in my cart?', 'what's my total?', 'how many items?'. Do NOT use for 'show my cart' or 'open cart' — those require open_cart() instead."""
         logger.info("read_cart called")
         cart = await self._get_visitor_cart()
         logger.info(f"read_cart: visitor cart_json = {cart}")

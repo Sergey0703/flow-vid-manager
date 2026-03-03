@@ -201,16 +201,31 @@
     },
     {
       "id": "cart_count",
-      "persona": "Customer checking how many items are in the cart, in Russian and English",
+      "persona": "Customer checking how many items are in the cart",
       "messages": [
         "show me hoodies",
         "add the Classic Hoodie to my cart",
         "show me accessories",
         "add the Ribbed Scarf to my cart",
         "add the Beanie too",
-        "сколько позиций у меня в корзине?",
-        "how many items do I have in cart?",
-        "сколько товаров я добавил?",
+        "how many items do I have in my cart?",
+        "how many products did I add?",
+        "what is the total price?",
+        "bye"
+      ]
+    },
+    {
+      "id": "cart_open_close",
+      "persona": "Customer asks agent to show and hide the cart panel",
+      "messages": [
+        "show me hoodies",
+        "add the Oversized Hoodie to my cart",
+        "show me accessories",
+        "add the Beanie to my cart",
+        "show me my cart",
+        "ok close the cart",
+        "open my cart again",
+        "hide the cart please",
         "bye"
       ]
     },

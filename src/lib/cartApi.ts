@@ -1,4 +1,4 @@
-const CART_BASE = 'http://46.62.246.93:8000';
+const CART_BASE = 'https://cart.aimediaflow.net';
 
 export interface CartItem {
   id: string;

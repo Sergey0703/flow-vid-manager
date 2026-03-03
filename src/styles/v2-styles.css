@@ -4563,6 +4563,19 @@
 .v2-scope.v2-light .shop-pixel-widget {
     box-shadow: 0 8px 32px rgba(0,0,0,0.12);
 }
+.v2-scope.v2-light .shop-cart-panel {
+    background: #f8fafc;
+    border-left-color: rgba(0,0,0,0.12);
+}
+.v2-scope.v2-light .shop-cart-panel__header {
+    border-bottom-color: rgba(0,0,0,0.1);
+}
+.v2-scope.v2-light .shop-cart-item {
+    border-bottom-color: rgba(0,0,0,0.08);
+}
+.v2-scope.v2-light .shop-cart-panel__footer {
+    border-top-color: rgba(0,0,0,0.1);
+}
 /* ── Product Modal ───────────────────────────────────────────────────────── */
 .v2-scope .shop-modal-backdrop {
     position: fixed;
@@ -5158,10 +5171,13 @@
     height: 40px;
     border-radius: 50%;
     border: 1.5px solid var(--v2-border);
-    background: var(--v2-card);
+    background: #161b27;
     color: var(--v2-text);
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
+}
+.v2-scope.v2-light .shop-cart-btn {
+    background: #f8fafc;
 }
 .v2-scope .shop-cart-btn:hover,
 .v2-scope .shop-cart-btn--has-items {
@@ -5200,7 +5216,7 @@
     width: 320px;
     max-width: 92vw;
     z-index: 1200;
-    background: var(--v2-card);
+    background: #161b27;
     border-left: 1.5px solid var(--v2-border);
     display: flex;
     flex-direction: column;

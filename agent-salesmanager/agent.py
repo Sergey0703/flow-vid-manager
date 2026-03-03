@@ -382,21 +382,23 @@ class SalesManagerAgent(Agent):
             self._visitor_id = vid
             logger.info(f"update_visitor_id: cached visitor_id={vid}")
 
-    async def _get_visitor_cart(self) -> list[dict]:
+    async def _get_visitor_cart(self, force_api: bool = False) -> list[dict]:
         """Dual-path cart read.
-        Fast path: cart_json LiveKit attribute (set by frontend syncCart — instant).
-        Fallback: HTTP GET from Cart API (works after reconnect when cart_json is gone).
+        Default: cart_json LiveKit attribute (set by frontend syncCart — instant).
+        force_api=True: always read from Cart API (used after remove, so we bypass stale cart_json).
+        Fallback to Cart API when cart_json is empty (reconnect scenario).
         """
         import json
-        # Fast path
-        try:
-            for p in self._room.remote_participants.values():
-                cart_json = p.attributes.get("cart_json", "")
-                if cart_json:
-                    return json.loads(cart_json)
-        except Exception:
-            pass
-        # Fallback via Cart API
+        if not force_api:
+            # Fast path: read from LiveKit attribute
+            try:
+                for p in self._room.remote_participants.values():
+                    cart_json = p.attributes.get("cart_json", "")
+                    if cart_json:
+                        return json.loads(cart_json)
+            except Exception:
+                pass
+        # Cart API path (authoritative, used after mutations or reconnect)
         visitor_id = self._get_visitor_id()
         if visitor_id:
             try:
@@ -406,7 +408,7 @@ class SalesManagerAgent(Agent):
                             data = await res.json()
                             return data.get("items", [])
             except Exception as e:
-                logger.warning(f"_get_visitor_cart HTTP fallback failed: {e}")
+                logger.warning(f"_get_visitor_cart Cart API failed: {e}")
         return []
 
     @llm.function_tool
@@ -485,9 +487,14 @@ class SalesManagerAgent(Agent):
                         logger.info(f"remove_from_cart Cart API: {res.status}")
             except Exception as e:
                 logger.warning(f"remove_from_cart Cart API failed: {e}")
-        cart = await self._get_visitor_cart()
-        remaining = sum(i.get("qty", 1) for i in cart if i.get("id") != product_id)
-        return f"Removed from cart. Customer has {remaining} item(s) remaining."
+        # Use force_api=True to bypass stale cart_json LiveKit attribute
+        cart = await self._get_visitor_cart(force_api=True)
+        remaining_items = [i for i in cart if i.get("id") != product_id]
+        remaining = sum(i.get("qty", 1) for i in remaining_items)
+        if remaining_items:
+            names = ", ".join(i.get("name", i.get("id", "")) for i in remaining_items)
+            return f"Removed. Cart now has {remaining} item(s): {names}."
+        return "Removed. Cart is now empty."
 
     @llm.function_tool
     async def read_cart(
@@ -535,12 +542,18 @@ class SalesManagerAgent(Agent):
 
         if is_farewell and not self._ending:
             self._ending = True
-            logger.info(f"Farewell detected: {repr(lower)} — scheduling room deletion")
+            logger.info(f"Farewell detected: {repr(lower)} — scheduling session end")
             room_name = self._ctx.room.name
-            async def delayed_delete():
+            async def delayed_end():
                 await asyncio.sleep(4)
+                # Signal frontend to close the widget cleanly
+                try:
+                    await self._room.local_participant.set_attributes({"session_ended": "1"})
+                except Exception:
+                    pass
+                await asyncio.sleep(1)
                 await delete_room(room_name)
-            asyncio.ensure_future(delayed_delete())
+            asyncio.ensure_future(delayed_end())
 
 
 async def entrypoint(ctx: JobContext):

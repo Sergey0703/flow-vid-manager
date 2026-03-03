@@ -120,6 +120,10 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
             if (parsed.action && parsed.id) onCartActionRef.current(parsed);
           } catch { /* ignore malformed */ }
         }
+
+        if (attrs['session_ended'] === '1') {
+          setTimeout(() => disconnect(), 1500);
+        }
       });
 
       micStream.getTracks().forEach(t => t.stop());

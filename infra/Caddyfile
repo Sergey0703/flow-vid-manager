@@ -1,0 +1,55 @@
+# n8n
+n8n.aimediaflow.net {
+    # Always allow OPTIONS (CORS preflight)
+    @options method OPTIONS
+    handle @options {
+        header Access-Control-Allow-Origin *
+        header Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        header Access-Control-Allow-Headers "Content-Type, X-App-Token"
+        header Access-Control-Max-Age 86400
+        respond 204
+    }
+
+    # Block webhooks without token (header OR query param)
+    @webhook_no_token {
+        path /webhook/*
+        not method OPTIONS
+        not header X-App-Token c00173f9c8dd40fbe52bae04d445307b5a544a9ba47c3d052541fbb92d6a7301
+        not query token=c00173f9c8dd40fbe52bae04d445307b5a544a9ba47c3d052541fbb92d6a7301
+    }
+    handle @webhook_no_token {
+        respond 403
+    }
+
+    # Block non-webhook paths
+    @not_webhook {
+        not path /webhook/*
+        not method OPTIONS
+    }
+    handle @not_webhook {
+        respond 403
+    }
+
+    reverse_proxy n8n:5678 {
+        header_down Access-Control-Allow-Origin *
+        header_down Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        header_down Access-Control-Allow-Headers "Content-Type, X-App-Token"
+    }
+}
+
+# Vocab Mini App
+vocab.aimediaflow.net {
+    root * /srv/webapp
+    file_server
+
+    header {
+        Cache-Control "no-cache, no-store, must-revalidate"
+        Pragma "no-cache"
+        Expires "0"
+    }
+}
+
+# Cart API
+cart.aimediaflow.net {
+    reverse_proxy cart-api:8000
+}

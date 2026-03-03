@@ -34,6 +34,7 @@ LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
 LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 
 TYPESENSE_BASE = f"http://{TYPESENSE_HOST}:{TYPESENSE_PORT}"
+CART_API_BASE = os.getenv("CART_API_BASE", "http://cart-api:8000")
 
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY is required")
@@ -357,17 +358,40 @@ class SalesManagerAgent(Agent):
             logger.warning(f"close_product set_attributes failed: {e}")
             return "Could not close product card."
 
-    def _get_visitor_cart(self) -> list[dict]:
-        """Read cart_json attribute from the visitor participant. Returns parsed list or []."""
+    def _get_visitor_id(self) -> str | None:
+        """Read visitor_id from the remote participant's LiveKit attributes."""
+        for p in self._room.remote_participants.values():
+            vid = p.attributes.get("visitor_id", "")
+            if vid:
+                return vid
+        return None
+
+    async def _get_visitor_cart(self) -> list[dict]:
+        """Dual-path cart read.
+        Fast path: cart_json LiveKit attribute (set by frontend syncCart — instant).
+        Fallback: HTTP GET from Cart API (works after reconnect when cart_json is gone).
+        """
         import json
+        # Fast path
         try:
             for p in self._room.remote_participants.values():
                 cart_json = p.attributes.get("cart_json", "")
                 if cart_json:
                     return json.loads(cart_json)
-            return []
         except Exception:
-            return []
+            pass
+        # Fallback via Cart API
+        visitor_id = self._get_visitor_id()
+        if visitor_id:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"{CART_API_BASE}/cart/{visitor_id}", timeout=aiohttp.ClientTimeout(total=3)) as res:
+                        if res.status == 200:
+                            data = await res.json()
+                            return data.get("items", [])
+            except Exception as e:
+                logger.warning(f"_get_visitor_cart HTTP fallback failed: {e}")
+        return []
 
     @llm.function_tool
     async def add_to_cart(
@@ -379,16 +403,49 @@ class SalesManagerAgent(Agent):
         import json
         qty_int = int(qty) if str(qty).isdigit() else 1
         logger.info(f"add_to_cart: product_id={repr(product_id)} qty={qty_int}")
-        # Signal frontend to add the item via cart_action attribute
+        # Signal frontend via LiveKit attribute
         action_payload = json.dumps({"action": "add", "id": product_id, "qty": qty_int})
         try:
             await self._room.local_participant.set_attributes({"cart_action": action_payload})
         except Exception as e:
             logger.warning(f"add_to_cart set_attributes failed: {e}")
-        # Count current cart items for confirmation (read before frontend updates)
-        cart = self._get_visitor_cart()
-        logger.info(f"add_to_cart: visitor cart_json after signal = {cart}")
-        total_qty = sum(i.get("qty", 1) for i in cart) + qty_int
+        # Persist to Cart API so cart survives reconnects
+        visitor_id = self._get_visitor_id()
+        if visitor_id:
+            # Look up product name/price from catalog for server-side storage
+            product_info = {"id": product_id, "name": product_id, "price": 0.0, "qty": qty_int}
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        f"http://{TYPESENSE_HOST}:{TYPESENSE_PORT}/collections/products/documents/search",
+                        headers={"X-TYPESENSE-API-KEY": TYPESENSE_API_KEY},
+                        params={"q": "*", "query_by": "name", "filter_by": f"id:={product_id}", "per_page": 1},
+                        timeout=aiohttp.ClientTimeout(total=3),
+                    ) as res:
+                        if res.status == 200:
+                            data = await res.json()
+                            hits = data.get("hits", [])
+                            if hits:
+                                d = hits[0]["document"]
+                                product_info = {"id": product_id, "name": d.get("name", product_id), "price": float(d.get("price", 0)), "qty": qty_int}
+            except Exception as e:
+                logger.warning(f"add_to_cart: product lookup failed: {e}")
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{CART_API_BASE}/cart/{visitor_id}/add",
+                        json=product_info,
+                        timeout=aiohttp.ClientTimeout(total=3),
+                    ) as res:
+                        logger.info(f"add_to_cart Cart API: {res.status}")
+            except Exception as e:
+                logger.warning(f"add_to_cart Cart API failed: {e}")
+        # Read back cart for confirmation count
+        cart = await self._get_visitor_cart()
+        logger.info(f"add_to_cart: cart after signal = {cart}")
+        total_qty = sum(i.get("qty", 1) for i in cart)
+        if total_qty == 0:
+            total_qty = qty_int  # fallback if cart_json not yet propagated
         return f"Added to cart. Customer now has approximately {total_qty} item(s) in cart."
 
     @llm.function_tool
@@ -404,7 +461,20 @@ class SalesManagerAgent(Agent):
             await self._room.local_participant.set_attributes({"cart_action": action_payload})
         except Exception as e:
             logger.warning(f"remove_from_cart set_attributes failed: {e}")
-        cart = self._get_visitor_cart()
+        # Persist removal to Cart API
+        visitor_id = self._get_visitor_id()
+        if visitor_id:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{CART_API_BASE}/cart/{visitor_id}/remove",
+                        json={"id": product_id},
+                        timeout=aiohttp.ClientTimeout(total=3),
+                    ) as res:
+                        logger.info(f"remove_from_cart Cart API: {res.status}")
+            except Exception as e:
+                logger.warning(f"remove_from_cart Cart API failed: {e}")
+        cart = await self._get_visitor_cart()
         remaining = sum(i.get("qty", 1) for i in cart if i.get("id") != product_id)
         return f"Removed from cart. Customer has {remaining} item(s) remaining."
 
@@ -415,7 +485,7 @@ class SalesManagerAgent(Agent):
     ) -> str:
         """Read the current contents of the customer's shopping cart. Call when user asks 'what's in my cart?', 'show my basket', 'what did I add?', 'what's my total?'."""
         logger.info("read_cart called")
-        cart = self._get_visitor_cart()
+        cart = await self._get_visitor_cart()
         logger.info(f"read_cart: visitor cart_json = {cart}")
         if not cart:
             return "The cart is empty."

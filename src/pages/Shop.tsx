@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/v2-styles.css';
 import { getProducts, getProductById, type Product } from '../lib/shopApi';
+import { getCart, addToCart, removeFromCart, clearCart } from '../lib/cartApi';
 import ShopPixelWidget from '../components/shop/ShopPixelWidget';
+
+const VISITOR_KEY = 'visitor_id';
 
 const THEME_KEY = 'v2-theme';
 
@@ -46,6 +49,33 @@ export default function Shop() {
   // can resolve a product even when the active category tab doesn't include it
   const allProductsRef = useRef<Map<string, Product>>(new Map());
 
+  // Stable visitor_id — generated once and persisted in localStorage
+  const visitorIdRef = useRef<string>('');
+  if (!visitorIdRef.current) {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem(VISITOR_KEY, id); }
+    visitorIdRef.current = id;
+  }
+
+  // Restore cart from server on first mount
+  useEffect(() => {
+    getCart(visitorIdRef.current).then(data => {
+      if (data.items.length === 0) return;
+      // We need Product objects — fetch each if not already cached
+      const promises = data.items.map(item =>
+        allProductsRef.current.has(item.id)
+          ? Promise.resolve(allProductsRef.current.get(item.id)!)
+          : getProductById(item.id).then(p => { if (p) allProductsRef.current.set(p.id, p); return p; })
+      );
+      Promise.all(promises).then(prods => {
+        const restored = data.items
+          .map((item, i) => prods[i] ? { product: prods[i]!, qty: item.qty } : null)
+          .filter(Boolean) as { product: Product; qty: number }[];
+        if (restored.length > 0) setCartItems(restored);
+      });
+    }).catch(() => { /* server unreachable — start with empty cart */ });
+  }, []);
+
   useEffect(() => {
     setLoading(true);
     getProducts('*', activeCategory)
@@ -88,10 +118,13 @@ export default function Shop() {
   const handleAddToCart = useCallback((product: Product) => {
     setCartItems(prev => {
       const existing = prev.find(i => i.product.id === product.id);
+      const qty = existing ? existing.qty + 1 : 1;
       const next = existing
-        ? prev.map(i => i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i)
+        ? prev.map(i => i.product.id === product.id ? { ...i, qty } : i)
         : [...prev, { product, qty: 1 }];
       syncCart(next);
+      addToCart(visitorIdRef.current, { id: product.id, name: product.name, price: product.price, qty: 1 })
+        .catch(() => {});
       return next;
     });
   }, [syncCart]);
@@ -100,6 +133,7 @@ export default function Shop() {
     setCartItems(prev => {
       const next = prev.filter(i => i.product.id !== productId);
       syncCart(next);
+      removeFromCart(visitorIdRef.current, productId).catch(() => {});
       return next;
     });
   }, [syncCart]);
@@ -235,6 +269,7 @@ export default function Shop() {
         onRoomReady={handleRoomReady}
         lastRecommended={lastRecommended}
         cartCount={cartCount}
+        visitorId={visitorIdRef.current}
       />
 
       {/* Cart button (fixed, top-right on desktop) */}
@@ -280,12 +315,12 @@ export default function Shop() {
                 <span>€{cartTotal.toFixed(2)}</span>
               </div>
               <div className="shop-cart-panel__actions">
-                <button className="shop-cart-clear-btn" onClick={() => { setCartItems([]); syncCart([]); }}>
+                <button className="shop-cart-clear-btn" onClick={() => { setCartItems([]); syncCart([]); clearCart(visitorIdRef.current).catch(() => {}); }}>
                   Clear
                 </button>
                 <button
                   className="shop-cart-checkout-btn"
-                  onClick={() => { setCheckoutDone(true); setTimeout(() => setCheckoutDone(false), 3000); }}
+                  onClick={() => { setCheckoutDone(true); clearCart(visitorIdRef.current).catch(() => {}); setTimeout(() => setCheckoutDone(false), 3000); }}
                 >
                   {checkoutDone ? '✅ Order noted!' : 'Checkout →'}
                 </button>

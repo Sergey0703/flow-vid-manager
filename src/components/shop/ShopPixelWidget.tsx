@@ -14,9 +14,10 @@ interface ShopPixelWidgetProps {
   onRoomReady: (room: any) => void;
   lastRecommended: Product | null;
   cartCount: number;
+  visitorId: string;
 }
 
-export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, onRoomReady, lastRecommended, cartCount }: ShopPixelWidgetProps) {
+export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, onRoomReady, lastRecommended, cartCount, visitorId }: ShopPixelWidgetProps) {
   const [state, setState] = useState<DemoState>('idle');
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
@@ -123,6 +124,7 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
 
       micStream.getTracks().forEach(t => t.stop());
       await room.connect(data.wsUrl, data.token);
+      room.localParticipant.setAttributes({ visitor_id: visitorId });
       onRoomReadyRef.current(room);
 
       room.registerRpcMethod('end_call', async () => {

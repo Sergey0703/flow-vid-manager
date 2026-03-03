@@ -77,6 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     room: roomName,
     canPublish: true,
     canSubscribe: true,
+    canUpdateOwnMetadata: true,  // required for localParticipant.setAttributes()
   });
 
   // Dispatch agent to the room using proper SDK classes

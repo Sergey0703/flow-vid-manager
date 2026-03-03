@@ -3905,11 +3905,6 @@
     padding: 0.65rem 1.5rem;
     border-bottom: 1px solid var(--v2-border);
 }
-.v2-scope .shop-topbar__row1 .shop-title {
-    flex: 1;
-    text-align: center;
-}
-
 .v2-scope .shop-topbar__row2 {
     display: flex;
     gap: 0.5rem;

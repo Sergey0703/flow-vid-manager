@@ -200,6 +200,21 @@
       ]
     },
     {
+      "id": "cart_count",
+      "persona": "Customer checking how many items are in the cart, in Russian and English",
+      "messages": [
+        "show me hoodies",
+        "add the Classic Hoodie to my cart",
+        "show me accessories",
+        "add the Ribbed Scarf to my cart",
+        "add the Beanie too",
+        "сколько позиций у меня в корзине?",
+        "how many items do I have in cart?",
+        "сколько товаров я добавил?",
+        "bye"
+      ]
+    },
+    {
       "id": "cart_full_flow",
       "persona": "Full shopping flow: browse, expand, add to cart, check out",
       "messages": [

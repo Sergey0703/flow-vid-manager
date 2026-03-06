@@ -525,13 +525,14 @@ class SalesManagerAgent(Agent):
         total = 0.0
         for item in cart:
             name = item.get("name", item.get("id", "item"))
+            item_id = item.get("id", "")
             price = float(item.get("price", 0))
             qty = int(item.get("qty", 1))
             subtotal = price * qty
             total += subtotal
-            lines.append(f"{name} x{qty} (€{subtotal:.2f})")
+            lines.append(f"{name} (id:{item_id}) x{qty} (€{subtotal:.2f})")
         items_str = ", ".join(lines)
-        return f"Cart: {items_str}. Total: €{total:.2f}."
+        return f"Cart: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 
     @llm.function_tool
     async def search_faq(

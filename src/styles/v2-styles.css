@@ -2454,7 +2454,6 @@
     display: block;
 }
 
-
 .v2-scope .cat-avatar-label {
     position: absolute;
     bottom: -4px;
@@ -2477,6 +2476,52 @@
 }
 
 .v2-scope .cat-avatar-status.connecting {
+    color: var(--v2-muted);
+    background: rgba(255,255,255,0.06);
+    animation: voice-pulse 1.2s ease infinite;
+}
+
+/* ── Michael Avatar ── */
+.v2-scope .michael-avatar-wrap {
+    position: relative;
+    width: 240px;
+    flex-shrink: 0;
+}
+
+.v2-scope .michael-avatar-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.v2-scope .michael-avatar-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.v2-scope .michael-avatar-label {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+.v2-scope .michael-avatar-status {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.v2-scope .michael-avatar-status.connected {
+    color: var(--v2-cyan);
+    background: rgba(0,200,224,0.12);
+}
+
+.v2-scope .michael-avatar-status.connecting {
     color: var(--v2-muted);
     background: rgba(255,255,255,0.06);
     animation: voice-pulse 1.2s ease infinite;
@@ -4258,13 +4303,13 @@
 /* ── Floating cat (desktop) ──────────────────────────────────────────────── */
 .v2-scope .shop-floating-cat {
     position: fixed;
-    top: 4rem;
+    top: 0.5rem;
     right: 1rem;
     width: 160px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    z-index: 100;
+    z-index: 1300;
     pointer-events: none;
 }
 
@@ -4468,7 +4513,7 @@
     align-items: center;
     gap: 0.6rem;
     cursor: pointer;
-    z-index: 100;
+    z-index: 1300;
 }
 .v2-scope .shop-pixel-tab-icon { font-size: 1.2rem; }
 .v2-scope .shop-pixel-tab-label { font-size: 0.9rem; font-weight: 600; color: var(--v2-text); flex: 1; }
@@ -5037,7 +5082,7 @@
     width: 130px;
     bottom: auto;
     left: auto;
-    z-index: 200;
+    z-index: 1300;
     background: transparent;
     display: flex;
     flex-direction: column;

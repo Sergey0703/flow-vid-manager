@@ -202,11 +202,14 @@ export default function Shop() {
       <div className="shop-topbar">
         {/* Left column: header row + tabs row */}
         <div className="shop-topbar__left">
-          {/* Desktop: row1 = back + title (centered) */}
+          {/* Desktop: row1 = back + theme + title (centered) */}
           <div className="shop-topbar__row1">
             <Link to="/" className="shop-back-link">
               <BackIcon /> AIMediaFlow
             </Link>
+            <button className="v2-theme-toggle shop-topbar__theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
+              {isLight ? <MoonIcon /> : <SunIcon />}
+            </button>
             <span className="shop-title">PIXEL'S SHOP</span>
           </div>
           {/* Desktop: row2 = category tabs */}
@@ -262,19 +265,8 @@ export default function Shop() {
           )}
         </div>
 
-        {/* Right column: cart btn + theme toggle + space for cat widget overlay */}
+        {/* Right column: space for cat widget overlay */}
         <div className="shop-topbar__right">
-          <button
-            className={`shop-cart-btn shop-cart-btn--inline${cartCount > 0 ? ' shop-cart-btn--has-items' : ''}`}
-            onClick={() => setCartOpen(o => !o)}
-            aria-label="Open cart"
-          >
-            🛒
-            {cartCount > 0 && <span className="shop-cart-badge">{cartCount}</span>}
-          </button>
-          <button className="v2-theme-toggle shop-topbar__theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
-            {isLight ? <MoonIcon /> : <SunIcon />}
-          </button>
         </div>
       </div>
 

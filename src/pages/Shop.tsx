@@ -283,6 +283,16 @@ export default function Shop() {
       />
 
 
+      {/* Cart button (fixed, desktop only) */}
+      <button
+        className={`shop-cart-btn shop-cart-btn--fixed${cartCount > 0 ? ' shop-cart-btn--has-items' : ''}`}
+        onClick={() => setCartOpen(o => !o)}
+        aria-label="Open cart"
+      >
+        🛒
+        {cartCount > 0 && <span className="shop-cart-badge">{cartCount}</span>}
+      </button>
+
       {/* Cart panel */}
       <div className={`shop-cart-panel${cartOpen ? ' shop-cart-panel--open' : ''}`}>
         <div className="shop-cart-panel__header">

@@ -5203,6 +5203,32 @@
     }
 }
 
+/* ── Cart button (fixed, desktop only) ──────────────────────────────────────── */
+.v2-scope .shop-cart-btn--fixed {
+    position: fixed;
+    top: 0.65rem;
+    right: 138px; /* avatar widget is 130px wide + 8px gap */
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid var(--v2-border);
+    background: #161b27;
+    color: var(--v2-text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+.v2-scope.v2-light .shop-cart-btn--fixed { background: #f8fafc; }
+.v2-scope .shop-cart-btn--fixed:hover,
+.v2-scope .shop-cart-btn--fixed.shop-cart-btn--has-items { border-color: var(--v2-cyan); }
+@media (max-width: 768px) {
+    .v2-scope .shop-cart-btn--fixed { display: none; }
+}
+
 /* ── Cart button (inline in topbar) ─────────────────────────────────────────── */
 .v2-scope .shop-cart-btn--inline {
     position: relative;

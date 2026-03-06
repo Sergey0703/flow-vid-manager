@@ -5203,29 +5203,25 @@
     }
 }
 
-/* ── Cart button (fixed, just left of the cat avatar widget) ─────────────────── */
-.v2-scope .shop-cart-btn {
-    position: fixed;
-    top: 0.65rem;
-    right: 138px; /* avatar widget is 130px wide + 8px gap */
-    z-index: 1100;
+/* ── Cart button (inline in topbar) ─────────────────────────────────────────── */
+.v2-scope .shop-cart-btn--inline {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     border: 1.5px solid var(--v2-border);
-    background: #161b27;
+    background: transparent;
     color: var(--v2-text);
     cursor: pointer;
+    flex-shrink: 0;
+    font-size: 1rem;
     transition: border-color 0.2s, background 0.2s;
 }
-.v2-scope.v2-light .shop-cart-btn {
-    background: #f8fafc;
-}
-.v2-scope .shop-cart-btn:hover,
-.v2-scope .shop-cart-btn--has-items {
+.v2-scope .shop-cart-btn--inline:hover,
+.v2-scope .shop-cart-btn--inline.shop-cart-btn--has-items {
     border-color: var(--v2-cyan);
 }
 .v2-scope .shop-cart-badge {
@@ -5412,12 +5408,6 @@
 }
 .v2-scope .shop-cart-checkout-btn:hover { opacity: 0.85; }
 @media (max-width: 768px) {
-    .v2-scope .shop-cart-btn {
-        top: 0.55rem;
-        right: 92px; /* mobile avatar is 84px + 8px gap */
-        width: 36px;
-        height: 36px;
-    }
     .v2-scope .shop-cart-panel {
         top: 0;
         right: 0;

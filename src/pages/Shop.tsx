@@ -202,12 +202,20 @@ export default function Shop() {
       <div className="shop-topbar">
         {/* Left column: header row + tabs row */}
         <div className="shop-topbar__left">
-          {/* Desktop: row1 = back + title (centered) */}
+          {/* Desktop: row1 = back + title (centered) + cart */}
           <div className="shop-topbar__row1">
             <Link to="/" className="shop-back-link">
               <BackIcon /> AIMediaFlow
             </Link>
             <span className="shop-title">PIXEL'S SHOP</span>
+            <button
+              className={`shop-cart-btn shop-cart-btn--inline${cartCount > 0 ? ' shop-cart-btn--has-items' : ''}`}
+              onClick={() => setCartOpen(o => !o)}
+              aria-label="Open cart"
+            >
+              🛒
+              {cartCount > 0 && <span className="shop-cart-badge">{cartCount}</span>}
+            </button>
           </div>
           {/* Desktop: row2 = category tabs */}
           <div className="shop-topbar__row2 shop-topbar__row2--desktop">
@@ -221,7 +229,7 @@ export default function Shop() {
               </button>
             ))}
           </div>
-          {/* Mobile: single row = back + burger + title + theme */}
+          {/* Mobile: single row = back + burger + theme + title + cart */}
           <div className="shop-topbar__mobile-row">
             <Link to="/" className="shop-back-link">
               <BackIcon />
@@ -233,9 +241,17 @@ export default function Shop() {
             >
               <BurgerIcon open={menuOpen} />
             </button>
-            <span className="shop-title">PIXEL'S SHOP</span>
             <button className="v2-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
               {isLight ? <MoonIcon /> : <SunIcon />}
+            </button>
+            <span className="shop-title">PIXEL'S SHOP</span>
+            <button
+              className={`shop-cart-btn shop-cart-btn--inline${cartCount > 0 ? ' shop-cart-btn--has-items' : ''}`}
+              onClick={() => setCartOpen(o => !o)}
+              aria-label="Open cart"
+            >
+              🛒
+              {cartCount > 0 && <span className="shop-cart-badge">{cartCount}</span>}
             </button>
           </div>
           {/* Mobile: dropdown menu */}
@@ -274,15 +290,6 @@ export default function Shop() {
         visitorId={visitorIdRef.current}
       />
 
-      {/* Cart button (fixed, top-right on desktop) */}
-      <button
-        className={`shop-cart-btn${cartCount > 0 ? ' shop-cart-btn--has-items' : ''}`}
-        onClick={() => setCartOpen(o => !o)}
-        aria-label="Open cart"
-      >
-        <CartIcon />
-        {cartCount > 0 && <span className="shop-cart-badge">{cartCount}</span>}
-      </button>
 
       {/* Cart panel */}
       <div className={`shop-cart-panel${cartOpen ? ' shop-cart-panel--open' : ''}`}>

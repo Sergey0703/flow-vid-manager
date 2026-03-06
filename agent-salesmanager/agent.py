@@ -38,6 +38,8 @@ FAREWELL_WORDS = {"bye", "goodbye", "that's all", "that is all", "thanks bye", "
 
 USER_AWAY_TIMEOUT = 40
 SILENCE_END_DELAY = 25
+SESSION_TTL = 3 * 60          # must match ttl in api/livekit-token.ts
+SESSION_EXPIRY_WARNING = 20   # seconds before end to warn user
 
 
 async def delete_room(room_name: str):
@@ -659,7 +661,7 @@ async def entrypoint(ctx: JobContext):
 
     async def session_expiry_warning():
         try:
-            await asyncio.sleep(160)  # warn 20s before 3-minute token expiry
+            await asyncio.sleep(SESSION_TTL - SESSION_EXPIRY_WARNING)
         except asyncio.CancelledError:
             return
         if agent._ending:

@@ -18,14 +18,12 @@ from livekit.agents import (
     llm,
 )
 from livekit.plugins import openai as lk_openai, silero
-from livekit.plugins import groq as lk_groq
 from livekit.plugins.turn_detector.english import EnglishModel
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("aimediaflow-salesmanager")
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TYPESENSE_HOST = os.getenv("TYPESENSE_HOST", "typesense")
 TYPESENSE_PORT = os.getenv("TYPESENSE_PORT", "8108")
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "typesense-local-key-2025")
@@ -35,9 +33,6 @@ LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 
 TYPESENSE_BASE = f"http://{TYPESENSE_HOST}:{TYPESENSE_PORT}"
 CART_API_BASE = os.getenv("CART_API_BASE", "http://cart-api:8000")
-
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY is required")
 
 FAREWELL_WORDS = {"bye", "goodbye", "that's all", "that is all", "thanks bye", "thank you bye", "see you", "talk later", "have a good", "have a great", "cheers"}
 
@@ -274,7 +269,7 @@ class SalesManagerAgent(Agent):
         )
         super().__init__(
             instructions=instructions,
-            llm=lk_groq.LLM(model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=GROQ_API_KEY),
+            llm=lk_openai.LLM(model="gpt-4o-mini"),
             stt=lk_openai.STT(
                 model="parakeet-tdt-0.6b-v3",
                 base_url="http://parakeet-stt:5092/v1",

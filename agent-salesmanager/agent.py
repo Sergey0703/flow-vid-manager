@@ -503,12 +503,19 @@ class SalesManagerAgent(Agent):
                 logger.warning(f"remove_from_cart Cart API failed: {e}")
         # Use force_api=True to bypass stale cart_json LiveKit attribute
         cart = await self._get_visitor_cart(force_api=True)
-        remaining_items = [i for i in cart if i.get("id") != product_id]
-        remaining = sum(i.get("qty", 1) for i in remaining_items)
-        if remaining_items:
-            names = ", ".join(i.get("name", i.get("id", "")) for i in remaining_items)
-            return f"Removed. Cart now has {remaining} item(s): {names}."
-        return "Removed. Cart is now empty."
+        if not cart:
+            return "Removed. Cart is now empty."
+        lines = []
+        total = 0.0
+        for item in cart:
+            name = item.get("name", item.get("id", "item"))
+            item_id = item.get("id", "")
+            price = float(item.get("price", 0))
+            qty = int(item.get("qty", 1))
+            total += price * qty
+            lines.append(f"{name} (id:{item_id}) x{qty} (€{price * qty:.2f})")
+        items_str = ", ".join(lines)
+        return f"Removed. Cart now: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 
     @llm.function_tool
     async def read_cart(

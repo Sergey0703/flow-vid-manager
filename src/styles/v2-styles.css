@@ -5418,9 +5418,9 @@
         height: 36px;
     }
     .v2-scope .shop-cart-panel {
-        top: 0;
+        top: 214px;
         right: 0;
-        height: 100dvh;
+        height: calc(100dvh - 214px);
         width: 100vw;
         max-width: 100vw;
         border-left: none;

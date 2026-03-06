@@ -657,6 +657,23 @@ async def entrypoint(ctx: JobContext):
         instructions="Greet the visitor as Pixel, the shop's AI kitten assistant. Be warm and playful. Ask what they're looking for today. No cat sounds."
     )
 
+    async def session_expiry_warning():
+        try:
+            await asyncio.sleep(160)  # warn 20s before 3-minute token expiry
+        except asyncio.CancelledError:
+            return
+        if agent._ending:
+            return
+        logger.info("Session expiry warning: 20 seconds remaining")
+        agent._ending = True
+        await session.say(
+            "Just a heads-up — our session is about to end in 20 seconds. "
+            "Don't worry, your cart will be saved and you can start a new chat anytime to continue shopping!",
+            allow_interruptions=False,
+        )
+
+    asyncio.ensure_future(session_expiry_warning())
+
 
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(

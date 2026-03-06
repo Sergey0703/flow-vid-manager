@@ -68,6 +68,11 @@ class RemoveItem(BaseModel):
     id: str
 
 
+class UpdateQty(BaseModel):
+    id: str
+    qty: int
+
+
 # ---------- routes ----------
 
 @app.get("/health")
@@ -102,6 +107,20 @@ def add_to_cart(visitor_id: str, item: AddItem):
 def remove_from_cart(visitor_id: str, body: RemoveItem):
     items = _load_items(visitor_id)
     items = [i for i in items if i["id"] != body.id]
+    _save_items(visitor_id, items)
+    return {"items": items, "total": _calc_total(items)}
+
+
+@app.post("/cart/{visitor_id}/update")
+def update_qty(visitor_id: str, body: UpdateQty):
+    items = _load_items(visitor_id)
+    for item in items:
+        if item["id"] == body.id:
+            if body.qty <= 0:
+                items = [i for i in items if i["id"] != body.id]
+            else:
+                item["qty"] = body.qty
+            break
     _save_items(visitor_id, items)
     return {"items": items, "total": _calc_total(items)}
 

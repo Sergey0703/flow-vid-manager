@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/v2-styles.css';
 import { getProducts, getProductById, type Product } from '../lib/shopApi';
-import { getCart, addToCart, removeFromCart, clearCart } from '../lib/cartApi';
+import { getCart, addToCart, removeFromCart, updateCartQty, clearCart } from '../lib/cartApi';
 import ShopPixelWidget from '../components/shop/ShopPixelWidget';
 
 const VISITOR_KEY = 'visitor_id';
@@ -149,9 +149,19 @@ export default function Shop() {
     });
   }, [syncCart]);
 
-  const handleCartAction = useCallback(async (action: { action: 'add' | 'remove'; id: string; qty?: number }) => {
+  const handleCartAction = useCallback(async (action: { action: 'add' | 'remove' | 'update'; id: string; qty?: number }) => {
     console.log('[cart] handleCartAction', action, 'room=', !!liveKitRoomRef.current);
     if (action.action === 'remove') { handleRemoveFromCart(action.id); return; }
+    if (action.action === 'update' && action.qty != null) {
+      setCartItems(prev => {
+        const next = prev.map(i => i.product.id === action.id ? { ...i, qty: action.qty! } : i)
+                        .filter(i => i.qty > 0);
+        syncCart(next);
+        updateCartQty(visitorIdRef.current, action.id, action.qty!).catch(() => {});
+        return next;
+      });
+      return;
+    }
     let product = allProductsRef.current.get(action.id);
     console.log('[cart] product from ref:', product?.name ?? 'NOT FOUND');
     if (!product) {

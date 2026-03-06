@@ -38,6 +38,16 @@ export async function removeFromCart(visitorId: string, productId: string): Prom
   return res.json();
 }
 
+export async function updateCartQty(visitorId: string, productId: string, qty: number): Promise<CartData> {
+  const res = await fetch(`${CART_BASE}/cart/${visitorId}/update`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: productId, qty }),
+  });
+  if (!res.ok) throw new Error('Failed to update cart qty');
+  return res.json();
+}
+
 export async function clearCart(visitorId: string): Promise<void> {
   await fetch(`${CART_BASE}/cart/${visitorId}`, { method: 'DELETE' });
 }

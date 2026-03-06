@@ -489,6 +489,47 @@ class SalesManagerAgent(Agent):
         return f"Added. Cart now: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 
     @llm.function_tool
+    async def update_cart_qty(
+        self,
+        product_id: Annotated[str, "Product ID to update, e.g. 'p002'. Use the id from read_cart or add_to_cart response."],
+        qty: Annotated[str, "New quantity. Must be 1 or more. To remove the item entirely use remove_from_cart instead."],
+    ) -> str:
+        """Change the quantity of a product already in the cart. Call when user says 'change qty', 'set quantity to', 'I want 2 of those', 'make it 3'."""
+        import json
+        qty_int = max(1, int(qty) if str(qty).isdigit() else 1)
+        logger.info(f"update_cart_qty: product_id={repr(product_id)} qty={qty_int}")
+        action_payload = json.dumps({"action": "update", "id": product_id, "qty": qty_int})
+        try:
+            await self._room.local_participant.set_attributes({"cart_action": action_payload})
+        except Exception as e:
+            logger.warning(f"update_cart_qty set_attributes failed: {e}")
+        visitor_id = self._get_visitor_id()
+        if visitor_id:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{CART_API_BASE}/cart/{visitor_id}/update",
+                        json={"id": product_id, "qty": qty_int},
+                        timeout=aiohttp.ClientTimeout(total=3),
+                    ) as res:
+                        logger.info(f"update_cart_qty Cart API: {res.status}")
+            except Exception as e:
+                logger.warning(f"update_cart_qty Cart API failed: {e}")
+        cart = await self._get_visitor_cart(force_api=True)
+        if not cart:
+            return "Cart is now empty."
+        lines = []
+        total = 0.0
+        for item in cart:
+            name = item.get("name", item.get("id", "item"))
+            item_id = item.get("id", "")
+            price = float(item.get("price", 0))
+            q = int(item.get("qty", 1))
+            total += price * q
+            lines.append(f"{name} (id:{item_id}) x{q} (€{price * q:.2f})")
+        return f"Updated. Cart now: {', '.join(lines)}. Total: €{total:.2f}."
+
+    @llm.function_tool
     async def remove_from_cart(
         self,
         product_id: Annotated[str, "Product ID to remove from the cart, e.g. 'p002'."],

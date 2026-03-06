@@ -244,6 +244,74 @@
         "what's left in cart?",
         "ok that's all, bye"
       ]
+    },
+    {
+      "id": "update_qty_flow",
+      "persona": "Customer adds items then changes quantities",
+      "messages": [
+        "show me accessories",
+        "add the Dad Cap to my cart",
+        "add the Beanie to my cart",
+        "what's in my cart?",
+        "actually I want 2 Dad Caps",
+        "and make the Beanie quantity 3",
+        "what's my total now?",
+        "set the Dad Cap back to 1",
+        "what's in my cart?",
+        "bye"
+      ]
+    },
+    {
+      "id": "farewell_end_session",
+      "persona": "Customer who ends session with various farewell phrases",
+      "messages": [
+        "show me hoodies",
+        "nice, add the Classic Hoodie to my cart",
+        "that's all I need, thanks",
+        "no thanks, goodbye"
+      ]
+    },
+    {
+      "id": "ambiguous_qty_command",
+      "persona": "Customer using ambiguous phrasing to add quantity (STT transcription issue)",
+      "messages": [
+        "show me accessories",
+        "add the Dad Cap to my cart",
+        "what's in my cart?",
+        "please add a second one",
+        "what's in my cart now?",
+        "ok remove the cap from my cart",
+        "bye"
+      ]
+    },
+    {
+      "id": "cart_update_remove",
+      "persona": "Customer managing cart: add, update qty, then remove",
+      "messages": [
+        "show me tshirts",
+        "add the Basic Tee to my cart",
+        "show me accessories",
+        "add the Beanie to my cart",
+        "change the Basic Tee quantity to 2",
+        "what's in my cart?",
+        "I changed my mind, remove the Basic Tee",
+        "what's left?",
+        "bye"
+      ]
+    },
+    {
+      "id": "cart_size_flow",
+      "persona": "Customer adds sized clothing — agent asks size. Then adds accessory — agent skips size question.",
+      "messages": [
+        "show me hoodies",
+        "add the Classic Hoodie to my cart",
+        "L",
+        "what's in my cart?",
+        "show me accessories",
+        "add the Beanie to my cart",
+        "what's in my cart?",
+        "bye"
+      ]
     }
   ]
 }

@@ -62,6 +62,7 @@ class AddItem(BaseModel):
     name: str
     price: float
     qty: int = 1
+    size: str = ""
 
 
 class RemoveItem(BaseModel):
@@ -98,7 +99,7 @@ def add_to_cart(visitor_id: str, item: AddItem):
             existing["qty"] = existing.get("qty", 1) + item.qty
             _save_items(visitor_id, items)
             return {"items": items, "total": _calc_total(items)}
-    items.append({"id": item.id, "name": item.name, "price": item.price, "qty": item.qty})
+    items.append({"id": item.id, "name": item.name, "price": item.price, "qty": item.qty, "size": item.size})
     _save_items(visitor_id, items)
     return {"items": items, "total": _calc_total(items)}
 

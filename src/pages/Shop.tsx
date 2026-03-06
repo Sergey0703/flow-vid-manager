@@ -41,7 +41,7 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [cartItems, setCartItems] = useState<{ product: Product; qty: number }[]>([]);
+  const [cartItems, setCartItems] = useState<{ product: Product; qty: number; size?: string }[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutDone, setCheckoutDone] = useState(false);
   const liveKitRoomRef = useRef<any>(null);
@@ -69,8 +69,8 @@ export default function Shop() {
       );
       Promise.all(promises).then(prods => {
         const restored = data.items
-          .map((item, i) => prods[i] ? { product: prods[i]!, qty: item.qty } : null)
-          .filter(Boolean) as { product: Product; qty: number }[];
+          .map((item, i) => prods[i] ? { product: prods[i]!, qty: item.qty, size: item.size } : null)
+          .filter(Boolean) as { product: Product; qty: number; size?: string }[];
         if (restored.length > 0) setCartItems(restored);
       });
     }).catch(() => { /* server unreachable — start with empty cart */ });
@@ -108,22 +108,22 @@ export default function Shop() {
     setExpandedId(id);
   }, []);
 
-  const syncCart = useCallback((items: { product: Product; qty: number }[]) => {
+  const syncCart = useCallback((items: { product: Product; qty: number; size?: string }[]) => {
     const room = liveKitRoomRef.current;
     if (!room) return;
-    const compact = items.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, qty: i.qty }));
+    const compact = items.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, qty: i.qty, size: i.size ?? '' }));
     room.localParticipant.setAttributes({ cart_json: items.length ? JSON.stringify(compact) : '' });
   }, []);
 
-  const handleAddToCart = useCallback((product: Product) => {
+  const handleAddToCart = useCallback((product: Product, size?: string) => {
     setCartItems(prev => {
       const existing = prev.find(i => i.product.id === product.id);
       const qty = existing ? existing.qty + 1 : 1;
       const next = existing
         ? prev.map(i => i.product.id === product.id ? { ...i, qty } : i)
-        : [...prev, { product, qty: 1 }];
+        : [...prev, { product, qty: 1, size }];
       syncCart(next);
-      addToCart(visitorIdRef.current, { id: product.id, name: product.name, price: product.price, qty: 1 })
+      addToCart(visitorIdRef.current, { id: product.id, name: product.name, price: product.price, qty: 1, size: size ?? '' })
         .catch(() => {});
       return next;
     });
@@ -149,7 +149,7 @@ export default function Shop() {
     });
   }, [syncCart]);
 
-  const handleCartAction = useCallback(async (action: { action: 'add' | 'remove' | 'update'; id: string; qty?: number }) => {
+  const handleCartAction = useCallback(async (action: { action: 'add' | 'remove' | 'update'; id: string; qty?: number; size?: string }) => {
     console.log('[cart] handleCartAction', action, 'room=', !!liveKitRoomRef.current);
     if (action.action === 'remove') { handleRemoveFromCart(action.id); return; }
     if (action.action === 'update' && action.qty != null) {
@@ -171,7 +171,7 @@ export default function Shop() {
     }
     if (product) {
       console.log('[cart] calling handleAddToCart for', product.name);
-      handleAddToCart(product);
+      handleAddToCart(product, action.size);
     } else {
       console.error('[cart] product not found for id:', action.id);
     }
@@ -315,10 +315,10 @@ export default function Shop() {
         ) : (
           <>
             <div className="shop-cart-items">
-              {cartItems.map(({ product: p, qty }) => (
+              {cartItems.map(({ product: p, qty, size }) => (
                 <div key={p.id} className="shop-cart-item">
                   <div className="shop-cart-item__info">
-                    <span className="shop-cart-item__name">{p.name}</span>
+                    <span className="shop-cart-item__name">{p.name}{size ? ` — ${size}` : ''}</span>
                     <span className="shop-cart-item__price">€{(p.price * qty).toFixed(2)}</span>
                   </div>
                   <div className="shop-cart-item__controls">

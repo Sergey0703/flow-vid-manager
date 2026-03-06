@@ -22,18 +22,18 @@ from typing import Any
 
 import aiohttp
 from dotenv import load_dotenv
-from groq import AsyncGroq
+from openai import AsyncOpenAI
 
 load_dotenv()
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 
-GROQ_API_KEY      = os.getenv("GROQ_API_KEY")
+OPENAI_API_KEY    = os.getenv("OPENAI_API_KEY")
 TYPESENSE_HOST    = os.getenv("TYPESENSE_HOST", "46.62.246.93")
 TYPESENSE_PORT    = os.getenv("TYPESENSE_PORT", "8108")
 TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "typesense-local-key-2025")
 TYPESENSE_BASE    = f"http://{TYPESENSE_HOST}:{TYPESENSE_PORT}"
-LLM_MODEL         = "meta-llama/llama-4-scout-17b-16e-instruct"
+LLM_MODEL         = "gpt-4o-mini"
 
 SCENARIOS_FILE = os.path.join(os.path.dirname(__file__), "test_scenarios.json")
 LOG_FILE       = os.path.join(os.path.dirname(__file__), "test_results.log")
@@ -177,7 +177,7 @@ async def _fetch_categories():
 # ── Tool execution ──────────────────────────────────────────────────────────────
 
 # Tracks UI state (what would be sent via set_attributes)
-ui_state = {"recommended_ids": "", "expanded_id": ""}
+ui_state = {"recommended_ids": "", "expanded_id": "", "cart_ui": ""}
 
 # Simulated cart (product_id → {name, price, qty})
 cart_state: dict[str, dict] = {}
@@ -265,7 +265,8 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
 
     elif name == "add_to_cart":
         product_id = args.get("product_id", "")
-        qty = int(str(args.get("qty", 1)))  # accept string or int (Groq may return either)
+        qty = int(str(args.get("qty", 1)))  # accept string or int
+        size = args.get("size", "")
         # Try to get product info from catalog cache
         doc = _product_catalog.get(product_id, {})
         name_str = doc.get("name", product_id)
@@ -273,9 +274,9 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
         if product_id in cart_state:
             cart_state[product_id]["qty"] += qty
         else:
-            cart_state[product_id] = {"name": name_str, "price": price, "qty": qty}
-        cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values())
-        ui_changes["cart_action"] = json.dumps({"action": "add", "id": product_id, "qty": qty})
+            cart_state[product_id] = {"name": name_str, "price": price, "qty": qty, "size": size}
+        cart_summary = ", ".join(f"{v['name']}{(' — ' + v['size']) if v.get('size') else ''} x{v['qty']}" for v in cart_state.values())
+        ui_changes["cart_action"] = json.dumps({"action": "add", "id": product_id, "qty": qty, "size": size})
         total_qty = sum(v["qty"] for v in cart_state.values())
         return f"Added to cart. Cart: [{cart_summary}]. Total items: {total_qty}.", ui_changes
 
@@ -291,11 +292,33 @@ async def execute_tool(name: str, args: dict) -> tuple[str, dict]:
             return "The cart is empty.", ui_changes
         lines = []
         total = 0.0
-        for item in cart_state.values():
+        for pid, item in cart_state.items():
             subtotal = item["price"] * item["qty"]
             total += subtotal
-            lines.append(f"{item['name']} x{item['qty']} (€{subtotal:.2f})")
-        return f"Cart: {', '.join(lines)}. Total: €{total:.2f}.", ui_changes
+            size_part = f", size:{item['size']}" if item.get("size") else ""
+            lines.append(f"{item['name']} (id:{pid}{size_part}) x{item['qty']} (€{subtotal:.2f})")
+        return f"Cart: {', '.join(lines)}. Total: €{total:.2f}. Use product id (e.g. p011) for remove/update.", ui_changes
+
+    elif name == "update_cart_qty":
+        product_id = args.get("product_id", "")
+        qty = max(1, int(str(args.get("qty", 1))))
+        if product_id in cart_state:
+            cart_state[product_id]["qty"] = qty
+            cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values())
+            ui_changes["cart_action"] = json.dumps({"action": "update", "id": product_id, "qty": qty})
+            total = sum(v["price"] * v["qty"] for v in cart_state.values())
+            return f"Updated {cart_state[product_id]['name']} qty to {qty}. Cart: [{cart_summary}]. Total: €{total:.2f}.", ui_changes
+        return f"Product {product_id} not found in cart.", ui_changes
+
+    elif name == "show_hide_cart":
+        state = args.get("state", "open")
+        ui_changes["cart_ui"] = state
+        ui_state["cart_ui"] = state
+        return f"Cart panel {state}ed.", ui_changes
+
+    elif name == "end_session":
+        ui_changes["session_ended"] = "true"
+        return "Session ended by agent.", ui_changes
 
     return f"Unknown tool: {name}", ui_changes
 
@@ -388,7 +411,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "add_to_cart",
-            "description": "Add a product to the customer's shopping cart. Call when user says 'add to cart', 'I'll take it', 'buy this', 'add one', 'get it'.",
+            "description": "Add a product to the customer's shopping cart. Call when user says 'add to cart', 'I'll take it', 'buy this', 'add one', 'get it'. If the product has sizes, ask the customer what size BEFORE calling this tool.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -399,6 +422,10 @@ TOOLS = [
                     "qty": {
                         "type": "string",
                         "description": "Quantity to add. Default is 1."
+                    },
+                    "size": {
+                        "type": "string",
+                        "description": "Size to add, e.g. 'M', 'L', 'XL'. Leave empty for accessories (one size fits all)."
                     }
                 },
                 "required": ["product_id"]
@@ -426,7 +453,57 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "read_cart",
-            "description": "Read current cart contents aloud. Call when user asks 'what's in my cart?', 'my basket', 'what did I add?', 'what's my total?', 'show cart'.",
+            "description": "Read current cart contents aloud. Call when user asks 'what's in my cart?', 'my basket', 'what did I add?', 'what's my total?'. Do NOT call this alone for 'show me my cart' — use show_hide_cart instead.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_cart_qty",
+            "description": "Change the quantity of a product already in the cart. Call when user says 'change qty', 'set quantity to', 'I want 2 of those', 'make it 3', 'add a second one', 'add another'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "string",
+                        "description": "Product ID to update, e.g. 'p011'. Use the id from read_cart or add_to_cart response."
+                    },
+                    "qty": {
+                        "type": "integer",
+                        "description": "New total quantity. Must be 1 or more."
+                    }
+                },
+                "required": ["product_id", "qty"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "show_hide_cart",
+            "description": "Open or close the cart panel on screen. state='open' when user says 'show my cart', 'open cart', 'show me my cart'. state='close' when user says 'close cart', 'hide cart'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "state": {
+                        "type": "string",
+                        "description": "'open' to show the cart panel, 'close' to hide it."
+                    }
+                },
+                "required": ["state"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "end_session",
+            "description": "End the conversation. Call when user says 'bye', 'goodbye', 'thanks bye', 'that's all', 'that is all', 'see you', 'talk later', or clearly indicates they are done shopping.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -486,15 +563,20 @@ AVAILABLE CATEGORIES (exact values for search_products category parameter):
 {cats_exact}
 
 SHOPPING CART:
-- add_to_cart(product_id, qty): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
+- add_to_cart(product_id, qty, size): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
 - remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
-- read_cart(): when user asks "what's in my cart?", "what did I select?", "my basket", "show cart", "total"
+- update_cart_qty(product_id, qty): when user says "change qty", "set quantity to", "I want 2 of those", "make it 3", "add another", "add a second one"
+- read_cart(): ONLY when user asks about cart CONTENTS: "what's in my cart?", "what's my total?", "how many items?"
+- show_hide_cart(state): state='open' when user says "show my cart", "open cart", "show me my cart"; state='close' when user says "close cart", "hide cart"
 Always confirm additions aloud: "Added! You now have X items in your cart."
 
-ENDING THE CALL:
-When the user says goodbye, bye, thanks bye, that is all, say a short warm farewell."""
+SIZE RULE: If a product has sizes listed in the search result (e.g. "sizes: S, M, L, XL"), ALWAYS ask the customer what size they want BEFORE calling add_to_cart. Do NOT ask for size if the product has no sizes (accessories: cap, beanie, bag, scarf). Once the customer tells you the size, call add_to_cart immediately with that size.
 
-        self.client    = AsyncGroq(api_key=GROQ_API_KEY)
+ENDING THE CALL:
+When the user says "bye", "goodbye", "thanks bye", "that's all", "that is all", "see you", "no thanks goodbye", or clearly indicates they are done,
+IMMEDIATELY call end_session() and say a short warm farewell like "Bye! Come back anytime!" — nothing else."""
+
+        self.client    = AsyncOpenAI(api_key=OPENAI_API_KEY)
         self.history   = []
         self.log_lines = log_lines
         self.no_pause  = no_pause
@@ -596,6 +678,10 @@ When the user says goodbye, bye, thanks bye, that is all, say a short warm farew
                             self._print(f"  {C.RED}[SCHEMA WARN] cart_action: not valid JSON {repr(raw)}{C.RESET}")
                         cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values()) or "empty"
                         ui_parts.append(f"cart_action: {action_str} → [{cart_summary}]")
+                    if "cart_ui" in ui_changes:
+                        ui_parts.append(f"cart_ui: {ui_changes['cart_ui']}")
+                    if "session_ended" in ui_changes:
+                        ui_parts.append(f"SESSION ENDED")
                     if ui_parts:
                         self._print(f"  {C.BLUE}→ UI: {' | '.join(ui_parts)}{C.RESET}")
 
@@ -713,8 +799,8 @@ async def main():
             print(f"  {C.CYAN}{s['id']:<30}{C.RESET} {s['persona']}")
         return
 
-    if not GROQ_API_KEY:
-        print(f"{C.RED}ERROR: GROQ_API_KEY not set in .env{C.RESET}")
+    if not OPENAI_API_KEY:
+        print(f"{C.RED}ERROR: OPENAI_API_KEY not set in .env{C.RESET}")
         sys.exit(1)
 
     print(f"\n{C.BOLD}Fetching categories from Typesense...{C.RESET}")
@@ -727,9 +813,11 @@ async def main():
     if args.no_pause:
         print(f"  {C.DIM}Fast mode: pauses disabled{C.RESET}")
 
-    log_lines = [f"Test run: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"]
-    log_lines.append(f"Model: {LLM_MODEL}")
-    log_lines.append(f"Categories: {', '.join(categories) or 'defaults'}")
+    log_lines = [
+        f"Test run: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"Model: {LLM_MODEL}",
+        f"Categories: {', '.join(categories) or 'defaults'}",
+    ]
 
     to_run = [s for s in scenarios if s["id"] == args.scenario] if args.scenario else scenarios
 

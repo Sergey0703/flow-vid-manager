@@ -97,12 +97,14 @@ AVAILABLE CATEGORIES (exact values for search_products category parameter):
 {categories_exact}
 
 SHOPPING CART:
-- add_to_cart(product_id, qty): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
+- add_to_cart(product_id, qty, size): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
 - remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
 - read_cart(): ONLY when user asks about cart CONTENTS without wanting to see it: "what's in my cart?", "what's my total?", "how many items?"
 - show_hide_cart(state): state='open' when user says "show my cart", "open cart", "open my cart", "show me my cart" — then also call read_cart(); state='close' when user says "close cart", "hide cart", "close my cart"
 IMPORTANT: "show me my cart" = show_hide_cart(state='open') + read_cart(). Never use read_cart() alone for these phrases.
 Always confirm additions aloud: "Added! You now have X items in your cart."
+
+SIZE RULE: If a product has sizes listed in the search result (e.g. "sizes: S, M, L, XL"), ALWAYS ask the customer what size they want BEFORE calling add_to_cart. Do NOT ask for size if the product has no sizes (accessories: cap, beanie, bag, scarf). Once the customer tells you the size, call add_to_cart immediately with that size.
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that is all, or clearly indicates they are done,
@@ -430,13 +432,14 @@ class SalesManagerAgent(Agent):
         self,
         product_id: Annotated[str, "Product ID to add, e.g. 'p002'. Use the id from the most recent search result."],
         qty: Annotated[str, "Quantity to add. Default is 1."] = "1",
+        size: Annotated[str, "Size to add, e.g. 'M', 'L', 'XL'. Leave empty for accessories (one size fits all)."] = "",
     ) -> str:
-        """Add a product to the customer's shopping cart. Call when user says 'add to cart', 'I'll take it', 'buy this', or similar."""
+        """Add a product to the customer's shopping cart. Call when user says 'add to cart', 'I'll take it', 'buy this', or similar. If the product has sizes, ask the customer what size they want BEFORE calling this tool."""
         import json
         qty_int = int(qty) if str(qty).isdigit() else 1
-        logger.info(f"add_to_cart: product_id={repr(product_id)} qty={qty_int}")
+        logger.info(f"add_to_cart: product_id={repr(product_id)} qty={qty_int} size={repr(size)}")
         # Signal frontend via LiveKit attribute
-        action_payload = json.dumps({"action": "add", "id": product_id, "qty": qty_int})
+        action_payload = json.dumps({"action": "add", "id": product_id, "qty": qty_int, "size": size})
         try:
             await self._room.local_participant.set_attributes({"cart_action": action_payload})
         except Exception as e:
@@ -459,7 +462,7 @@ class SalesManagerAgent(Agent):
                             hits = data.get("hits", [])
                             if hits:
                                 d = hits[0]["document"]
-                                product_info = {"id": product_id, "name": d.get("name", product_id), "price": float(d.get("price", 0)), "qty": qty_int}
+                                product_info = {"id": product_id, "name": d.get("name", product_id), "price": float(d.get("price", 0)), "qty": qty_int, "size": size}
             except Exception as e:
                 logger.warning(f"add_to_cart: product lookup failed: {e}")
             try:
@@ -483,8 +486,10 @@ class SalesManagerAgent(Agent):
             item_id = item.get("id", "")
             price = float(item.get("price", 0))
             qty = int(item.get("qty", 1))
+            size_val = item.get("size", "")
             total += price * qty
-            lines.append(f"{name} (id:{item_id}) x{qty} (€{price * qty:.2f})")
+            size_part = f", size:{size_val}" if size_val else ""
+            lines.append(f"{name} (id:{item_id}{size_part}) x{qty} (€{price * qty:.2f})")
         items_str = ", ".join(lines)
         return f"Added. Cart now: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 
@@ -566,8 +571,10 @@ class SalesManagerAgent(Agent):
             item_id = item.get("id", "")
             price = float(item.get("price", 0))
             qty = int(item.get("qty", 1))
+            size_val = item.get("size", "")
             total += price * qty
-            lines.append(f"{name} (id:{item_id}) x{qty} (€{price * qty:.2f})")
+            size_part = f", size:{size_val}" if size_val else ""
+            lines.append(f"{name} (id:{item_id}{size_part}) x{qty} (€{price * qty:.2f})")
         items_str = ", ".join(lines)
         return f"Removed. Cart now: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 
@@ -589,9 +596,11 @@ class SalesManagerAgent(Agent):
             item_id = item.get("id", "")
             price = float(item.get("price", 0))
             qty = int(item.get("qty", 1))
+            size_val = item.get("size", "")
             subtotal = price * qty
             total += subtotal
-            lines.append(f"{name} (id:{item_id}) x{qty} (€{subtotal:.2f})")
+            size_part = f", size:{size_val}" if size_val else ""
+            lines.append(f"{name} (id:{item_id}{size_part}) x{qty} (€{subtotal:.2f})")
         items_str = ", ".join(lines)
         return f"Cart: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 

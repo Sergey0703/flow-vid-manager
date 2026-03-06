@@ -473,7 +473,20 @@ class SalesManagerAgent(Agent):
             except Exception as e:
                 logger.warning(f"add_to_cart Cart API failed: {e}")
         logger.info(f"add_to_cart: signalled frontend and Cart API for product_id={product_id}")
-        return f"Added {qty_int} item(s) to cart."
+        cart = await self._get_visitor_cart(force_api=True)
+        if not cart:
+            return f"Added to cart."
+        lines = []
+        total = 0.0
+        for item in cart:
+            name = item.get("name", item.get("id", "item"))
+            item_id = item.get("id", "")
+            price = float(item.get("price", 0))
+            qty = int(item.get("qty", 1))
+            total += price * qty
+            lines.append(f"{name} (id:{item_id}) x{qty} (€{price * qty:.2f})")
+        items_str = ", ".join(lines)
+        return f"Added. Cart now: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 
     @llm.function_tool
     async def remove_from_cart(

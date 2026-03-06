@@ -100,7 +100,7 @@ SHOPPING CART:
 - add_to_cart(product_id, qty, size): when user says "add to cart", "I'll take it", "buy this", "add one", "get it"
 - remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
 - read_cart(): ONLY when user asks about cart CONTENTS without wanting to see it: "what's in my cart?", "what's my total?", "how many items?"
-- show_hide_cart(state): state='open' when user says "show my cart", "open cart", "open my cart", "show me my cart" — then also call read_cart(); state='close' when user says "close cart", "hide cart", "close my cart"
+- show_hide_cart(state): state='open' when user says "show my cart", "open cart", "open my cart", "show me my cart" — then also call read_cart(); state='close' when user says "close cart", "hide cart", "close my cart", "close the cart"
 IMPORTANT: "show me my cart" = show_hide_cart(state='open') + read_cart(). Never use read_cart() alone for these phrases.
 Always confirm additions aloud: "Added! You now have X items in your cart."
 
@@ -352,7 +352,7 @@ class SalesManagerAgent(Agent):
         self,
         confirm: Annotated[str, "Always pass empty string."] = "",
     ) -> str:
-        """Close the currently open product card. Call this when the user says 'close it', 'close the card', 'close that', 'go back', 'never mind', or any variation meaning they want to stop viewing a product detail."""
+        """Close the currently open product card. Call this when the user says 'close it', 'close the card', 'close that', 'go back', 'never mind', or any variation meaning they want to stop viewing a product detail. Do NOT call this for cart — use show_hide_cart(state='close') when the user says 'close the cart', 'close my cart', 'hide the cart'."""
         logger.info("close_product called")
         try:
             await self._room.local_participant.set_attributes({"expanded_id": ""})
@@ -366,7 +366,7 @@ class SalesManagerAgent(Agent):
         self,
         state: Annotated[str, "Pass 'open' to show the cart panel, 'close' to hide it"],
     ) -> str:
-        """Show or hide the shopping cart panel on screen. Call with state='open' when user says 'show my cart', 'open cart', 'open my cart', 'show me my cart'. Call with state='close' when user says 'close cart', 'hide cart', 'close my cart'. After opening, also call read_cart()."""
+        """Show or hide the shopping cart panel on screen. Call with state='open' when user says 'show my cart', 'open cart', 'open my cart', 'show me my cart'. Call with state='close' when user says 'close cart', 'hide cart', 'close my cart', 'close the cart'. After opening, also call read_cart()."""
         logger.info(f"show_hide_cart: state={state}")
         ui_val = "open" if state == "open" else "closed"
         try:

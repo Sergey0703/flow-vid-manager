@@ -312,6 +312,96 @@
         "what's in my cart?",
         "bye"
       ]
+    },
+    {
+      "id": "show_cart_reads_contents",
+      "persona": "Customer asks to 'show me my cart' — agent should open cart panel AND read contents aloud",
+      "messages": [
+        "show me hoodies",
+        "add the Classic Hoodie to my cart",
+        "M",
+        "show me accessories",
+        "add the Dad Cap to my cart",
+        "show me my cart",
+        "ok close the cart",
+        "what's in my cart?",
+        "bye"
+      ]
+    },
+    {
+      "id": "multi_size_cart",
+      "persona": "Customer adds two sized clothing items — agent asks size each time, then accessory no size",
+      "messages": [
+        "show me sweatshirts",
+        "add the Essential Sweatshirt to my cart",
+        "S",
+        "show me tshirts",
+        "add the Basic Tee to my cart",
+        "M",
+        "show me accessories",
+        "add the Ribbed Scarf to my cart",
+        "what's in my cart?",
+        "bye"
+      ]
+    },
+    {
+      "id": "back_navigation",
+      "persona": "Customer uses 'go back', 'back', 'return' — should close card, NOT trigger search",
+      "messages": [
+        "show me jackets",
+        "open the Bomber Jacket",
+        "go back",
+        "open the Track Jacket",
+        "back",
+        "show me sweatshirts",
+        "open the first one",
+        "return",
+        "bye"
+      ]
+    },
+    {
+      "id": "empty_cart_check",
+      "persona": "Customer asks about empty cart before adding anything, then adds item",
+      "messages": [
+        "what's in my cart?",
+        "show my cart",
+        "ok, show me tshirts",
+        "add the Oversized Tee to my cart",
+        "L",
+        "what's in my cart?",
+        "what's the total?",
+        "bye"
+      ]
+    },
+    {
+      "id": "size_then_no_size_back",
+      "persona": "Customer adds sized item, then changes mind before giving size, then adds accessory",
+      "messages": [
+        "show me hoodies",
+        "add the Oversized Hoodie to my cart",
+        "actually never mind, show me accessories instead",
+        "add the Canvas Tote Bag to my cart",
+        "what's in my cart?",
+        "bye"
+      ]
+    },
+    {
+      "id": "cart_full_with_sizes",
+      "persona": "Full flow: browse, add sized item, add accessory, update qty, remove, checkout total",
+      "messages": [
+        "show me jackets",
+        "open the Bomber Jacket",
+        "add it to my cart",
+        "XL",
+        "close the card",
+        "show me accessories",
+        "add the Beanie to my cart",
+        "what's in my cart?",
+        "I want 2 beanies actually",
+        "remove the jacket from my cart",
+        "what's left and what's the total?",
+        "bye"
+      ]
     }
   ]
 }

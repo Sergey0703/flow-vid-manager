@@ -382,7 +382,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "close_product",
-            "description": "Close the currently open product card. Call this when the user says 'close it', 'close the card', 'close that', 'go back', 'never mind', or any variation meaning they want to stop viewing a product detail.",
+            "description": "Close the currently open product card. Call this when the user says 'close it', 'close the card', 'close that', 'go back', 'never mind', or any variation meaning they want to stop viewing a product detail. Do NOT call this for cart — use show_hide_cart(state='close') when the user says 'close the cart', 'close my cart', 'hide the cart'.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -486,7 +486,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "show_hide_cart",
-            "description": "Open or close the cart panel on screen. state='open' when user says 'show my cart', 'open cart', 'show me my cart'. state='close' when user says 'close cart', 'hide cart'.",
+            "description": "Open or close the cart panel on screen. state='open' when user says 'show my cart', 'open cart', 'show me my cart'. state='close' when user says 'close cart', 'hide cart', 'close the cart', 'close my cart'.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -556,6 +556,7 @@ SHOWING PRODUCT DETAIL:
 
 CLOSING PRODUCT CARD:
 - Call close_product when the user says: "close it", "close the card", "close that", "go back", "never mind", "dismiss it", or any variation meaning they want to stop viewing a product detail
+- Do NOT call close_product for cart — use show_hide_cart(state='close') when user says "close the cart", "close my cart", "hide the cart"
 - NEVER call search_products when the user just wants to close a card
 - After closing, simply ask what they would like to see next
 
@@ -567,7 +568,7 @@ SHOPPING CART:
 - remove_from_cart(product_id): when user says "remove", "take it out", "I changed my mind", "don't want it"
 - update_cart_qty(product_id, qty): when user says "change qty", "set quantity to", "I want 2 of those", "make it 3", "add another", "add a second one"
 - read_cart(): ONLY when user asks about cart CONTENTS: "what's in my cart?", "what's my total?", "how many items?"
-- show_hide_cart(state): state='open' when user says "show my cart", "open cart", "show me my cart"; state='close' when user says "close cart", "hide cart"
+- show_hide_cart(state): state='open' when user says "show my cart", "open cart", "show me my cart"; state='close' when user says "close cart", "hide cart", "close the cart", "close my cart"
 Always confirm additions aloud: "Added! You now have X items in your cart."
 
 SIZE RULE: If a product has sizes listed in the search result (e.g. "sizes: S, M, L, XL"), ALWAYS ask the customer what size they want BEFORE calling add_to_cart. Do NOT ask for size if the product has no sizes (accessories: cap, beanie, bag, scarf). Once the customer tells you the size, call add_to_cart immediately with that size.
@@ -767,13 +768,15 @@ async def run_scenario(scenario: dict, categories: list[str], pauses: dict,
         log_lines.append(f"[Pixel]: {reply}")
 
         # Show current UI + cart state after each turn
-        rec = ui_state.get("recommended_ids", "")
-        exp = ui_state.get("expanded_id", "")
+        rec      = ui_state.get("recommended_ids", "")
+        exp      = ui_state.get("expanded_id", "")
+        cart_ui  = ui_state.get("cart_ui", "")
         state_parts = []
         if rec: state_parts.append(f"recommended=[{rec}]")
         if exp: state_parts.append(f"expanded={exp}")
+        if cart_ui: state_parts.append(f"cart_panel={cart_ui}")
         if cart_state:
-            cart_summary = ", ".join(f"{v['name']} x{v['qty']}" for v in cart_state.values())
+            cart_summary = ", ".join(f"{v['name']}{(' — ' + v['size']) if v.get('size') else ''} x{v['qty']}" for v in cart_state.values())
             cart_total = sum(v["price"] * v["qty"] for v in cart_state.values())
             state_parts.append(f"cart=[{cart_summary}] total=€{cart_total:.2f}")
         if state_parts:

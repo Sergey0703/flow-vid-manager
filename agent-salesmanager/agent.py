@@ -322,6 +322,7 @@ class SalesManagerAgent(Agent):
         try:
             attrs: dict[str, str] = {"recommended_ids": ",".join(ids)}
             attrs["expanded_id"] = ids[0] if len(ids) == 1 else ""
+            attrs["cart_ui"] = "closed"
             await self._room.local_participant.set_attributes(attrs)
         except Exception as e:
             logger.warning(f"set_attributes failed: {e}")
@@ -341,6 +342,7 @@ class SalesManagerAgent(Agent):
             await self._room.local_participant.set_attributes({
                 "expanded_id": product_id,
                 "recommended_ids": product_id,
+                "cart_ui": "closed",
             })
             return f"Product {product_id} is now shown in detail on the page."
         except Exception as e:

@@ -440,10 +440,14 @@ class SalesManagerAgent(Agent):
         import json
         qty_int = int(qty) if str(qty).isdigit() else 1
         logger.info(f"add_to_cart: product_id={repr(product_id)} qty={qty_int} size={repr(size)}")
-        # Signal frontend via LiveKit attribute
+        # Signal frontend via LiveKit attribute; also close product card and cart panel
         action_payload = json.dumps({"action": "add", "id": product_id, "qty": qty_int, "size": size})
         try:
-            await self._room.local_participant.set_attributes({"cart_action": action_payload})
+            await self._room.local_participant.set_attributes({
+                "cart_action": action_payload,
+                "expanded_id": "",
+                "cart_ui": "closed",
+            })
         except Exception as e:
             logger.warning(f"add_to_cart set_attributes failed: {e}")
         # Persist to Cart API so cart survives reconnects
@@ -478,11 +482,13 @@ class SalesManagerAgent(Agent):
             except Exception as e:
                 logger.warning(f"add_to_cart Cart API failed: {e}")
         logger.info(f"add_to_cart: signalled frontend and Cart API for product_id={product_id}")
+        await asyncio.sleep(0.3)  # let Cart API commit before reading back
         cart = await self._get_visitor_cart(force_api=True)
         if not cart:
             return f"Added to cart."
         lines = []
         total = 0.0
+        total_qty = 0
         for item in cart:
             name = item.get("name", item.get("id", "item"))
             item_id = item.get("id", "")
@@ -490,10 +496,11 @@ class SalesManagerAgent(Agent):
             qty = int(item.get("qty", 1))
             size_val = item.get("size", "")
             total += price * qty
+            total_qty += qty
             size_part = f", size:{size_val}" if size_val else ""
             lines.append(f"{name} (id:{item_id}{size_part}) x{qty} (€{price * qty:.2f})")
         items_str = ", ".join(lines)
-        return f"Added. Cart now: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
+        return f"Added. Cart has {total_qty} item(s): {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
 
     @llm.function_tool
     async def update_cart_qty(

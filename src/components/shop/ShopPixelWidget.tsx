@@ -26,21 +26,21 @@ export default function ShopPixelWidget({ onRecommend, onExpand, onCartAction, o
   const [agentThinkingState, setAgentThinkingState] = useState<AgentThinkingState>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const roomRef         = useRef<any>(null);
-  const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioRef        = useRef<HTMLAudioElement | null>(null);
+  const roomRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Keep prop callbacks in refs so LiveKit event handlers always call latest version
-  const onRecommendRef   = useRef(onRecommend);
-  const onExpandRef      = useRef(onExpand);
-  const onCartActionRef  = useRef(onCartAction);
-  const onRoomReadyRef   = useRef(onRoomReady);
-  const onCartOpenRef    = useRef(onCartOpen);
-  useEffect(() => { onRecommendRef.current  = onRecommend;  }, [onRecommend]);
-  useEffect(() => { onExpandRef.current     = onExpand;     }, [onExpand]);
+  const onRecommendRef = useRef(onRecommend);
+  const onExpandRef = useRef(onExpand);
+  const onCartActionRef = useRef(onCartAction);
+  const onRoomReadyRef = useRef(onRoomReady);
+  const onCartOpenRef = useRef(onCartOpen);
+  useEffect(() => { onRecommendRef.current = onRecommend; }, [onRecommend]);
+  useEffect(() => { onExpandRef.current = onExpand; }, [onExpand]);
   useEffect(() => { onCartActionRef.current = onCartAction; }, [onCartAction]);
-  useEffect(() => { onRoomReadyRef.current  = onRoomReady;  }, [onRoomReady]);
-  useEffect(() => { onCartOpenRef.current   = onCartOpen;   }, [onCartOpen]);
+  useEffect(() => { onRoomReadyRef.current = onRoomReady; }, [onRoomReady]);
+  useEffect(() => { onCartOpenRef.current = onCartOpen; }, [onCartOpen]);
 
   const stopTimer = () => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }

@@ -61,7 +61,7 @@ const Agents = () => {
             />
 
             <LipsyncDemoCard
-              type="cat"
+              type="michael"
               title="Pixel"
               description="AI coordinator that manages requests, routes tasks, and helps orchestrate complex workflows across multiple systems."
               agentName="aimediaflow-coordinator"

@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import CatAvatar from './CatAvatar';
 import GirlAvatar from './GirlAvatar';
+import MichaelAvatar from './MichaelAvatar';
 
 type DemoState = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -18,9 +19,9 @@ function useDemoAgent(agentName?: string) {
   const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
   const [agentThinkingState, setAgentThinkingState] = useState<AgentThinkingState>(null);
 
-  const roomRef         = useRef<any>(null);
-  const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioRef        = useRef<HTMLAudioElement | null>(null);
+  const roomRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxCallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -201,6 +202,20 @@ const GirlDemoContent = ({ title, description, agentName }: { title: string; des
   );
 };
 
+// ── Michael variant ──────────────────────────────────────────────────────────
+const MichaelDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
+  const { state, error, duration, agentStream, agentThinkingState, connect, disconnect } = useDemoAgent(agentName);
+  const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
+  return (
+    <DemoCardShell
+      title={title} description={description}
+      state={state} error={error} duration={duration}
+      connect={connect} disconnect={disconnect}
+      avatar={<MichaelAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />}
+    />
+  );
+};
+
 // ── Coming Soon variant ───────────────────────────────────────────────────────
 const ComingSoonCard = ({
   title,
@@ -227,7 +242,8 @@ const ComingSoonCard = ({
 
 // ── Public component ──────────────────────────────────────────────────────────
 interface LipsyncDemoCardProps {
-  type: 'cat' | 'girl' | 'coming-soon';
+  type: 'cat' | 'girl' | 'michael' | 'coming-soon';
+
   title: string;
   description: string;
   placeholderIcon?: React.ReactNode;
@@ -235,8 +251,9 @@ interface LipsyncDemoCardProps {
 }
 
 const LipsyncDemoCard = ({ type, title, description, placeholderIcon, agentName }: LipsyncDemoCardProps) => {
-  if (type === 'cat')  return <CatDemoContent  title={title} description={description} agentName={agentName} />;
+  if (type === 'cat') return <CatDemoContent title={title} description={description} agentName={agentName} />;
   if (type === 'girl') return <GirlDemoContent title={title} description={description} agentName={agentName} />;
+  if (type === 'michael') return <MichaelDemoContent title={title} description={description} agentName={agentName} />;
   return <ComingSoonCard title={title} description={description} placeholderIcon={placeholderIcon} />;
 };
 

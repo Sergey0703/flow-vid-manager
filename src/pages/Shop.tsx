@@ -140,11 +140,18 @@ export default function Shop() {
 
   const handleQtyChange = useCallback((productId: string, delta: number) => {
     setCartItems(prev => {
-      const next = prev.map(i => i.product.id === productId
-        ? { ...i, qty: Math.max(1, i.qty + delta) }
-        : i
-      );
+      const item = prev.find(i => i.product.id === productId);
+      if (!item) return prev;
+      const newQty = item.qty + delta;
+      if (newQty <= 0) {
+        const next = prev.filter(i => i.product.id !== productId);
+        syncCart(next);
+        removeFromCart(visitorIdRef.current, productId).catch(() => {});
+        return next;
+      }
+      const next = prev.map(i => i.product.id === productId ? { ...i, qty: newQty } : i);
       syncCart(next);
+      updateCartQty(visitorIdRef.current, productId, newQty).catch(() => {});
       return next;
     });
   }, [syncCart]);

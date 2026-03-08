@@ -85,10 +85,10 @@ const MichaelAvatar = ({ agentStream, agentState, agentThinkingState }: MichaelA
     const engine = new LipSyncEngine({
       sampleRate: 48000,
       fftSize: 256,
-      analyserSmoothing: 0.5,
+      analyserSmoothing: 0.75,
       silenceThreshold: 0.015,
-      smoothingFactor: 0.35,
-      holdFrames: 2,
+      smoothingFactor: 0.6,
+      holdFrames: 6,
       disablePlayback: true,
       analysisMode: 'raf',
     });

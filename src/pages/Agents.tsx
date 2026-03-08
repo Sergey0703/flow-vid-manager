@@ -62,7 +62,7 @@ const Agents = () => {
 
             <LipsyncDemoCard
               type="michael"
-              title="Pixel"
+              title="Michael"
               description="AI coordinator that manages requests, routes tasks, and helps orchestrate complex workflows across multiple systems."
               agentName="aimediaflow-coordinator"
             />

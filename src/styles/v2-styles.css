@@ -3325,6 +3325,12 @@
     text-align: center;
 }
 
+.v2-scope .lipsync-hero .v2-section-sub {
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* ── Grid section ── */
 .v2-scope .lipsync-grid-section {
     padding: 0 2rem 7rem;
@@ -3393,6 +3399,12 @@
     inset: 0;
     background: radial-gradient(ellipse at 50% 0%, rgba(0, 200, 224, 0.07) 0%, transparent 70%);
     pointer-events: none;
+}
+
+/* Cat avatar size in demo cards */
+.v2-scope .lipsync-card-preview .cat-avatar-wrap {
+    width: 200px;
+    max-width: 200px;
 }
 
 /* Pixel (cat) avatar only — zoomed in, centered */

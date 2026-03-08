@@ -78,7 +78,7 @@ const MichaelAvatar = ({ agentStream, agentState, agentThinkingState }: MichaelA
     const imageReady = new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
       img.onerror = reject;
-      img.src = '/new-avatar-sprite.webp';
+      img.src = '/michael-sprite.webp';
     });
     rendererReadyRef.current = imageReady;
 

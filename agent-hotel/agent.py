@@ -19,6 +19,7 @@ from livekit.agents import (
     function_tool,
 )
 from livekit.plugins import openai as lk_openai
+from livekit.plugins import deepgram as lk_deepgram
 from livekit.plugins import silero
 from livekit.plugins import groq as lk_groq
 from livekit.plugins.turn_detector.english import EnglishModel
@@ -29,10 +30,28 @@ logger = logging.getLogger("aimediaflow-hotel")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 LIVEKIT_URL = os.getenv("LIVEKIT_URL")
 LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
 LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 HOTEL_API_URL = os.getenv("HOTEL_API_URL", "http://hotel-api:8001")
+
+
+def make_stt():
+    """Deepgram Nova-2 primary, Parakeet local fallback."""
+    if DEEPGRAM_API_KEY:
+        logger.info("STT: Deepgram Nova-2 (primary)")
+        return lk_deepgram.STT(
+            model="nova-2-general",
+            language="en",
+            api_key=DEEPGRAM_API_KEY,
+        )
+    logger.warning("STT: Deepgram key missing — falling back to Parakeet")
+    return lk_openai.STT(
+        model="parakeet-tdt-0.6b-v3",
+        base_url="http://parakeet-stt:5092/v1",
+        api_key="not-needed",
+    )
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
@@ -176,11 +195,7 @@ class HotelAgent(Agent):
         super().__init__(
             instructions=SYSTEM_BASE,
             llm=lk_groq.LLM(model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=GROQ_API_KEY),
-            stt=lk_openai.STT(
-                model="parakeet-tdt-0.6b-v3",
-                base_url="http://parakeet-stt:5092/v1",
-                api_key="not-needed",
-            ),
+            stt=make_stt(),
             tts=lk_openai.TTS(
                 model="tts-1",
                 voice="default",

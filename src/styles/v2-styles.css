@@ -5456,3 +5456,209 @@
         border-left: none;
     }
 }
+
+/* ─── HOTEL DEMO ─── */
+
+.hotel-rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hotel-room-card {
+    background: var(--v2-bg-card);
+    border: 1px solid var(--v2-border);
+    border-radius: var(--v2-radius);
+    padding: 16px;
+    overflow: hidden;
+}
+
+.hotel-room-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.hotel-room-number {
+    font-size: 1.3rem;
+    font-weight: 800;
+    border: 2px solid;
+    border-radius: 8px;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.hotel-room-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hotel-room-type {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.hotel-room-desc {
+    font-size: 0.85rem;
+    color: var(--v2-muted);
+}
+
+.hotel-room-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--v2-text);
+    white-space: nowrap;
+}
+
+.hotel-room-price span {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--v2-muted);
+}
+
+.hotel-calendar-grid {
+    display: grid;
+    gap: 2px;
+    overflow-x: auto;
+}
+
+.hotel-cal-day {
+    min-width: 28px;
+    height: 42px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    position: relative;
+    transition: opacity 0.2s;
+}
+
+.hotel-cal-day.free {
+    background: rgba(74, 158, 255, 0.1);
+    border: 1px solid rgba(74, 158, 255, 0.25);
+}
+
+.hotel-cal-day.booked {
+    background: rgba(239, 68, 68, 0.25);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.hotel-cal-day.past {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    opacity: 0.5;
+}
+
+.hotel-cal-day.today {
+    outline: 2px solid var(--v2-cyan);
+    outline-offset: 1px;
+}
+
+.hotel-cal-num {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--v2-text);
+    line-height: 1;
+}
+
+.hotel-cal-guest {
+    font-size: 0.55rem;
+    color: #fca5a5;
+    line-height: 1;
+    margin-top: 2px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 2px;
+}
+
+.hotel-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--v2-bg-card);
+    border: 1px solid var(--v2-border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    min-width: 80px;
+}
+
+.hotel-stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--v2-cyan);
+    line-height: 1;
+}
+
+.hotel-stat-label {
+    font-size: 0.72rem;
+    color: var(--v2-muted);
+    margin-top: 4px;
+    text-align: center;
+}
+
+.hotel-nav-btn {
+    background: var(--v2-bg-card);
+    border: 1px solid var(--v2-border);
+    border-radius: 8px;
+    color: var(--v2-text);
+    padding: 8px 16px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.hotel-nav-btn:hover {
+    background: var(--v2-bg-card-alt);
+    border-color: var(--v2-cyan);
+}
+
+.hotel-nav-today {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    color: var(--v2-cyan);
+    border-color: var(--v2-cyan);
+}
+
+/* light mode overrides */
+.v2-light .hotel-room-card {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.v2-light .hotel-cal-day.free {
+    background: rgba(74, 158, 255, 0.08);
+    border-color: rgba(74, 158, 255, 0.3);
+}
+
+.v2-light .hotel-cal-day.past {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.08);
+}
+
+.v2-light .hotel-stat {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.v2-light .hotel-nav-btn {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.v2-light .hotel-cal-num {
+    color: #1e293b;
+}

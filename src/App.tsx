@@ -11,6 +11,7 @@ import PendingApproval from "./pages/PendingApproval";
 import NotFound from "./pages/NotFound";
 import Agents from "./pages/Agents";
 import Shop from "./pages/Shop";
+import HotelDemo from "./pages/HotelDemo";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/agents" element={<Agents />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/hotel-demo" element={<HotelDemo />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/pending-approval" element={<PendingApproval />} />

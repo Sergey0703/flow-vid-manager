@@ -4,8 +4,9 @@ from typing import Optional
 
 import redis
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 load_dotenv()
@@ -96,7 +97,8 @@ def add_to_cart(visitor_id: str, item: AddItem):
     items = _load_items(visitor_id)
     for existing in items:
         if existing["id"] == item.id:
-            existing["qty"] = existing.get("qty", 1) + item.qty
+            existing["qty"] = item.qty  # replace, not accumulate
+            existing["size"] = item.size
             _save_items(visitor_id, items)
             return {"items": items, "total": _calc_total(items)}
     items.append({"id": item.id, "name": item.name, "price": item.price, "qty": item.qty, "size": item.size})
@@ -130,3 +132,18 @@ def update_qty(visitor_id: str, body: UpdateQty):
 def clear_cart(visitor_id: str):
     r.delete(_cart_key(visitor_id))
     return {"items": [], "total": 0.0}
+
+
+# ---------- Twilio TwiML webhook ----------
+
+LIVEKIT_SIP_URI = "sip:+353646655830@x6lac9z6uul.sip.livekit.cloud"
+
+@app.post("/twiml/voice")
+async def twiml_voice(request: Request):
+    twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Dial>
+    <Sip>{LIVEKIT_SIP_URI}</Sip>
+  </Dial>
+</Response>"""
+    return Response(content=twiml, media_type="application/xml")

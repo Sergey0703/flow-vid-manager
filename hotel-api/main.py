@@ -51,6 +51,8 @@ class BookingRequest(BaseModel):
     guest_name: str
     check_in: date
     check_out: date
+    phone: str = ""
+    email: str = ""
 
 
 # ---------- routes ----------
@@ -90,7 +92,7 @@ def get_bookings(year: int, month: int):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(
         """
-        SELECT b.id, b.guest_name, b.check_in, b.check_out, b.created_at,
+        SELECT b.id, b.guest_name, b.phone, b.check_in, b.check_out, b.created_at,
                r.number as room_number, r.type, r.price_per_night
         FROM bookings b
         JOIN rooms r ON r.id = b.room_id
@@ -122,7 +124,7 @@ def check_availability(check_in: date, check_out: date, room_number: Optional[st
     if room_number:
         cur.execute(
             """
-            SELECT r.number, r.type, r.description, r.price_per_night,
+            SELECT r.number, r.type, r.description, r.details, r.price_per_night,
                    NOT EXISTS (
                        SELECT 1 FROM bookings b
                        WHERE b.room_id = r.id
@@ -135,7 +137,7 @@ def check_availability(check_in: date, check_out: date, room_number: Optional[st
     else:
         cur.execute(
             """
-            SELECT r.number, r.type, r.description, r.price_per_night,
+            SELECT r.number, r.type, r.description, r.details, r.price_per_night,
                    NOT EXISTS (
                        SELECT 1 FROM bookings b
                        WHERE b.room_id = r.id
@@ -185,10 +187,10 @@ def create_booking(req: BookingRequest):
     # create booking
     cur.execute(
         """
-        INSERT INTO bookings (room_id, guest_name, check_in, check_out)
-        VALUES (%s, %s, %s, %s) RETURNING id, created_at
+        INSERT INTO bookings (room_id, guest_name, check_in, check_out, phone, email)
+        VALUES (%s, %s, %s, %s, %s, %s) RETURNING id, created_at
         """,
-        (room["id"], req.guest_name, req.check_in, req.check_out),
+        (room["id"], req.guest_name, req.check_in, req.check_out, req.phone, req.email),
     )
     result = cur.fetchone()
     conn.commit()
@@ -201,6 +203,8 @@ def create_booking(req: BookingRequest):
         "room_number": req.room_number,
         "room_type": room["type"],
         "guest_name": req.guest_name,
+        "phone": req.phone,
+        "email": req.email,
         "check_in": req.check_in.isoformat(),
         "check_out": req.check_out.isoformat(),
         "nights": nights,
@@ -221,3 +225,136 @@ def cancel_booking(booking_id: int):
     if not deleted:
         raise HTTPException(status_code=404, detail="Booking not found")
     return {"status": "cancelled", "booking_id": booking_id}
+
+
+class RescheduleRequest(BaseModel):
+    phone: str
+    new_check_in: date
+    new_check_out: date
+
+
+@app.post("/bookings/reschedule")
+def reschedule_booking(req: RescheduleRequest):
+    if req.new_check_out <= req.new_check_in:
+        raise HTTPException(status_code=400, detail="new_check_out must be after new_check_in")
+
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # find booking by phone (most recent upcoming)
+    cur.execute(
+        """
+        SELECT b.id, b.room_id, b.guest_name, b.check_in, b.check_out,
+               r.number as room_number, r.type, r.price_per_night
+        FROM bookings b JOIN rooms r ON r.id = b.room_id
+        WHERE b.phone = %s AND b.check_in >= CURRENT_DATE
+        ORDER BY b.check_in ASC LIMIT 1
+        """,
+        (req.phone,),
+    )
+    booking = cur.fetchone()
+    if not booking:
+        cur.close(); conn.close()
+        raise HTTPException(status_code=404, detail="No upcoming booking found for this phone number")
+
+    # check new dates don't conflict with another booking in same room (excluding this one)
+    cur.execute(
+        """
+        SELECT id FROM bookings
+        WHERE room_id = %s AND id != %s AND check_in < %s AND check_out > %s
+        """,
+        (booking["room_id"], booking["id"], req.new_check_out, req.new_check_in),
+    )
+    if cur.fetchone():
+        cur.close(); conn.close()
+        raise HTTPException(status_code=409, detail="Room is not available for the new dates")
+
+    # update
+    cur.execute(
+        "UPDATE bookings SET check_in = %s, check_out = %s WHERE id = %s",
+        (req.new_check_in, req.new_check_out, booking["id"]),
+    )
+    conn.commit()
+    cur.close(); conn.close()
+
+    nights = (req.new_check_out - req.new_check_in).days
+    return {
+        "status": "rescheduled",
+        "booking_id": booking["id"],
+        "room_number": booking["room_number"],
+        "room_type": booking["type"],
+        "guest_name": booking["guest_name"],
+        "new_check_in": req.new_check_in.isoformat(),
+        "new_check_out": req.new_check_out.isoformat(),
+        "nights": nights,
+        "total": float(booking["price_per_night"]) * nights,
+    }
+
+
+@app.get("/bookings/find-by-phone")
+def find_booking_by_phone(phone: str, guest_name: str):
+    """Find an upcoming booking by phone + name without modifying it."""
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute(
+        """
+        SELECT b.id, b.guest_name, b.check_in, b.check_out, b.email,
+               r.number as room_number, r.type
+        FROM bookings b JOIN rooms r ON r.id = b.room_id
+        WHERE b.phone = %s AND LOWER(b.guest_name) LIKE LOWER(%s) AND b.check_in >= CURRENT_DATE
+        ORDER BY b.check_in ASC LIMIT 1
+        """,
+        (phone, f"%{guest_name}%"),
+    )
+    booking = cur.fetchone()
+    cur.close(); conn.close()
+    if not booking:
+        raise HTTPException(status_code=404, detail="No upcoming booking found for this name and phone number")
+    return {
+        "booking_id": booking["id"],
+        "room_number": booking["room_number"],
+        "guest_name": booking["guest_name"],
+        "check_in": booking["check_in"].isoformat(),
+        "check_out": booking["check_out"].isoformat(),
+        "email": booking["email"] or "",
+    }
+
+
+class CancelByPhoneRequest(BaseModel):
+    phone: str
+    guest_name: str
+
+
+@app.post("/bookings/cancel-by-phone")
+def cancel_booking_by_phone(req: CancelByPhoneRequest):
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    # find upcoming booking by phone + name (case-insensitive name match)
+    cur.execute(
+        """
+        SELECT b.id, b.guest_name, b.check_in, b.check_out,
+               r.number as room_number, r.type
+        FROM bookings b JOIN rooms r ON r.id = b.room_id
+        WHERE b.phone = %s AND LOWER(b.guest_name) LIKE LOWER(%s) AND b.check_in >= CURRENT_DATE
+        ORDER BY b.check_in ASC LIMIT 1
+        """,
+        (req.phone, f"%{req.guest_name}%"),
+    )
+    booking = cur.fetchone()
+    if not booking:
+        cur.close(); conn.close()
+        raise HTTPException(status_code=404, detail="No upcoming booking found for this name and phone number")
+
+    cur.execute("DELETE FROM bookings WHERE id = %s", (booking["id"],))
+    conn.commit()
+    cur.close(); conn.close()
+
+    return {
+        "status": "cancelled",
+        "booking_id": booking["id"],
+        "room_number": booking["room_number"],
+        "guest_name": booking["guest_name"],
+        "check_in": booking["check_in"].isoformat(),
+        "check_out": booking["check_out"].isoformat(),
+    }

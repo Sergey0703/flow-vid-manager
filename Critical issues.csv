@@ -1,0 +1,4 @@
+Reason,Source,Validation,Pages
+Page with redirect,Website,Failed,2
+Alternative page with proper canonical tag,Website,Not Started,1
+Duplicate without user-selected canonical,Website,Passed,0

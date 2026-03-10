@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import logging
 import os
 from datetime import date
@@ -35,6 +36,9 @@ LIVEKIT_URL = os.getenv("LIVEKIT_URL")
 LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
 LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 HOTEL_API_URL = os.getenv("HOTEL_API_URL", "http://hotel-api:8001")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "info@aimediaflow.net")
+ROOM_PHOTO_PATH = os.getenv("ROOM_PHOTO_PATH", "/opt/hotel-room.jpg")
 
 
 def make_stt():
@@ -93,21 +97,49 @@ When a caller wants to book a room:
    - Only ask for a specific number if the caller themselves mentions a room number they want
 6. Ask their name
 7. Ask their phone number
-8. Call book_room with the room number you chose from availability results
-9. ONLY if book_room returns success: confirm "Perfect! Room [number] is booked for [name], [check-in] to [check-out]. See you then!"
-   If book_room returns an error — apologise and try the next available room of the same type
+8. Ask for their email address: "Would you like to receive a photo of your room by email? If so, what's your email address?" (optional — if they decline, leave email blank)
+9. Call book_room with the room number you chose from availability results
+10. ONLY if book_room returns success: confirm "Perfect! Room [number] is booked for [name], [check-in] to [check-out]. See you then!"
+    If book_room returns an error — apologise and try the next available room of the same type
+11. If the caller gave an email — call send_room_photo to send them a photo of their room
 
 ROOM NUMBERS:
 - Rooms are numbered 101 to 110
 - "one oh one" = 101, "one oh five" = 105, "one ten" = 110
 - "one hundred and five" = 105, "one hundred five" = 105
 
+RESCHEDULING A BOOKING:
+If a caller wants to move their booking to new dates:
+1. Ask for their phone number (used to identify the booking)
+2. Ask for the new check-in and check-out dates
+3. Validate dates (not in the past, check-out after check-in)
+4. Call reschedule_booking — it will find their most recent upcoming booking automatically
+5. Confirm the new dates or explain if the room isn't available and suggest alternatives
+
+CANCELLING A BOOKING:
+If a caller wants to cancel:
+1. Ask for their name and phone number to confirm identity
+2. Call find_upcoming_booking — it returns the booking dates without deleting
+3. Read back the found dates to the caller: "I found your booking for Room [X], checking in on [date] and checking out on [date]. Shall I go ahead and cancel it?"
+4. Wait for their verbal confirmation (yes/no)
+5. Only if they confirm YES — call cancel_booking_by_phone
+6. Confirm warmly: "Done, your booking has been cancelled. We're sorry to hear that, we hope to see you another time!"
+7. If they say NO — keep the booking and say "No problem, your booking is still in place!"
+
+DESCRIBING ROOMS:
+- After listing available rooms, offer to describe any room in detail: "Would you like to know more about any of these rooms?"
+- If asked, describe the room conversationally using the details provided — bed type, size, view, bathroom (shower or bath/jacuzzi), balcony, floor, etc.
+- Keep descriptions natural and warm, not a list — one or two flowing sentences
+- You know every room's details from the check_availability results
+
 RULES:
 - Use check_availability BEFORE suggesting rooms — never guess availability
 - Dates: ask naturally, interpret "next Friday", "March 20th", etc.
 - If no rooms available for those dates — apologise and suggest different dates
 - You CANNOT take payment over the phone — payment is on arrival
-- You CANNOT transfer calls or send emails
+- You CAN send room photos by email — use send_room_photo tool
+- If a caller at any point asks for room photos or information by email — ask for their email address and call send_room_photo
+- If the caller asks to speak to a manager or a person — say "Of course, I'll have our manager call you back. Could I take your name and phone number?" then confirm you've noted it and say the manager will be in touch shortly
 
 ENDING THE CALL:
 When caller says goodbye or they're done — say "Thanks for calling Seaside Hotel, goodbye now!" and nothing else."""
@@ -157,7 +189,8 @@ async def check_availability(
         lines = [f"Available rooms for {nights} night(s):"]
         for r in available:
             total = r["price_per_night"] * nights
-            lines.append(f"Room {r['number']} — {r['type']}: {r['description']}. €{r['price_per_night']}/night, total €{total:.0f}.")
+            details = f" Details: {r['details']}" if r.get("details") else ""
+            lines.append(f"Room {r['number']} — {r['type']}: {r['description']}. €{r['price_per_night']}/night, total €{total:.0f}.{details}")
         return "\n".join(lines)
     except Exception as e:
         logger.error(f"check_availability error: {e}")
@@ -171,6 +204,7 @@ async def book_room(
     check_in: Annotated[str, "Check-in date in YYYY-MM-DD format"],
     check_out: Annotated[str, "Check-out date in YYYY-MM-DD format"],
     guest_phone: Annotated[str, "Guest phone number for booking confirmation"] = "",
+    guest_email: Annotated[str, "Guest email address (optional)"] = "",
 ) -> str:
     """Book a hotel room for a guest."""
     try:
@@ -183,6 +217,7 @@ async def book_room(
                     "check_in": check_in,
                     "check_out": check_out,
                     "phone": guest_phone,
+                    "email": guest_email,
                 },
             ) as res:
                 if res.status == 409:
@@ -204,6 +239,143 @@ async def book_room(
         return "I'm having trouble completing the booking. Please try again."
 
 
+@function_tool
+async def reschedule_booking(
+    guest_phone: Annotated[str, "Guest's phone number as provided when booking"],
+    new_check_in: Annotated[str, "New check-in date in YYYY-MM-DD format"],
+    new_check_out: Annotated[str, "New check-out date in YYYY-MM-DD format"],
+) -> str:
+    """Reschedule an existing booking to new dates, identified by phone number."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{HOTEL_API_URL}/bookings/reschedule",
+                json={"phone": guest_phone, "new_check_in": new_check_in, "new_check_out": new_check_out},
+            ) as res:
+                if res.status == 404:
+                    return "I couldn't find an upcoming booking for that phone number."
+                if res.status == 409:
+                    return f"Unfortunately the room is not available for those new dates. Would you like to try different dates?"
+                if res.status != 200:
+                    return "I'm having trouble rescheduling. Please try again."
+                data = await res.json()
+        return (
+            f"Done! Booking rescheduled for {data['guest_name']}. "
+            f"Room {data['room_number']} ({data['room_type']}), "
+            f"{data['new_check_in']} to {data['new_check_out']}, {data['nights']} nights. "
+            f"Total: €{data['total']:.0f}. Payment on arrival."
+        )
+    except Exception as e:
+        logger.error(f"reschedule_booking error: {e}")
+        return "I'm having trouble rescheduling. Please try again."
+
+
+@function_tool
+async def find_upcoming_booking(
+    guest_phone: Annotated[str, "Guest's phone number"],
+    guest_name: Annotated[str, "Guest's name to confirm identity"],
+) -> str:
+    """Look up an upcoming booking by phone and name WITHOUT cancelling it. Use this before cancel to read back dates to the caller."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{HOTEL_API_URL}/bookings/find-by-phone",
+                params={"phone": guest_phone, "guest_name": guest_name},
+            ) as res:
+                if res.status == 404:
+                    return "I couldn't find an upcoming booking for that name and phone number."
+                if res.status != 200:
+                    return "I'm having trouble looking up the booking. Please try again."
+                data = await res.json()
+        return (
+            f"Found booking: Room {data['room_number']} for {data['guest_name']}, "
+            f"check-in {data['check_in']}, check-out {data['check_out']}."
+        )
+    except Exception as e:
+        logger.error(f"find_upcoming_booking error: {e}")
+        return "I'm having trouble looking up the booking. Please try again."
+
+
+@function_tool
+async def cancel_booking_by_phone(
+    guest_phone: Annotated[str, "Guest's phone number"],
+    guest_name: Annotated[str, "Guest's name to confirm identity"],
+) -> str:
+    """Cancel an upcoming booking identified by phone number and guest name."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{HOTEL_API_URL}/bookings/cancel-by-phone",
+                json={"phone": guest_phone, "guest_name": guest_name},
+            ) as res:
+                if res.status == 404:
+                    return "I couldn't find an upcoming booking for that name and phone number."
+                if res.status != 200:
+                    return "I'm having trouble cancelling. Please try again."
+                data = await res.json()
+        return (
+            f"Booking cancelled. Room {data['room_number']} for {data['guest_name']}, "
+            f"{data['check_in']} to {data['check_out']}. We hope to see you another time!"
+        )
+    except Exception as e:
+        logger.error(f"cancel_booking_by_phone error: {e}")
+        return "I'm having trouble cancelling. Please try again."
+
+
+@function_tool
+async def send_room_photo(
+    guest_email: Annotated[str, "Guest's email address to send the photo to"],
+    room_number: Annotated[str, "Room number the guest has booked or is interested in"] = "",
+) -> str:
+    """Send a hotel room photo to the guest's email address via Brevo."""
+    if not BREVO_API_KEY:
+        return "Email service is not configured. I'm sorry I cannot send the photo right now."
+    try:
+        # Read and base64-encode the room photo
+        with open(ROOM_PHOTO_PATH, "rb") as f:
+            photo_b64 = base64.b64encode(f.read()).decode()
+
+        subject = "Your room at Seaside Hotel"
+        if room_number:
+            subject = f"Room {room_number} at Seaside Hotel"
+
+        payload = {
+            "sender": {"name": "Seaside Hotel", "email": CONTACT_EMAIL},
+            "to": [{"email": guest_email}],
+            "subject": subject,
+            "htmlContent": (
+                "<p>Dear Guest,</p>"
+                "<p>Thank you for choosing Seaside Hotel! Here is a photo of your room.</p>"
+                "<p>We look forward to welcoming you!</p>"
+                "<p>Warm regards,<br>Seaside Hotel Reception</p>"
+            ),
+            "attachment": [
+                {
+                    "name": "room-photo.jpg",
+                    "content": photo_b64,
+                }
+            ],
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.brevo.com/v3/smtp/email",
+                json=payload,
+                headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+            ) as res:
+                if res.status in (200, 201):
+                    return f"Photo sent to {guest_email}. The guest will receive it shortly."
+                body = await res.text()
+                logger.error(f"Brevo send_room_photo error {res.status}: {body}")
+                return "I'm sorry, I couldn't send the email right now. Please check back later."
+    except FileNotFoundError:
+        logger.error(f"Room photo not found at {ROOM_PHOTO_PATH}")
+        return "I'm sorry, the room photo is not available at the moment."
+    except Exception as e:
+        logger.error(f"send_room_photo error: {e}")
+        return "I'm sorry, I couldn't send the email right now."
+
+
 # ── Agent ───────────────────────────────────────────────────────────────────────
 
 class HotelAgent(Agent):
@@ -219,7 +391,7 @@ class HotelAgent(Agent):
                 base_url="http://piper-wrapper:8881/v1",
                 api_key="not-needed",
             ),
-            tools=[check_availability, book_room],
+            tools=[check_availability, book_room, reschedule_booking, find_upcoming_booking, cancel_booking_by_phone, send_room_photo],
         )
         self.session_log = session_log
         self._ctx = ctx

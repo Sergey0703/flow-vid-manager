@@ -5555,15 +5555,19 @@
     border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
-/* check-in: free top-left, booked bottom-right */
+/* check-in: free top-left, booked bottom-right, white diagonal divider */
 .hotel-cal-day.checkin {
-    background: linear-gradient(to bottom right, rgba(74,158,255,0.1) 50%, rgba(239,68,68,0.25) 50%);
+    background:
+        linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.6) calc(50% - 1px), rgba(255,255,255,0.6) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(to bottom right, rgba(74,158,255,0.1) 50%, rgba(239,68,68,0.3) 50%);
     border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
-/* check-out: booked top-left, free bottom-right */
+/* check-out: booked top-left, free bottom-right, white diagonal divider */
 .hotel-cal-day.checkout {
-    background: linear-gradient(to bottom right, rgba(239,68,68,0.25) 50%, rgba(74,158,255,0.1) 50%);
+    background:
+        linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.6) calc(50% - 1px), rgba(255,255,255,0.6) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(to bottom right, rgba(239,68,68,0.3) 50%, rgba(74,158,255,0.1) 50%);
     border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
@@ -5662,11 +5666,15 @@
 }
 
 .v2-light .hotel-cal-day.checkin {
-    background: linear-gradient(to bottom right, rgba(74,158,255,0.08) 50%, rgba(239,68,68,0.2) 50%);
+    background:
+        linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.9) calc(50% - 1px), rgba(255,255,255,0.9) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(to bottom right, rgba(74,158,255,0.08) 50%, rgba(239,68,68,0.2) 50%);
 }
 
 .v2-light .hotel-cal-day.checkout {
-    background: linear-gradient(to bottom right, rgba(239,68,68,0.2) 50%, rgba(74,158,255,0.08) 50%);
+    background:
+        linear-gradient(to bottom right, transparent calc(50% - 1px), rgba(255,255,255,0.9) calc(50% - 1px), rgba(255,255,255,0.9) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(to bottom right, rgba(239,68,68,0.2) 50%, rgba(74,158,255,0.08) 50%);
 }
 
 .v2-light .hotel-stat {

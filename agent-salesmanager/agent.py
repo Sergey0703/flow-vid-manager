@@ -104,7 +104,15 @@ SHOPPING CART:
 IMPORTANT: "show me my cart" = show_hide_cart(state='open') + read_cart(). Never use read_cart() alone for these phrases.
 Always confirm additions aloud: "Added! You now have X items in your cart."
 
-SIZE RULE: If a product has sizes listed in the search result (e.g. "sizes: S, M, L, XL"), ALWAYS ask the customer what size they want BEFORE calling add_to_cart. Do NOT ask for size if the product has no sizes (accessories: cap, beanie, bag, scarf). Once the customer tells you the size, call add_to_cart immediately with that size.
+SIZE RULE: Check the "sizes:" field in the search result. If sizes is "one size" or empty — do NOT ask for size, call add_to_cart immediately with size="one size". Only ask for size if sizes lists multiple options (e.g. "S, M, L, XL"). Once the customer tells you the size, call add_to_cart immediately.
+
+NEW ARRIVALS: If the user asks about "new arrivals", "new items", "what's new", "latest", "new catalog" — use the product IDs from the NEW ARRIVALS list in your greeting instructions. Call expand_product for the first one, or search_products with the product name as keyword. Never say "I don't have that info".
+
+BROWSING MODE: If the user says "I don't know", "surprise me", "just browsing", "show me something cool", or anything vague — ask ONE short question to narrow it down: either about style ("casual or sporty?") or budget ("any budget in mind?"). Then immediately search based on the answer. Do NOT ask more than one question.
+
+CROSS-SELL: After every successful add_to_cart, call search_products once more for a complementary item — use a different category than what was just added (e.g. added hoodie → search accessories; added tshirt → search bottoms or accessories). Mention ONE result naturally: "By the way, this pairs great with our [name] — want a look?" Skip cross-sell if the cart already has 3 or more items.
+
+OFF-TOPIC RULE: If the user asks about anything unrelated to shopping — weather, news, politics, jokes, personal questions, coding, or anything outside this shop — reply with exactly one sentence redirecting to the shop. Example: "I'm just a shop assistant — want to find something stylish instead?"
 
 ENDING THE CALL:
 When the user says goodbye, bye, thanks bye, that is all, or clearly indicates they are done,
@@ -130,6 +138,41 @@ async def _fetch_categories() -> list[str]:
     except Exception as e:
         logger.error(f"Typesense categories fetch error: {e}")
         return []
+
+
+async def _fetch_new_arrivals(limit: int = 3) -> str:
+    """Return new arrivals formatted as product context (id + name + price), sorted by created_at desc."""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{TYPESENSE_BASE}/collections/products/documents/search",
+                headers={"X-TYPESENSE-API-KEY": TYPESENSE_API_KEY},
+                params={
+                    "q": "*",
+                    "query_by": "name",
+                    "filter_by": "stock:>0",
+                    "sort_by": "created_at:desc",
+                    "per_page": limit,
+                },
+            ) as res:
+                if res.status != 200:
+                    return ""
+                data = await res.json()
+                hits = data.get("hits", [])
+                if not hits:
+                    return ""
+                lines = []
+                for h in hits:
+                    d = h["document"]
+                    pid = d.get("id", "")
+                    name = d.get("name", "")
+                    price = d.get("price", 0)
+                    sizes = ", ".join(d.get("sizes", [])) or "one size"
+                    lines.append(f"[id:{pid}] {name} €{price:.2f} | sizes: {sizes}")
+                return "\n".join(lines)
+    except Exception as e:
+        logger.error(f"_fetch_new_arrivals error: {e}")
+        return ""
 
 
 # ── Typesense search ───────────────────────────────────────────────────────────
@@ -264,7 +307,7 @@ async def _search_faq_raw(query: str) -> str:
 # ── Agent ──────────────────────────────────────────────────────────────────────
 
 class SalesManagerAgent(Agent):
-    def __init__(self, session_log: SessionLogger, room, ctx: JobContext, categories: list[str]):
+    def __init__(self, session_log: SessionLogger, room, ctx: JobContext, categories: list[str], session=None):
         cats_exact = ", ".join(categories) if categories else "hoodies, tshirts, jackets, sweatshirts, accessories, bottoms"
         cats_list = ", ".join(categories[:-1]) + (f", and {categories[-1]}" if len(categories) > 1 else categories[0]) if categories else "hoodies, jackets, accessories"
         instructions = SYSTEM_BASE_TEMPLATE.format(
@@ -281,7 +324,7 @@ class SalesManagerAgent(Agent):
             ),
             tts=lk_openai.TTS(
                 model="tts-1",
-                voice="default",
+                voice="shop",
                 response_format="pcm",
                 base_url="http://piper-wrapper-ryan:8881/v1",
                 api_key="not-needed",
@@ -293,6 +336,7 @@ class SalesManagerAgent(Agent):
         self._ctx = ctx
         self._ending = False
         self._visitor_id: str | None = None  # cached from participant attributes
+        self._session = session  # set after session.start()
 
     @llm.function_tool
     async def search_products(
@@ -328,7 +372,23 @@ class SalesManagerAgent(Agent):
             logger.warning(f"set_attributes failed: {e}")
 
         if not context:
+            if self._session:
+                await self._session.say("Sorry, nothing matched that search.", allow_interruptions=True)
             return "No products found for that query."
+
+        # Say a short intro immediately — eliminates second LLM round-trip
+        if self._session:
+            if len(ids) == 1:
+                # Single result — name it directly
+                first_hit_line = context.split("\n")[1] if "\n" in context else ""
+                # Extract name from "- [id:p001] Classic Hoodie €49.99 | ..."
+                import re
+                m = re.search(r'\] (.+?) €', first_hit_line)
+                product_name = m.group(1) if m else "it"
+                await self._session.say(f"Found it — here's the {product_name}!", allow_interruptions=True)
+            else:
+                cat_word = category if category else "items"
+                await self._session.say(f"Here are some {cat_word} I found!", allow_interruptions=True)
         return context
 
     @llm.function_tool
@@ -344,7 +404,9 @@ class SalesManagerAgent(Agent):
                 "recommended_ids": product_id,
                 "cart_ui": "closed",
             })
-            return f"Product {product_id} is now shown in detail on the page."
+            if self._session:
+                await self._session.say("Here you go!", allow_interruptions=True)
+            return f"done. product {product_id} expanded."
         except Exception as e:
             logger.warning(f"expand_product set_attributes failed: {e}")
             return "Could not expand product."
@@ -358,10 +420,10 @@ class SalesManagerAgent(Agent):
         logger.info("close_product called")
         try:
             await self._room.local_participant.set_attributes({"expanded_id": ""})
-            return "Product card closed."
+            return "done"
         except Exception as e:
             logger.warning(f"close_product set_attributes failed: {e}")
-            return "Could not close product card."
+            return "done"
 
     @llm.function_tool
     async def show_hide_cart(
@@ -373,10 +435,15 @@ class SalesManagerAgent(Agent):
         ui_val = "open" if state == "open" else "closed"
         try:
             await self._room.local_participant.set_attributes({"cart_ui": ui_val})
-            return f"Cart panel {state}ed."
+            if self._session:
+                if state == "open":
+                    await self._session.say("Here's your cart!", allow_interruptions=True)
+                else:
+                    await self._session.say("Cart closed.", allow_interruptions=True)
+            return f"done. cart {state}."
         except Exception as e:
             logger.warning(f"show_hide_cart set_attributes failed: {e}")
-            return "Could not update cart panel."
+            return f"done. cart {state}."
 
     def _get_visitor_id(self) -> str | None:
         """Return cached visitor_id, or scan remote participants to find it."""
@@ -482,25 +549,14 @@ class SalesManagerAgent(Agent):
             except Exception as e:
                 logger.warning(f"add_to_cart Cart API failed: {e}")
         logger.info(f"add_to_cart: signalled frontend and Cart API for product_id={product_id}")
-        await asyncio.sleep(0.3)  # let Cart API commit before reading back
-        cart = await self._get_visitor_cart(force_api=True)
-        if not cart:
-            return f"Added to cart."
-        lines = []
-        total = 0.0
-        total_qty = 0
-        for item in cart:
-            name = item.get("name", item.get("id", "item"))
-            item_id = item.get("id", "")
-            price = float(item.get("price", 0))
-            qty = int(item.get("qty", 1))
-            size_val = item.get("size", "")
-            total += price * qty
-            total_qty += qty
-            size_part = f", size:{size_val}" if size_val else ""
-            lines.append(f"{name} (id:{item_id}{size_part}) x{qty} (€{price * qty:.2f})")
-        items_str = ", ".join(lines)
-        return f"Added. Cart has {total_qty} item(s): {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
+        # Build confirmation phrase from product_info (already resolved above)
+        product_name = product_info.get("name", product_id)
+        size_str = f", size {size}" if size and size != "one size" else ""
+        qty_str = f"{qty_int} × " if qty_int > 1 else ""
+        phrase = f"Added! {qty_str}{product_name}{size_str} is in your cart."
+        if self._session:
+            await self._session.say(phrase, allow_interruptions=True)
+        return f"done. id:{product_id} name:{product_name} qty:{qty_int} size:{size or 'one size'}"
 
     @llm.function_tool
     async def update_cart_qty(
@@ -508,7 +564,7 @@ class SalesManagerAgent(Agent):
         product_id: Annotated[str, "Product ID to update, e.g. 'p002'. Use the id from read_cart or add_to_cart response."],
         qty: Annotated[str, "New quantity. Must be 1 or more. To remove the item entirely use remove_from_cart instead."],
     ) -> str:
-        """Change the quantity of a product already in the cart. Call when user says 'change qty', 'set quantity to', 'I want 2 of those', 'make it 3'."""
+        """Change the quantity of a product already in the cart. Call when user says 'change qty', 'set quantity to', 'I want 2 of those', 'make it 3', 'remove one', 'delete one', 'take one out' (reduce qty by 1 — if result is 0, use remove_from_cart instead)."""
         import json
         qty_int = max(1, int(qty) if str(qty).isdigit() else 1)
         logger.info(f"update_cart_qty: product_id={repr(product_id)} qty={qty_int}")
@@ -529,26 +585,16 @@ class SalesManagerAgent(Agent):
                         logger.info(f"update_cart_qty Cart API: {res.status}")
             except Exception as e:
                 logger.warning(f"update_cart_qty Cart API failed: {e}")
-        cart = await self._get_visitor_cart(force_api=True)
-        if not cart:
-            return "Cart is now empty."
-        lines = []
-        total = 0.0
-        for item in cart:
-            name = item.get("name", item.get("id", "item"))
-            item_id = item.get("id", "")
-            price = float(item.get("price", 0))
-            q = int(item.get("qty", 1))
-            total += price * q
-            lines.append(f"{name} (id:{item_id}) x{q} (€{price * q:.2f})")
-        return f"Updated. Cart now: {', '.join(lines)}. Total: €{total:.2f}."
+        if self._session:
+            await self._session.say(f"Done! Updated to {qty_int}.", allow_interruptions=True)
+        return f"updated id:{product_id} qty:{qty_int}"
 
     @llm.function_tool
     async def remove_from_cart(
         self,
         product_id: Annotated[str, "Product ID to remove from the cart, e.g. 'p002'."],
     ) -> str:
-        """Remove a product from the customer's shopping cart. Call when user says 'remove', 'take it out', 'I changed my mind'."""
+        """Remove a product entirely from the cart. Call ONLY when user wants to remove the whole product (all units), e.g. 'remove it', 'take it out', 'I changed my mind', 'don't want it'. If user says 'remove one', 'delete one', 'take one out' and qty > 1 — use update_cart_qty to reduce qty by 1 instead."""
         import json
         logger.info(f"remove_from_cart: product_id={repr(product_id)}")
         action_payload = json.dumps({"action": "remove", "id": product_id})
@@ -569,23 +615,9 @@ class SalesManagerAgent(Agent):
                         logger.info(f"remove_from_cart Cart API: {res.status}")
             except Exception as e:
                 logger.warning(f"remove_from_cart Cart API failed: {e}")
-        # Use force_api=True to bypass stale cart_json LiveKit attribute
-        cart = await self._get_visitor_cart(force_api=True)
-        if not cart:
-            return "Removed. Cart is now empty."
-        lines = []
-        total = 0.0
-        for item in cart:
-            name = item.get("name", item.get("id", "item"))
-            item_id = item.get("id", "")
-            price = float(item.get("price", 0))
-            qty = int(item.get("qty", 1))
-            size_val = item.get("size", "")
-            total += price * qty
-            size_part = f", size:{size_val}" if size_val else ""
-            lines.append(f"{name} (id:{item_id}{size_part}) x{qty} (€{price * qty:.2f})")
-        items_str = ", ".join(lines)
-        return f"Removed. Cart now: {items_str}. Total: €{total:.2f}. Use the id: value when calling remove_from_cart."
+        if self._session:
+            await self._session.say("Done, removed from your cart.", allow_interruptions=True)
+        return "removed"
 
     @llm.function_tool
     async def read_cart(
@@ -594,8 +626,8 @@ class SalesManagerAgent(Agent):
     ) -> str:
         """Read cart contents aloud. Use for: 'what's in my cart?', 'what's my total?', 'how many items?'. Do NOT use for 'show my cart' or 'open cart' — those require open_cart() instead."""
         logger.info("read_cart called")
-        cart = await self._get_visitor_cart()
-        logger.info(f"read_cart: visitor cart_json = {cart}")
+        cart = await self._get_visitor_cart(force_api=True)
+        logger.info(f"read_cart: visitor cart (from API) = {cart}")
         if not cart:
             return "The cart is empty."
         lines = []
@@ -661,8 +693,9 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     logger.info("Sales manager agent connected to LiveKit room")
 
-    categories = await _fetch_categories()
-    logger.info(f"Loaded categories from Typesense: {categories}")
+    categories, new_arrivals = await asyncio.gather(_fetch_categories(), _fetch_new_arrivals())
+    logger.info(f"Loaded categories: {categories}")
+    logger.info(f"New arrivals: {new_arrivals!r}")
     agent = SalesManagerAgent(session_log, ctx.room, ctx, categories=categories)
 
     # Cache visitor_id whenever participant attributes change
@@ -734,9 +767,11 @@ async def entrypoint(ctx: JobContext):
                 session_log.on_agent_text(content)
 
     await session.start(room=ctx.room, agent=agent)
+    agent._session = session
 
+    arrivals_hint = f"\n\nNEW ARRIVALS (mention 1-2 by name in greeting, remember their IDs for expand_product/add_to_cart):\n{new_arrivals}" if new_arrivals else ""
     await session.generate_reply(
-        instructions="Greet the visitor as Pixel, the shop's AI kitten assistant. Be warm and playful. Ask what they're looking for today. No cat sounds."
+        instructions=f"Greet the visitor as Pixel, the shop's AI kitten assistant. Be warm and playful. Ask what they're looking for today. No cat sounds.{arrivals_hint}"
     )
 
     async def session_expiry_warning():

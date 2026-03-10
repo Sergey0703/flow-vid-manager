@@ -5555,6 +5555,18 @@
     border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
+/* check-in: free top-left, booked bottom-right */
+.hotel-cal-day.checkin {
+    background: linear-gradient(to bottom right, rgba(74,158,255,0.1) 50%, rgba(239,68,68,0.25) 50%);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* check-out: booked top-left, free bottom-right */
+.hotel-cal-day.checkout {
+    background: linear-gradient(to bottom right, rgba(239,68,68,0.25) 50%, rgba(74,158,255,0.1) 50%);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
 .hotel-cal-day.past {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -5647,6 +5659,14 @@
 .v2-light .hotel-cal-day.past {
     background: rgba(0,0,0,0.04);
     border-color: rgba(0,0,0,0.08);
+}
+
+.v2-light .hotel-cal-day.checkin {
+    background: linear-gradient(to bottom right, rgba(74,158,255,0.08) 50%, rgba(239,68,68,0.2) 50%);
+}
+
+.v2-light .hotel-cal-day.checkout {
+    background: linear-gradient(to bottom right, rgba(239,68,68,0.2) 50%, rgba(74,158,255,0.08) 50%);
 }
 
 .v2-light .hotel-stat {

@@ -42,16 +42,19 @@ function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
 }
 
-function isDateBooked(bookings: Booking[], roomNumber: string, year: number, month: number, day: number): Booking | null {
+type DayStatus = { type: "free" | "past" | "checkin" | "checkout" | "booked"; booking: Booking | null };
+
+function getDayStatus(bookings: Booking[], roomNumber: string, year: number, month: number, day: number, isPast: boolean): DayStatus {
   const d = new Date(year, month, day);
   for (const b of bookings) {
     if (b.room_number !== roomNumber) continue;
     const checkIn = new Date(b.check_in);
     const checkOut = new Date(b.check_out);
-    // checkOut is exclusive (checkout day = free)
-    if (d >= checkIn && d < checkOut) return b;
+    if (d.getTime() === checkIn.getTime()) return { type: "checkin", booking: b };
+    if (d.getTime() === checkOut.getTime()) return { type: "checkout", booking: b };
+    if (d > checkIn && d < checkOut) return { type: "booked", booking: b };
   }
-  return null;
+  return { type: isPast ? "past" : "free", booking: null };
 }
 
 function RoomCalendar({
@@ -87,16 +90,18 @@ function RoomCalendar({
 
       <div className="hotel-calendar-grid" style={{ gridTemplateColumns: `repeat(${daysInMonth}, 1fr)` }}>
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-          const booking = isDateBooked(bookings, room.number, year, month, day);
           const isPast = new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const { type: dayType, booking } = getDayStatus(bookings, room.number, year, month, day, isPast);
           return (
             <div
               key={day}
-              className={`hotel-cal-day ${booking ? "booked" : isPast ? "past" : "free"} ${isToday(day) ? "today" : ""}`}
+              className={`hotel-cal-day ${dayType} ${isToday(day) ? "today" : ""}`}
               title={booking ? `${booking.guest_name}\n${booking.check_in} → ${booking.check_out}` : ""}
             >
               <span className="hotel-cal-num">{day}</span>
-              {booking && <span className="hotel-cal-guest">{booking.guest_name.split(" ")[0]}</span>}
+              {booking && (dayType === "checkin" || dayType === "booked") && (
+                <span className="hotel-cal-guest">{booking.guest_name.split(" ")[0]}</span>
+              )}
             </div>
           );
         })}

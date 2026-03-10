@@ -78,15 +78,29 @@ CRITICAL VOICE RULES:
 3. Speak prices naturally: "eighty-nine euros" not "€89"
 4. SHORT replies only
 
+DATE VALIDATION — check this BEFORE calling check_availability:
+- Today is {today}. If EITHER date is in the past — say "Sorry, those dates are in the past. When would you like to check in?" Do NOT call check_availability.
+- If check-out is the same as or before check-in — say "Check-out must be after check-in. Could you give me your dates again?" Do NOT call check_availability.
+
 BOOKING FLOW:
 When a caller wants to book a room:
 1. Ask check-in date
 2. Ask check-out date
-3. Call check_availability to find free rooms — tell the caller what's available with prices
-4. Ask which room they'd like
-5. Ask their name
-6. Call book_room to confirm the booking
-7. Confirm: "Perfect! Room [number] is booked for [name], [check-in] to [check-out]. See you then!"
+3. Validate dates (see DATE VALIDATION above)
+4. Call check_availability — list available rooms with type and price
+5. Ask which TYPE of room they'd like (Standard, Superior, Deluxe, Penthouse)
+   - NEVER ask the caller for a specific room number — you pick an available room of their chosen type
+   - Only ask for a specific number if the caller themselves mentions a room number they want
+6. Ask their name
+7. Ask their phone number
+8. Call book_room with the room number you chose from availability results
+9. ONLY if book_room returns success: confirm "Perfect! Room [number] is booked for [name], [check-in] to [check-out]. See you then!"
+   If book_room returns an error — apologise and try the next available room of the same type
+
+ROOM NUMBERS:
+- Rooms are numbered 101 to 110
+- "one oh one" = 101, "one oh five" = 105, "one ten" = 110
+- "one hundred and five" = 105, "one hundred five" = 105
 
 RULES:
 - Use check_availability BEFORE suggesting rooms — never guess availability
@@ -156,6 +170,7 @@ async def book_room(
     guest_name: Annotated[str, "Full name of the guest"],
     check_in: Annotated[str, "Check-in date in YYYY-MM-DD format"],
     check_out: Annotated[str, "Check-out date in YYYY-MM-DD format"],
+    guest_phone: Annotated[str, "Guest phone number for booking confirmation"] = "",
 ) -> str:
     """Book a hotel room for a guest."""
     try:
@@ -167,6 +182,7 @@ async def book_room(
                     "guest_name": guest_name,
                     "check_in": check_in,
                     "check_out": check_out,
+                    "phone": guest_phone,
                 },
             ) as res:
                 if res.status == 409:
@@ -193,12 +209,12 @@ async def book_room(
 class HotelAgent(Agent):
     def __init__(self, session_log: SessionLogger, ctx: JobContext):
         super().__init__(
-            instructions=SYSTEM_BASE,
+            instructions=SYSTEM_BASE.format(today=date.today().strftime("%Y-%m-%d")),
             llm=lk_groq.LLM(model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=GROQ_API_KEY),
             stt=make_stt(),
             tts=lk_openai.TTS(
                 model="tts-1",
-                voice="default",
+                voice="hotel",
                 response_format="pcm",
                 base_url="http://piper-wrapper:8881/v1",
                 api_key="not-needed",
@@ -242,8 +258,8 @@ async def entrypoint(ctx: JobContext):
     session = AgentSession(
         vad=silero.VAD.load(),
         turn_detection=EnglishModel(),
-        min_endpointing_delay=0.5,
-        max_endpointing_delay=4.0,
+        min_endpointing_delay=1.2,
+        max_endpointing_delay=5.0,
     )
 
     @session.on("metrics_collected")

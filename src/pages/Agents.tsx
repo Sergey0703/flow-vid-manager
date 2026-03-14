@@ -68,9 +68,9 @@ const Agents = () => {
             />
 
             <LipsyncDemoCard
-              type="girl"
+              type="simli"
               title="Secretary"
-              description="AI secretary powered by Piper TTS — ultra-fast responses with a natural British voice. Ask about AIMediaFlow services."
+              description="AI secretary with a realistic Simli avatar — natural British voice, RAG knowledge base. Ask about AIMediaFlow services."
               agentName="aimediaflow-secretary"
             />
           </div>

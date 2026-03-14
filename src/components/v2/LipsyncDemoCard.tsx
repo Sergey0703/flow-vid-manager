@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import CatAvatar from './CatAvatar';
 import GirlAvatar from './GirlAvatar';
 import MichaelAvatar from './MichaelAvatar';
+import SimliAvatar from './SimliAvatar';
 
 type DemoState = 'idle' | 'connecting' | 'connected' | 'error';
 
@@ -17,6 +18,7 @@ function useDemoAgent(agentName?: string) {
   const [error, setError] = useState('');
   const [duration, setDuration] = useState(0);
   const [agentStream, setAgentStream] = useState<MediaStream | null>(null);
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [agentThinkingState, setAgentThinkingState] = useState<AgentThinkingState>(null);
 
   const roomRef = useRef<any>(null);
@@ -41,6 +43,7 @@ function useDemoAgent(agentName?: string) {
     if (roomRef.current) { await roomRef.current.disconnect(); roomRef.current = null; }
     if (audioRef.current) { audioRef.current.srcObject = null; }
     setAgentStream(null);
+    setVideoStream(null);
     setAgentThinkingState(null);
     setState('idle');
   }, []);
@@ -85,6 +88,10 @@ function useDemoAgent(agentName?: string) {
             setAgentStream((el as any).captureStream());
           }
         }
+        if (track.kind === Track.Kind.Video) {
+          const ms = (track as any).mediaStream as MediaStream | undefined;
+          if (ms) setVideoStream(ms);
+        }
       });
 
       room.on(RoomEvent.TrackUnsubscribed, (track) => { track.detach(); });
@@ -123,7 +130,7 @@ function useDemoAgent(agentName?: string) {
 
   useEffect(() => { return () => { disconnect(); }; }, []);
 
-  return { state, error, duration, agentStream, agentThinkingState, connect, disconnect };
+  return { state, error, duration, agentStream, videoStream, agentThinkingState, connect, disconnect };
 }
 
 // ── Shared card UI ────────────────────────────────────────────────────────────
@@ -202,6 +209,20 @@ const GirlDemoContent = ({ title, description, agentName }: { title: string; des
   );
 };
 
+// ── Simli variant ─────────────────────────────────────────────────────────────
+const SimliDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
+  const { state, error, duration, videoStream, connect, disconnect } = useDemoAgent(agentName);
+  const avatarState = state === 'connecting' ? 'connecting' : state === 'connected' ? 'connected' : 'idle';
+  return (
+    <DemoCardShell
+      title={title} description={description}
+      state={state} error={error} duration={duration}
+      connect={connect} disconnect={disconnect}
+      avatar={<SimliAvatar agentStream={null} agentState={avatarState} videoStream={videoStream} />}
+    />
+  );
+};
+
 // ── Michael variant ──────────────────────────────────────────────────────────
 const MichaelDemoContent = ({ title, description, agentName }: { title: string; description: string; agentName?: string }) => {
   const { state, error, duration, agentStream, agentThinkingState, connect, disconnect } = useDemoAgent(agentName);
@@ -242,7 +263,7 @@ const ComingSoonCard = ({
 
 // ── Public component ──────────────────────────────────────────────────────────
 interface LipsyncDemoCardProps {
-  type: 'cat' | 'girl' | 'michael' | 'coming-soon';
+  type: 'cat' | 'girl' | 'michael' | 'simli' | 'coming-soon';
 
   title: string;
   description: string;
@@ -254,6 +275,7 @@ const LipsyncDemoCard = ({ type, title, description, placeholderIcon, agentName 
   if (type === 'cat') return <CatDemoContent title={title} description={description} agentName={agentName} />;
   if (type === 'girl') return <GirlDemoContent title={title} description={description} agentName={agentName} />;
   if (type === 'michael') return <MichaelDemoContent title={title} description={description} agentName={agentName} />;
+  if (type === 'simli') return <SimliDemoContent title={title} description={description} agentName={agentName} />;
   return <ComingSoonCard title={title} description={description} placeholderIcon={placeholderIcon} />;
 };
 

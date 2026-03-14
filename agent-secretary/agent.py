@@ -16,6 +16,7 @@ from livekit.agents import (
 from livekit import api as lk_api
 from livekit.plugins import openai as lk_openai, deepgram, silero
 from livekit.plugins import groq as lk_groq
+from livekit.plugins import simli
 from livekit.plugins.turn_detector.english import EnglishModel
 from session_logger import SessionLogger
 
@@ -30,6 +31,8 @@ PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
 LIVEKIT_URL = os.getenv("LIVEKIT_URL")
 LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
 LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
+SIMLI_API_KEY = os.getenv("SIMLI_API_KEY")
+SIMLI_FACE_ID = os.getenv("SIMLI_FACE_ID")
 
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
@@ -214,6 +217,14 @@ async def entrypoint(ctx: JobContext):
             content = getattr(item, "text_content", "") or ""
             if content:
                 session_log.on_agent_text(content)
+
+    simli_avatar = simli.AvatarSession(
+        simli_config=simli.SimliConfig(
+            api_key=SIMLI_API_KEY,
+            face_id=SIMLI_FACE_ID,
+        ),
+    )
+    await simli_avatar.start(session, room=ctx.room)
 
     await session.start(room=ctx.room, agent=agent)
 

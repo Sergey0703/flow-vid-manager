@@ -3912,6 +3912,7 @@
 .v2-scope .lipsync-demo-card--simli .lipsync-card-preview {
     background: #000;
     min-height: 260px;
+    border-radius: 16px 16px 0 0;
 }
 .v2-scope .lipsync-demo-card--simli .lipsync-card-preview::before {
     display: none;
@@ -3919,7 +3920,7 @@
 .v2-scope .simli-avatar-wrap {
     width: 240px;
     height: 240px;
-    border-radius: 50%;
+    border-radius: 0;
     overflow: hidden;
     position: relative;
 }
@@ -3929,7 +3930,7 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    border-radius: 50%;
+    border-radius: 0;
 }
 .v2-scope.v2-light .lipsync-demo-card--simli .lipsync-card-preview {
     background: #000;

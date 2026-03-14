@@ -234,6 +234,7 @@ const MichaelDemoContent = ({ title, description, agentName }: { title: string; 
       title={title} description={description}
       state={state} error={error} duration={duration}
       connect={connect} disconnect={disconnect}
+      extraClass="lipsync-demo-card--michael"
       avatar={<MichaelAvatar agentStream={agentStream} agentState={avatarState} agentThinkingState={agentThinkingState} />}
     />
   );

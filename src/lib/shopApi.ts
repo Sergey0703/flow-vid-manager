@@ -9,6 +9,7 @@ export interface Product {
   stock: number;
   sizes: string[];
   colors: string[];
+  image_url?: string;
 }
 
 export async function getProducts(q?: string, category?: string): Promise<Product[]> {

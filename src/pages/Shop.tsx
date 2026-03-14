@@ -426,7 +426,7 @@ function ProductCard({ product: p, recommended, dimmed, onExpand, onAddToCart }:
     >
       {/* Image */}
       <div className="shop-card__image">
-        <ProductImage id={p.id} icon={icon} />
+        <ProductImage id={p.id} icon={icon} imageUrl={p.image_url} />
         {oos && <div className="shop-card__oos-overlay"><span>Out of Stock</span></div>}
         {recommended && <div className="shop-card__highlight-ring" />}
       </div>
@@ -486,7 +486,7 @@ function ProductModal({ product: p, onClose, onAddToCart }: ProductModalProps) {
         <button className="shop-modal__close" onClick={onClose}>✕</button>
 
         <div className="shop-modal__image">
-          <ProductImage id={p.id} icon={icon} large />
+          <ProductImage id={p.id} icon={icon} large imageUrl={p.image_url} />
           {oos && <div className="shop-card__oos-overlay"><span>Out of Stock</span></div>}
         </div>
 
@@ -538,14 +538,24 @@ function ProductModal({ product: p, onClose, onAddToCart }: ProductModalProps) {
 
 // ── Product Image (photo or emoji fallback) ───────────────────────────────────
 
-function ProductImage({ id, icon, large }: { id: string; icon: string; large?: boolean }) {
-  const [hasPhoto, setHasPhoto] = useState(true);
-  return hasPhoto ? (
+function ProductImage({ id, icon, large, imageUrl }: { id: string; icon: string; large?: boolean; imageUrl?: string }) {
+  const [src, setSrc] = useState(imageUrl || `/products/${id}.jpg`);
+  const [failed, setFailed] = useState(false);
+
+  const handleError = () => {
+    if (imageUrl && src === imageUrl) {
+      setSrc(`/products/${id}.jpg`);
+    } else {
+      setFailed(true);
+    }
+  };
+
+  return !failed ? (
     <img
-      src={`/products/${id}.jpg`}
+      src={src}
       alt={id}
       className={large ? 'shop-modal__img' : 'shop-card__img'}
-      onError={() => setHasPhoto(false)}
+      onError={handleError}
     />
   ) : (
     <div className="shop-card__image-placeholder">

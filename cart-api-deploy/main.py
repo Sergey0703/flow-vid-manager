@@ -1,12 +1,14 @@
 import json
 import os
+import uuid
 from typing import Optional
 
 import redis
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 load_dotenv()
@@ -14,6 +16,11 @@ load_dotenv()
 REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 CART_TTL = 7 * 24 * 3600  # 7 days in seconds
+
+UPLOADS_DIR = "/app/uploads"
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+PUBLIC_BASE = os.getenv("PUBLIC_BASE", "https://aimediaflow.net")
 
 app = FastAPI(title="Cart API")
 
@@ -30,6 +37,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
+
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
@@ -84,6 +93,17 @@ def health():
         return {"status": "ok", "redis": "connected"}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Redis unavailable: {e}")
+
+
+@app.post("/upload/image")
+async def upload_image(file: UploadFile = File(...)):
+    ext = os.path.splitext(file.filename or "")[1].lower() or ".webp"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    dest = os.path.join(UPLOADS_DIR, filename)
+    content = await file.read()
+    with open(dest, "wb") as f:
+        f.write(content)
+    return {"url": f"{PUBLIC_BASE}/uploads/{filename}"}
 
 
 @app.get("/cart/{visitor_id}")

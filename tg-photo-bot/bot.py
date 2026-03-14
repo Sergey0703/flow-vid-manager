@@ -1,11 +1,13 @@
 import asyncio
+import io
 import logging
 import os
 import time
 
 import aiohttp
+from PIL import Image
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     CallbackQueryHandler, filters, ContextTypes, ConversationHandler,
@@ -169,8 +171,31 @@ def category_keyboard():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "Send me a photo of a clothing item and I'll create a professional product photo."
+        "👋 Hello! Send me a photo of a clothing item and I'll create a professional product photo.\n\n"
+        "📸 Just send a photo and choose a style."
     )
+
+
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "ℹ️ *How to use this bot:*\n\n"
+        "1. Send a photo of a clothing item\n"
+        "2. Choose a style: Ghost Mannequin, Studio White, Street, Outdoor or Custom\n"
+        "3. After generation tap *🛒 Send to Shop* to add to the store\n"
+        "   — or *🔄 Regenerate* to generate again\n\n"
+        "📦 When sending to shop: select sizes, colors, category, enter a name and price.\n\n"
+        "/start — restart\n"
+        "/cancel — cancel current operation",
+        parse_mode="Markdown",
+    )
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+    await update.message.reply_text(
+        "❌ Cancelled. Send a new photo to start over."
+    )
+    return ConversationHandler.END
 
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -384,12 +409,23 @@ async def handle_publish(update: Update, context: ContextTypes.DEFAULT_TYPE):
     category   = context.user_data.get("shop_category", "tshirts")
     sizes_list = [s.strip() for s in sizes_str.split(",") if s.strip()]
 
-    # Generate next product ID
+    # Generate next product ID + convert image to WebP
     async with aiohttp.ClientSession() as session:
         new_id = await get_next_product_id(session)
         if not new_id:
             await query.message.reply_text("Failed to get product ID. Try again.")
             return
+
+        # Convert result image to WebP and upload to our server
+        webp_url = result_url  # fallback to original
+        webp_bytes = await download_as_webp(session, result_url)
+        if webp_bytes:
+            uploaded = await upload_to_our_server(session, webp_bytes)
+            if uploaded:
+                webp_url = uploaded
+                logger.info(f"WebP uploaded to our server: {webp_url}")
+            else:
+                logger.warning("WebP upload to our server failed, using original URL")
 
         doc = {
             "id":          new_id,
@@ -403,7 +439,7 @@ async def handle_publish(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "stock":       qty,
             "sku":         f"BOT-{new_id.upper()}",
             "created_at":  int(time.time()),
-            "image_url":   result_url,
+            "image_url":   webp_url,
         }
 
         ok = await add_product_to_typesense(session, doc)
@@ -417,6 +453,36 @@ async def handle_publish(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.info(f"Product added: {doc}")
     else:
         await query.message.reply_text("❌ Failed to add product to shop. Check logs.")
+
+
+CART_API_INTERNAL = "http://cart-api:8000"
+
+
+async def download_as_webp(session: aiohttp.ClientSession, url: str) -> bytes | None:
+    """Download image from URL and convert to WebP bytes."""
+    try:
+        async with session.get(url) as resp:
+            raw = await resp.read()
+        img = Image.open(io.BytesIO(raw)).convert("RGB")
+        buf = io.BytesIO()
+        img.save(buf, format="WEBP", quality=90)
+        return buf.getvalue()
+    except Exception as e:
+        logger.error(f"download_as_webp error: {e}")
+        return None
+
+
+async def upload_to_our_server(session: aiohttp.ClientSession, webp_bytes: bytes) -> str | None:
+    """Upload WebP image to our cart-api server, return public URL."""
+    try:
+        form = aiohttp.FormData()
+        form.add_field("file", webp_bytes, filename="product.webp", content_type="image/webp")
+        async with session.post(f"{CART_API_INTERNAL}/upload/image", data=form) as resp:
+            data = await resp.json()
+            return data.get("url")
+    except Exception as e:
+        logger.error(f"upload_to_our_server error: {e}")
+        return None
 
 
 async def get_next_product_id(session: aiohttp.ClientSession) -> str | None:
@@ -484,10 +550,15 @@ async def generate_and_send(msg, context, photo_bytes: bytes, prompt: str):
     logger.info(f"Sent result: {result_url}")
 
 
-async def upload_image(session: aiohttp.ClientSession, image_bytes: bytes) -> str | None:
+async def upload_image(
+    session: aiohttp.ClientSession,
+    image_bytes: bytes,
+    filename: str = "photo.jpg",
+    content_type: str = "image/jpeg",
+) -> str | None:
     try:
         form = aiohttp.FormData()
-        form.add_field("file", image_bytes, filename="photo.jpg", content_type="image/jpeg")
+        form.add_field("file", image_bytes, filename=filename, content_type=content_type)
         form.add_field("uploadPath", "tg-bot")
         async with session.post(
             KIE_UPLOAD_URL, data=form,
@@ -551,8 +622,16 @@ async def poll_result(session: aiohttp.ClientSession, task_id: str) -> str | Non
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+async def post_init(app):
+    await app.bot.set_my_commands([
+        BotCommand("start",  "Start / welcome message"),
+        BotCommand("help",   "How to use this bot"),
+        BotCommand("cancel", "Cancel current operation"),
+    ])
+
+
 def main():
-    app = Application.builder().token(TELEGRAM_TOKEN).build()
+    app = Application.builder().token(TELEGRAM_TOKEN).post_init(post_init).build()
 
     # ConversationHandler for custom prompt + name + price input
     conv = ConversationHandler(
@@ -565,11 +644,13 @@ def main():
             WAITING_NAME:          [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_name)],
             WAITING_PRICE:         [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_price)],
         },
-        fallbacks=[],
+        fallbacks=[CommandHandler("cancel", cancel)],
         per_message=False,
     )
 
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("start",  start))
+    app.add_handler(CommandHandler("help",   help_cmd))
+    app.add_handler(CommandHandler("cancel", cancel))
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     app.add_handler(conv)
     app.add_handler(CallbackQueryHandler(handle_action,       pattern="^action:"))

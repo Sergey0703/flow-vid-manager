@@ -173,12 +173,26 @@ class SecretaryAgent(Agent):
 
         if is_farewell:
             import asyncio
-            logger.info(f"Farewell detected in: {repr(lower)} — scheduling room deletion")
+            logger.info(f"Farewell detected in: {repr(lower)} — scheduling end_call RPC + room deletion")
             room_name = self._ctx.room.name
-            async def delayed_delete():
+            room = self._ctx.room
+            async def delayed_end():
                 await asyncio.sleep(4)
+                # Send end_call RPC to all remote participants (closes frontend)
+                try:
+                    for p in room.remote_participants.values():
+                        await room.local_participant.perform_rpc(
+                            destination_identity=p.identity,
+                            method="end_call",
+                            payload="{}",
+                        )
+                        logger.info(f"end_call RPC sent to {p.identity}")
+                except Exception as e:
+                    logger.warning(f"end_call RPC failed: {e}")
+                # Also delete the room as fallback
+                await asyncio.sleep(1)
                 await delete_room(room_name)
-            asyncio.ensure_future(delayed_delete())
+            asyncio.ensure_future(delayed_end())
 
 
 async def entrypoint(ctx: JobContext):

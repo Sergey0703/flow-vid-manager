@@ -34,7 +34,7 @@ LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
 if not OPENAI_API_KEY:
     raise ValueError("OPENAI_API_KEY is required")
 
-SYSTEM_BASE = """You are Pixel, a friendly AI coordinator for AIMediaFlow — an AI agency based in Kerry, Ireland.
+SYSTEM_BASE = """You are Michael, a friendly AI coordinator for AIMediaFlow — an AI agency based in Kerry, Ireland.
 Your job is to talk with visitors to the aimediaflow.net website, answer their questions,
 and help them understand how AIMediaFlow can help their business.
 
@@ -214,7 +214,7 @@ async def entrypoint(ctx: JobContext):
     await session.start(room=ctx.room, agent=agent)
 
     await session.generate_reply(
-        instructions="Greet the visitor warmly as Pixel, the AIMediaFlow coordinator. Ask how you can help them today."
+        instructions="Greet the visitor warmly as Michael, the AIMediaFlow coordinator. Ask how you can help them today."
     )
 
 

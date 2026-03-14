@@ -3911,14 +3911,14 @@
 /* ── Simli avatar card ── */
 .v2-scope .lipsync-demo-card--simli .lipsync-card-preview {
     background: #000;
-    min-height: 220px;
+    min-height: 260px;
 }
 .v2-scope .lipsync-demo-card--simli .lipsync-card-preview::before {
     display: none;
 }
 .v2-scope .simli-avatar-wrap {
-    width: 160px;
-    height: 160px;
+    width: 240px;
+    height: 240px;
     border-radius: 50%;
     overflow: hidden;
     position: relative;

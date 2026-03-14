@@ -3407,6 +3407,12 @@
     max-width: 200px;
 }
 
+/* Michael avatar — larger than cat/sales */
+.v2-scope .lipsync-demo-card--michael .lipsync-card-preview .cat-avatar-wrap {
+    width: 320px;
+    max-width: 320px;
+}
+
 /* Pixel (cat) avatar only — zoomed in, centered */
 .v2-scope .lipsync-demo-card .cat-avatar-wrap--pixel {
     width: 90%;

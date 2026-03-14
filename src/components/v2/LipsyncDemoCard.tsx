@@ -135,16 +135,17 @@ function useDemoAgent(agentName?: string) {
 
 // ── Shared card UI ────────────────────────────────────────────────────────────
 function DemoCardShell({
-  title, description, state, error, duration, connect, disconnect, avatar,
+  title, description, state, error, duration, connect, disconnect, avatar, extraClass,
 }: {
   title: string; description: string;
   state: DemoState; error: string; duration: number;
   connect: () => void; disconnect: () => void;
   avatar: React.ReactNode;
+  extraClass?: string;
 }) {
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   return (
-    <div className="lipsync-demo-card lipsync-demo-card--active">
+    <div className={`lipsync-demo-card lipsync-demo-card--active${extraClass ? ` ${extraClass}` : ''}`}>
       <div className="lipsync-card-preview">{avatar}</div>
       <div className="lipsync-card-body">
         <h3 className="lipsync-card-title">{title}</h3>
@@ -218,6 +219,7 @@ const SimliDemoContent = ({ title, description, agentName }: { title: string; de
       title={title} description={description}
       state={state} error={error} duration={duration}
       connect={connect} disconnect={disconnect}
+      extraClass="lipsync-demo-card--simli"
       avatar={<SimliAvatar agentStream={null} agentState={avatarState} videoStream={videoStream} />}
     />
   );

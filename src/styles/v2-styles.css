@@ -3908,6 +3908,33 @@
     background: radial-gradient(ellipse at 50% 0%, rgba(8, 145, 178, 0.08) 0%, transparent 70%);
 }
 
+/* ── Simli avatar card ── */
+.v2-scope .lipsync-demo-card--simli .lipsync-card-preview {
+    background: #000;
+    min-height: 220px;
+}
+.v2-scope .lipsync-demo-card--simli .lipsync-card-preview::before {
+    display: none;
+}
+.v2-scope .simli-avatar-wrap {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+}
+.v2-scope .simli-avatar-wrap img,
+.v2-scope .simli-avatar-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+}
+.v2-scope.v2-light .lipsync-demo-card--simli .lipsync-card-preview {
+    background: #000;
+}
+
 .v2-scope.v2-light .lipsync-card-title {
     color: var(--v2-text);
 }

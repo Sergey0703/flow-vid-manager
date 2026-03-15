@@ -107,7 +107,9 @@ Always confirm additions aloud: "Added! You now have X items in your cart."
 
 SIZE RULE: Check the "sizes:" field in the search result. If sizes is "one size" or empty — do NOT ask for size, call add_to_cart immediately with size="one size". Only ask for size if sizes lists multiple options (e.g. "S, M, L, XL"). Once the customer tells you the size, call add_to_cart immediately.
 
-NEW ARRIVALS: If the user asks about "new arrivals", "new items", "what's new", "latest", "new catalog" — use the product IDs from the NEW ARRIVALS list in your greeting instructions. Call expand_product for the first one, or search_products with the product name as keyword. Never say "I don't have that info".
+NEW ARRIVALS: If the user asks about "new arrivals", "new items", "what's new", "latest", "new catalog" — call search_products with new_arrivals_only=true. This sorts by newest first. Do NOT just use the greeting hints — always call search_products to get live results.
+
+SORTING: If the user says "cheapest", "lowest price", "budget", "most affordable" — call search_products with sort_order='price_asc'. If they say "most expensive", "premium", "high end" — use sort_order='price_desc'. Default is 'relevance'.
 
 BROWSING MODE: If the user says "I don't know", "surprise me", "just browsing", "show me something cool", or anything vague — ask ONE short question to narrow it down: either about style ("casual or sporty?") or budget ("any budget in mind?"). Then immediately search based on the answer. Do NOT ask more than one question.
 
@@ -208,14 +210,14 @@ def _build_filter(
     return " && ".join(parts)
 
 
-async def _do_search(q: str, filter_by: str) -> list:
+async def _do_search(q: str, filter_by: str, sort_by: str = "_text_match:desc") -> list:
     params: dict = {
         "q": q or "*",
         "query_by": "name,description",
         "query_by_weights": "10,2",
         "num_typos": "1",
         "per_page": "5",
-        "sort_by": "_text_match:desc",
+        "sort_by": sort_by,
     }
     if filter_by:
         params["filter_by"] = filter_by
@@ -243,21 +245,30 @@ async def _search_products_raw(
     sizes: list[str],
     price_min: float | None,
     price_max: float | None,
+    sort_order: str = "relevance",   # "relevance" | "price_asc" | "price_desc" | "newest"
 ) -> tuple[str, list[str]]:
     """Search products with structured filters. Returns (formatted_context, list_of_ids)."""
+    sort_map = {
+        "price_asc":  "price:asc",
+        "price_desc": "price:desc",
+        "newest":     "created_at:desc",
+        "relevance":  "_text_match:desc",
+    }
+    sort_by = sort_map.get(sort_order, "_text_match:desc")
+
     # Try with stock filter first
     filter_by = _build_filter(category, colors, sizes, price_min, price_max, stock_only=True)
-    hits = await _do_search(q, filter_by)
+    hits = await _do_search(q, filter_by, sort_by)
 
     # Relax stock filter if nothing found
     if not hits:
         filter_by = _build_filter(category, colors, sizes, price_min, price_max, stock_only=False)
-        hits = await _do_search(q, filter_by)
+        hits = await _do_search(q, filter_by, sort_by)
 
     # Relax size/color filters but keep category and price
     if not hits and (colors or sizes):
         filter_by = _build_filter(category, [], [], price_min, price_max, stock_only=True)
-        hits = await _do_search(q, filter_by)
+        hits = await _do_search(q, filter_by, sort_by)
 
     if not hits:
         return "", []
@@ -349,10 +360,13 @@ class SalesManagerAgent(Agent):
         sizes: Annotated[list[str], "Sizes to filter by, e.g. ['L', 'XL']. Empty list = any size."],
         price_max: Annotated[float, "Maximum price in EUR. Use -1 if no price limit was mentioned."],
         keywords: Annotated[str, "Free-text keywords for style/material/name, e.g. 'zip-front', 'cotton', 'track'. Empty string if no specific style."],
+        sort_order: Annotated[str, "Sort order: 'relevance' (default), 'price_asc' (cheapest first), 'price_desc' (most expensive first), 'newest' (latest arrivals first)."] = "relevance",
+        new_arrivals_only: Annotated[bool, "Set to true when user asks for new arrivals, new items, latest, what's new. Sorts by newest and limits to most recent 5."] = False,
     ) -> str:
         """Search the shop catalogue for products. Call this whenever the user asks about items, availability, prices, sizes, or colors."""
         price_max_val = price_max if price_max > 0 else None  # -1 or 0 = no limit
-        logger.info(f"search_products: category={repr(category)} colors={colors} sizes={sizes} price_max={price_max_val} keywords={repr(keywords)}")
+        effective_sort = "newest" if new_arrivals_only else sort_order
+        logger.info(f"search_products: category={repr(category)} colors={colors} sizes={sizes} price_max={price_max_val} keywords={repr(keywords)} sort={effective_sort}")
         context, ids = await _search_products_raw(
             q=keywords,
             category=category,
@@ -360,6 +374,7 @@ class SalesManagerAgent(Agent):
             sizes=sizes,
             price_min=None,
             price_max=price_max_val,
+            sort_order=effective_sort,
         )
         logger.info(f"search_products result: {len(ids)} products, ids={ids}")
 

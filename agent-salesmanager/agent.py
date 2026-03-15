@@ -17,6 +17,7 @@ from livekit.agents import (
     cli,
     llm,
 )
+from livekit.plugins import deepgram as lk_deepgram
 from livekit.plugins import openai as lk_openai, silero
 from livekit.plugins.turn_detector.english import EnglishModel
 from session_logger import SessionLogger
@@ -30,6 +31,7 @@ TYPESENSE_API_KEY = os.getenv("TYPESENSE_API_KEY", "typesense-local-key-2025")
 LIVEKIT_URL = os.getenv("LIVEKIT_URL")
 LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY")
 LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET")
+DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY", "")
 
 TYPESENSE_BASE = f"http://{TYPESENSE_HOST}:{TYPESENSE_PORT}"
 CART_API_BASE = os.getenv("CART_API_BASE", "http://cart-api:8000")
@@ -331,7 +333,11 @@ class SalesManagerAgent(Agent):
         super().__init__(
             instructions=instructions,
             llm=lk_openai.LLM(model="gpt-4o-mini"),
-            stt=lk_openai.STT(
+            stt=lk_deepgram.STT(
+                model="nova-3",
+                language="en",
+                api_key=DEEPGRAM_API_KEY,
+            ) if DEEPGRAM_API_KEY else lk_openai.STT(
                 model="parakeet-tdt-0.6b-v3",
                 base_url="http://parakeet-stt:5092/v1",
                 api_key="not-needed",

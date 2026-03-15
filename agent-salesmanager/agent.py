@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import time
 from typing import Annotated
 
 import aiohttp
@@ -258,9 +259,22 @@ async def _search_products_raw(
     }
     sort_by = sort_map.get(sort_order, "_text_match:desc")
 
+    # For new arrivals, add a 30-day date filter; fall back to no date filter if empty
+    date_filter = ""
+    if sort_order == "newest":
+        cutoff = int(time.time()) - 30 * 24 * 3600
+        date_filter = f"created_at:>{cutoff}"
+
     # Try with stock filter first
     filter_by = _build_filter(category, colors, sizes, price_min, price_max, stock_only=True)
+    if date_filter:
+        filter_by = (filter_by + " && " + date_filter) if filter_by else date_filter
     hits = await _do_search(q, filter_by, sort_by)
+
+    # If new arrivals found nothing with date filter, retry without it
+    if not hits and date_filter:
+        filter_by = _build_filter(category, colors, sizes, price_min, price_max, stock_only=True)
+        hits = await _do_search(q, filter_by, sort_by)
 
     # Relax stock filter if nothing found
     if not hits:

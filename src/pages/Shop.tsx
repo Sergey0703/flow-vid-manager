@@ -542,6 +542,11 @@ function ProductImage({ id, icon, large, imageUrl }: { id: string; icon: string;
   const [src, setSrc] = useState(imageUrl || `/products/${id}.jpg`);
   const [failed, setFailed] = useState(false);
 
+  useEffect(() => {
+    setSrc(imageUrl || `/products/${id}.jpg`);
+    setFailed(false);
+  }, [imageUrl, id]);
+
   const handleError = () => {
     if (imageUrl && src === imageUrl) {
       setSrc(`/products/${id}.jpg`);

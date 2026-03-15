@@ -106,7 +106,7 @@ SHOPPING CART:
 - read_cart(): ONLY when user asks about cart CONTENTS without wanting to see it: "what's in my cart?", "what's my total?", "how many items?"
 - show_hide_cart(state): state='open' when user says "show my cart", "open cart", "open my cart", "show me my cart" — then also call read_cart(); state='close' when user says "close cart", "hide cart", "close my cart", "close the cart"
 IMPORTANT: "show me my cart" = show_hide_cart(state='open') + read_cart(). Never use read_cart() alone for these phrases.
-Always confirm additions aloud: "Added! You now have X items in your cart."
+Always confirm additions aloud using the exact phrase returned by add_to_cart (it includes the real item count from the server).
 
 SIZE RULE: Check the "sizes:" field in the search result. If sizes is "one size" or empty — do NOT ask for size, call add_to_cart immediately with size="one size". Only ask for size if sizes lists multiple options (e.g. "S, M, L, XL"). Once the customer tells you the size, call add_to_cart immediately.
 
@@ -576,6 +576,7 @@ class SalesManagerAgent(Agent):
                                 product_info = {"id": product_id, "name": d.get("name", product_id), "price": float(d.get("price", 0)), "qty": qty_int, "size": size}
             except Exception as e:
                 logger.warning(f"add_to_cart: product lookup failed: {e}")
+            cart_total_items = None
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
@@ -584,6 +585,9 @@ class SalesManagerAgent(Agent):
                         timeout=aiohttp.ClientTimeout(total=3),
                     ) as res:
                         logger.info(f"add_to_cart Cart API: {res.status}")
+                        if res.status == 200:
+                            cart_data = await res.json()
+                            cart_total_items = sum(i.get("qty", 1) for i in cart_data.get("items", []))
             except Exception as e:
                 logger.warning(f"add_to_cart Cart API failed: {e}")
         logger.info(f"add_to_cart: signalled frontend and Cart API for product_id={product_id}")
@@ -591,10 +595,11 @@ class SalesManagerAgent(Agent):
         product_name = product_info.get("name", product_id)
         size_str = f", size {size}" if size and size != "one size" else ""
         qty_str = f"{qty_int} × " if qty_int > 1 else ""
-        phrase = f"Added! {qty_str}{product_name}{size_str} is in your cart."
+        items_str = f" You now have {cart_total_items} item{'s' if cart_total_items != 1 else ''} in your cart." if cart_total_items is not None else ""
+        phrase = f"Added! {qty_str}{product_name}{size_str} is in your cart.{items_str}"
         if self._session:
             await self._session.say(phrase, allow_interruptions=True)
-        return f"done. id:{product_id} name:{product_name} qty:{qty_int} size:{size or 'one size'}"
+        return f"done. id:{product_id} name:{product_name} qty:{qty_int} size:{size or 'one size'} cart_items:{cart_total_items}"
 
     @llm.function_tool
     async def update_cart_qty(

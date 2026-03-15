@@ -117,7 +117,7 @@ def add_to_cart(visitor_id: str, item: AddItem):
     items = _load_items(visitor_id)
     for existing in items:
         if existing["id"] == item.id:
-            existing["qty"] = item.qty  # replace, not accumulate
+            existing["qty"] = existing["qty"] + item.qty  # accumulate
             existing["size"] = item.size
             _save_items(visitor_id, items)
             return {"items": items, "total": _calc_total(items)}

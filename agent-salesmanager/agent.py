@@ -196,7 +196,7 @@ def _build_filter(
     parts = []
     if stock_only:
         parts.append("stock:>0")
-    if category:
+    if category and category != "all":
         parts.append(f"category:={category}")
     if colors:
         color_expr = " || ".join(f"colors:={c.lower()}" for c in colors)

@@ -138,7 +138,11 @@ class AimediaflowAgent(Agent):
         super().__init__(
             instructions=SYSTEM_BASE,
             llm=lk_groq.LLM(model="meta-llama/llama-4-scout-17b-16e-instruct", api_key=GROQ_API_KEY),
-            stt=openai.STT(
+            stt=deepgram.STT(
+                model="nova-3",
+                language="en",
+                api_key=DEEPGRAM_API_KEY,
+            ) if DEEPGRAM_API_KEY else openai.STT(
                 model="parakeet-tdt-0.6b-v3",
                 base_url="http://parakeet-stt:5092/v1",
                 api_key="not-needed",

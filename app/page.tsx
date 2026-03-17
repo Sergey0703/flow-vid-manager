@@ -18,8 +18,8 @@ interface Video {
 }
 
 async function getVideos(): Promise<Video[]> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const url = process.env.VITE_SUPABASE_URL;
+  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return [];
 
   try {

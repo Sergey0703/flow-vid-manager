@@ -69,14 +69,14 @@ export default function BusinessAutomationKillarney() {
       <Navigation />
       <main>
         {/* Hero */}
-        <section style={{ padding: "120px 0 80px", background: "var(--v2-bg, #0a0a0f)" }}>
+        <section className="v2-seo-section-a" style={{ padding: "120px 0 80px" }}>
           <div className="v2-container" style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
             <span className="v2-section-tag">Business Automation Killarney & Kerry</span>
             <h1 className="v2-section-title" style={{ fontSize: "clamp(2rem,5vw,3.2rem)", margin: "16px 0 24px" }}>
               Stop Doing Repetitive Tasks.<br />
               <span className="accent">Automate Your Kerry Business</span>
             </h1>
-            <p style={{ fontSize: "1.2rem", color: "var(--v2-text-muted, #aaa)", maxWidth: 680, margin: "0 auto 40px" }}>
+            <p className="v2-seo-desc" style={{ fontSize: "1.2rem", maxWidth: 680, margin: "0 auto 40px" }}>
               We automate time-consuming admin tasks so you and your team can focus on growing your
               business. Kerry and Killarney SMEs save 10–25 hours every week with our AI automation solutions.
             </p>
@@ -87,7 +87,7 @@ export default function BusinessAutomationKillarney() {
         </section>
 
         {/* What We Automate */}
-        <section style={{ padding: "80px 0", background: "var(--v2-surface, #111)" }}>
+        <section className="v2-seo-section-b" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">
@@ -96,41 +96,17 @@ export default function BusinessAutomationKillarney() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32 }}>
               {[
-                {
-                  icon: "🧾",
-                  title: "Invoice & Payments",
-                  desc: "Auto-generate invoices, send payment reminders, and reconcile payments — directly from your accounting software.",
-                },
-                {
-                  icon: "📅",
-                  title: "Appointment Reminders",
-                  desc: "Automatically send SMS and email reminders to reduce no-shows. Works with any booking system.",
-                },
-                {
-                  icon: "📧",
-                  title: "Customer Follow-Ups",
-                  desc: "Trigger personalised follow-up emails after enquiries, purchases or appointments — without lifting a finger.",
-                },
-                {
-                  icon: "📦",
-                  title: "Stock & Inventory",
-                  desc: "Auto-update stock levels, trigger reorder alerts, and sync inventory across your systems.",
-                },
-                {
-                  icon: "📱",
-                  title: "Social Media Posting",
-                  desc: "Schedule and publish content across Facebook, Instagram and LinkedIn automatically.",
-                },
-                {
-                  icon: "📊",
-                  title: "Reporting & Analytics",
-                  desc: "Generate weekly business performance reports automatically and receive them in your inbox every Monday morning.",
-                },
+                { icon: "🧾", title: "Invoice & Payments", desc: "Auto-generate invoices, send payment reminders, and reconcile payments — directly from your accounting software." },
+                { icon: "📅", title: "Appointment Reminders", desc: "Automatically send SMS and email reminders to reduce no-shows. Works with any booking system." },
+                { icon: "📧", title: "Customer Follow-Ups", desc: "Trigger personalised follow-up emails after enquiries, purchases or appointments — without lifting a finger." },
+                { icon: "📦", title: "Stock & Inventory", desc: "Auto-update stock levels, trigger reorder alerts, and sync inventory across your systems." },
+                { icon: "📱", title: "Social Media Posting", desc: "Schedule and publish content across Facebook, Instagram and LinkedIn automatically." },
+                { icon: "📊", title: "Reporting & Analytics", desc: "Generate weekly business performance reports automatically and receive them in your inbox every Monday morning." },
               ].map((item) => (
                 <div key={item.title} className="v2-service-card" style={{ padding: 32 }}>
                   <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>{item.icon}</div>
-                  <h3 style={{ fontSize: "1.15rem", marginBottom: 12, color: "var(--v2-text, #fff)" }}>{item.title}</h3>
-                  <p style={{ color: "var(--v2-text-muted, #aaa)", lineHeight: 1.6 }}>{item.desc}</p>
+                  <h3 className="v2-seo-card-title" style={{ fontSize: "1.15rem", marginBottom: 12 }}>{item.title}</h3>
+                  <p className="v2-seo-desc">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -138,7 +114,7 @@ export default function BusinessAutomationKillarney() {
         </section>
 
         {/* ROI Section */}
-        <section style={{ padding: "80px 0", background: "var(--v2-bg, #0a0a0f)" }}>
+        <section className="v2-seo-section-a" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">The <span className="accent">Real Cost</span> of Manual Work in Kerry</h2>
@@ -150,9 +126,9 @@ export default function BusinessAutomationKillarney() {
                 { value: "€0", label: "Extra hires needed" },
                 { value: "24/7", label: "Automation never takes a day off" },
               ].map((stat) => (
-                <div key={stat.label} style={{ padding: 32, border: "1px solid var(--v2-border, #222)", borderRadius: 12 }}>
-                  <div style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--v2-accent, #44C8F5)", marginBottom: 8 }}>{stat.value}</div>
-                  <div style={{ color: "var(--v2-text-muted, #aaa)", fontSize: "0.95rem" }}>{stat.label}</div>
+                <div key={stat.label} className="v2-seo-stat-card">
+                  <div className="v2-seo-stat-value">{stat.value}</div>
+                  <div className="v2-seo-desc" style={{ fontSize: "0.95rem" }}>{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -160,27 +136,27 @@ export default function BusinessAutomationKillarney() {
         </section>
 
         {/* FAQ */}
-        <section style={{ padding: "80px 0", background: "var(--v2-surface, #111)" }}>
+        <section className="v2-seo-section-b" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">Frequently Asked <span className="accent">Questions</span></h2>
             </div>
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ marginBottom: 32, borderBottom: "1px solid var(--v2-border, #222)", paddingBottom: 32 }}>
-                <h3 style={{ fontSize: "1.05rem", marginBottom: 12, color: "var(--v2-text, #fff)" }}>{item.name}</h3>
-                <p style={{ color: "var(--v2-text-muted, #aaa)", lineHeight: 1.7 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="v2-seo-faq-item">
+                <h3 className="v2-seo-card-title" style={{ fontSize: "1.05rem", marginBottom: 12 }}>{item.name}</h3>
+                <p className="v2-seo-desc" style={{ lineHeight: 1.7 }}>{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* CTA */}
-        <section style={{ padding: "80px 0", background: "var(--v2-bg, #0a0a0f)", textAlign: "center" }}>
+        <section className="v2-seo-section-a" style={{ padding: "80px 0", textAlign: "center" }}>
           <div className="v2-container" style={{ maxWidth: 700, margin: "0 auto", padding: "0 24px" }}>
             <h2 className="v2-section-title" style={{ marginBottom: 16 }}>
               Ready to Automate Your <span className="accent">Killarney Business?</span>
             </h2>
-            <p style={{ color: "var(--v2-text-muted, #aaa)", marginBottom: 40, fontSize: "1.1rem" }}>
+            <p className="v2-seo-desc" style={{ marginBottom: 40, fontSize: "1.1rem" }}>
               Book a free 30-minute discovery call. We'll map out exactly which tasks in your business
               can be automated and estimate the time and cost savings — no commitment required.
             </p>

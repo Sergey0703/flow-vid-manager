@@ -69,14 +69,14 @@ export default function AIPhoneAssistantKerry() {
       <Navigation />
       <main>
         {/* Hero */}
-        <section style={{ padding: "120px 0 80px", background: "var(--v2-bg, #0a0a0f)" }}>
+        <section className="v2-seo-section-a" style={{ padding: "120px 0 80px" }}>
           <div className="v2-container" style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
             <span className="v2-section-tag">AI Phone Assistant Kerry</span>
             <h1 className="v2-section-title" style={{ fontSize: "clamp(2rem,5vw,3.2rem)", margin: "16px 0 24px" }}>
               Never Miss a Call Again.<br />
               <span className="accent">AI Receptionist for Kerry Businesses</span>
             </h1>
-            <p style={{ fontSize: "1.2rem", color: "var(--v2-text-muted, #aaa)", maxWidth: 680, margin: "0 auto 40px" }}>
+            <p className="v2-seo-desc" style={{ fontSize: "1.2rem", maxWidth: 680, margin: "0 auto 40px" }}>
               Our AI phone assistant answers every call 24/7 — qualifying leads, booking appointments
               and handling enquiries automatically. Serving businesses in Killarney, Tralee, Listowel,
               Dingle and across Kerry.
@@ -88,7 +88,7 @@ export default function AIPhoneAssistantKerry() {
         </section>
 
         {/* Benefits */}
-        <section style={{ padding: "80px 0", background: "var(--v2-surface, #111)" }}>
+        <section className="v2-seo-section-b" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">
@@ -97,41 +97,17 @@ export default function AIPhoneAssistantKerry() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32 }}>
               {[
-                {
-                  icon: "📞",
-                  title: "Answers Every Call, 24/7",
-                  desc: "No more missed calls after hours or during busy periods. Every enquiry is captured and handled professionally.",
-                },
-                {
-                  icon: "📅",
-                  title: "Books Appointments Automatically",
-                  desc: "The AI connects to your calendar and schedules appointments in real time during the call — no double-bookings.",
-                },
-                {
-                  icon: "🎯",
-                  title: "Qualifies Leads Instantly",
-                  desc: "Asks the right questions to filter serious customers from casual enquiries, so your team focuses on what matters.",
-                },
-                {
-                  icon: "💰",
-                  title: "Costs Less Than a Receptionist",
-                  desc: "A full-time receptionist in Kerry costs €28,000–€35,000/year. Our AI handles the same workload at a fraction of the cost.",
-                },
-                {
-                  icon: "🌐",
-                  title: "Works in Any Language",
-                  desc: "Serve international tourists and customers in Kerry in English, Irish, or any other language.",
-                },
-                {
-                  icon: "⚡",
-                  title: "Live in 2–4 Weeks",
-                  desc: "We handle all setup and training. Your AI phone assistant is live and taking calls within weeks, not months.",
-                },
+                { icon: "📞", title: "Answers Every Call, 24/7", desc: "No more missed calls after hours or during busy periods. Every enquiry is captured and handled professionally." },
+                { icon: "📅", title: "Books Appointments Automatically", desc: "The AI connects to your calendar and schedules appointments in real time during the call — no double-bookings." },
+                { icon: "🎯", title: "Qualifies Leads Instantly", desc: "Asks the right questions to filter serious customers from casual enquiries, so your team focuses on what matters." },
+                { icon: "💰", title: "Costs Less Than a Receptionist", desc: "A full-time receptionist in Kerry costs €28,000–€35,000/year. Our AI handles the same workload at a fraction of the cost." },
+                { icon: "🌐", title: "Works in Any Language", desc: "Serve international tourists and customers in Kerry in English, Irish, or any other language." },
+                { icon: "⚡", title: "Live in 2–4 Weeks", desc: "We handle all setup and training. Your AI phone assistant is live and taking calls within weeks, not months." },
               ].map((item) => (
                 <div key={item.title} className="v2-service-card" style={{ padding: 32 }}>
                   <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>{item.icon}</div>
-                  <h3 style={{ fontSize: "1.15rem", marginBottom: 12, color: "var(--v2-text, #fff)" }}>{item.title}</h3>
-                  <p style={{ color: "var(--v2-text-muted, #aaa)", lineHeight: 1.6 }}>{item.desc}</p>
+                  <h3 className="v2-seo-card-title" style={{ fontSize: "1.15rem", marginBottom: 12 }}>{item.title}</h3>
+                  <p className="v2-seo-desc">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -139,7 +115,7 @@ export default function AIPhoneAssistantKerry() {
         </section>
 
         {/* Use Cases */}
-        <section style={{ padding: "80px 0", background: "var(--v2-bg, #0a0a0f)" }}>
+        <section className="v2-seo-section-a" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">
@@ -155,9 +131,9 @@ export default function AIPhoneAssistantKerry() {
                 { title: "Tradespeople & Contractors", desc: "Never miss a job enquiry while on site — AI captures the lead and schedules a callback." },
                 { title: "Professional Services", desc: "Law firms, accountants and consultants — qualify potential clients before they reach your team." },
               ].map((item) => (
-                <div key={item.title} style={{ padding: "24px", border: "1px solid var(--v2-border, #222)", borderRadius: 12 }}>
-                  <h3 style={{ fontSize: "1rem", marginBottom: 8, color: "var(--v2-accent, #44C8F5)" }}>{item.title}</h3>
-                  <p style={{ color: "var(--v2-text-muted, #aaa)", fontSize: "0.9rem", lineHeight: 1.6 }}>{item.desc}</p>
+                <div key={item.title} className="v2-seo-use-case-card">
+                  <h3 className="v2-seo-use-case-title">{item.title}</h3>
+                  <p className="v2-seo-desc" style={{ fontSize: "0.9rem" }}>{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -165,27 +141,27 @@ export default function AIPhoneAssistantKerry() {
         </section>
 
         {/* FAQ */}
-        <section style={{ padding: "80px 0", background: "var(--v2-surface, #111)" }}>
+        <section className="v2-seo-section-b" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">Frequently Asked <span className="accent">Questions</span></h2>
             </div>
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ marginBottom: 32, borderBottom: "1px solid var(--v2-border, #222)", paddingBottom: 32 }}>
-                <h3 style={{ fontSize: "1.05rem", marginBottom: 12, color: "var(--v2-text, #fff)" }}>{item.name}</h3>
-                <p style={{ color: "var(--v2-text-muted, #aaa)", lineHeight: 1.7 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="v2-seo-faq-item">
+                <h3 className="v2-seo-card-title" style={{ fontSize: "1.05rem", marginBottom: 12 }}>{item.name}</h3>
+                <p className="v2-seo-desc" style={{ lineHeight: 1.7 }}>{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* CTA */}
-        <section style={{ padding: "80px 0", background: "var(--v2-bg, #0a0a0f)", textAlign: "center" }}>
+        <section className="v2-seo-section-a" style={{ padding: "80px 0", textAlign: "center" }}>
           <div className="v2-container" style={{ maxWidth: 700, margin: "0 auto", padding: "0 24px" }}>
             <h2 className="v2-section-title" style={{ marginBottom: 16 }}>
               Ready to Stop <span className="accent">Missing Calls?</span>
             </h2>
-            <p style={{ color: "var(--v2-text-muted, #aaa)", marginBottom: 40, fontSize: "1.1rem" }}>
+            <p className="v2-seo-desc" style={{ marginBottom: 40, fontSize: "1.1rem" }}>
               Book a free 30-minute discovery call. We'll show you exactly how an AI phone assistant
               would work for your Kerry business — no commitment required.
             </p>

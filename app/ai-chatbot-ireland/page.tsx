@@ -69,14 +69,14 @@ export default function AIChatbotIreland() {
       <Navigation />
       <main>
         {/* Hero */}
-        <section style={{ padding: "120px 0 80px", background: "var(--v2-bg, #0a0a0f)" }}>
+        <section className="v2-seo-section-a" style={{ padding: "120px 0 80px" }}>
           <div className="v2-container" style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
             <span className="v2-section-tag">AI Chatbot Ireland</span>
             <h1 className="v2-section-title" style={{ fontSize: "clamp(2rem,5vw,3.2rem)", margin: "16px 0 24px" }}>
               Turn Website Visitors Into Customers.<br />
               <span className="accent">AI Chatbot for Irish Businesses</span>
             </h1>
-            <p style={{ fontSize: "1.2rem", color: "var(--v2-text-muted, #aaa)", maxWidth: 680, margin: "0 auto 40px" }}>
+            <p className="v2-seo-desc" style={{ fontSize: "1.2rem", maxWidth: 680, margin: "0 auto 40px" }}>
               Our AI chatbots capture leads, answer questions and book appointments 24/7 — trained
               on your business knowledge. Trusted by businesses across Kerry and Ireland.
             </p>
@@ -87,7 +87,7 @@ export default function AIChatbotIreland() {
         </section>
 
         {/* Benefits */}
-        <section style={{ padding: "80px 0", background: "var(--v2-surface, #111)" }}>
+        <section className="v2-seo-section-b" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">
@@ -96,41 +96,17 @@ export default function AIChatbotIreland() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 32 }}>
               {[
-                {
-                  icon: "💬",
-                  title: "24/7 Lead Capture",
-                  desc: "Engages every visitor the moment they land on your site — even at 2am on a Sunday. No lead left behind.",
-                },
-                {
-                  icon: "🧠",
-                  title: "Trained on Your Business",
-                  desc: "Knows your products, prices, policies and FAQs. Answers accurately using your own content — no generic responses.",
-                },
-                {
-                  icon: "📋",
-                  title: "Qualifies Prospects",
-                  desc: "Asks smart questions to identify serious buyers and passes hot leads directly to your sales team.",
-                },
-                {
-                  icon: "🔗",
-                  title: "Integrates with Your Tools",
-                  desc: "Connects to your CRM, calendar, email and WhatsApp. Works with HubSpot, Salesforce, Google Calendar and more.",
-                },
-                {
-                  icon: "📊",
-                  title: "Full Analytics",
-                  desc: "See exactly what your customers are asking, where they drop off, and how many leads the chatbot generates each week.",
-                },
-                {
-                  icon: "🚀",
-                  title: "One Line of Code to Install",
-                  desc: "Paste a single snippet into your website and it's live. Works with WordPress, Shopify, Wix, custom sites and more.",
-                },
+                { icon: "💬", title: "24/7 Lead Capture", desc: "Engages every visitor the moment they land on your site — even at 2am on a Sunday. No lead left behind." },
+                { icon: "🧠", title: "Trained on Your Business", desc: "Knows your products, prices, policies and FAQs. Answers accurately using your own content — no generic responses." },
+                { icon: "📋", title: "Qualifies Prospects", desc: "Asks smart questions to identify serious buyers and passes hot leads directly to your sales team." },
+                { icon: "🔗", title: "Integrates with Your Tools", desc: "Connects to your CRM, calendar, email and WhatsApp. Works with HubSpot, Salesforce, Google Calendar and more." },
+                { icon: "📊", title: "Full Analytics", desc: "See exactly what your customers are asking, where they drop off, and how many leads the chatbot generates each week." },
+                { icon: "🚀", title: "One Line of Code to Install", desc: "Paste a single snippet into your website and it's live. Works with WordPress, Shopify, Wix, custom sites and more." },
               ].map((item) => (
                 <div key={item.title} className="v2-service-card" style={{ padding: 32 }}>
                   <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>{item.icon}</div>
-                  <h3 style={{ fontSize: "1.15rem", marginBottom: 12, color: "var(--v2-text, #fff)" }}>{item.title}</h3>
-                  <p style={{ color: "var(--v2-text-muted, #aaa)", lineHeight: 1.6 }}>{item.desc}</p>
+                  <h3 className="v2-seo-card-title" style={{ fontSize: "1.15rem", marginBottom: 12 }}>{item.title}</h3>
+                  <p className="v2-seo-desc">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -138,7 +114,7 @@ export default function AIChatbotIreland() {
         </section>
 
         {/* How It Works */}
-        <section style={{ padding: "80px 0", background: "var(--v2-bg, #0a0a0f)" }}>
+        <section className="v2-seo-section-a" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">How We Build Your <span className="accent">AI Chatbot</span></h2>
@@ -151,10 +127,10 @@ export default function AIChatbotIreland() {
               { step: "05", title: "Ongoing Optimisation", desc: "We monitor performance and keep the chatbot updated as your business evolves." },
             ].map((item) => (
               <div key={item.step} style={{ display: "flex", gap: 24, marginBottom: 40, alignItems: "flex-start" }}>
-                <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--v2-accent, #44C8F5)", minWidth: 56 }}>{item.step}</div>
+                <div className="v2-seo-step-num">{item.step}</div>
                 <div>
-                  <h3 style={{ fontSize: "1.1rem", marginBottom: 8, color: "var(--v2-text, #fff)" }}>{item.title}</h3>
-                  <p style={{ color: "var(--v2-text-muted, #aaa)", lineHeight: 1.7 }}>{item.desc}</p>
+                  <h3 className="v2-seo-card-title" style={{ fontSize: "1.1rem", marginBottom: 8 }}>{item.title}</h3>
+                  <p className="v2-seo-desc" style={{ lineHeight: 1.7 }}>{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -162,27 +138,27 @@ export default function AIChatbotIreland() {
         </section>
 
         {/* FAQ */}
-        <section style={{ padding: "80px 0", background: "var(--v2-surface, #111)" }}>
+        <section className="v2-seo-section-b" style={{ padding: "80px 0" }}>
           <div className="v2-container" style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px" }}>
             <div className="v2-section-header center" style={{ marginBottom: 48 }}>
               <h2 className="v2-section-title">Frequently Asked <span className="accent">Questions</span></h2>
             </div>
             {faqSchema.mainEntity.map((item) => (
-              <div key={item.name} style={{ marginBottom: 32, borderBottom: "1px solid var(--v2-border, #222)", paddingBottom: 32 }}>
-                <h3 style={{ fontSize: "1.05rem", marginBottom: 12, color: "var(--v2-text, #fff)" }}>{item.name}</h3>
-                <p style={{ color: "var(--v2-text-muted, #aaa)", lineHeight: 1.7 }}>{item.acceptedAnswer.text}</p>
+              <div key={item.name} className="v2-seo-faq-item">
+                <h3 className="v2-seo-card-title" style={{ fontSize: "1.05rem", marginBottom: 12 }}>{item.name}</h3>
+                <p className="v2-seo-desc" style={{ lineHeight: 1.7 }}>{item.acceptedAnswer.text}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* CTA */}
-        <section style={{ padding: "80px 0", background: "var(--v2-bg, #0a0a0f)", textAlign: "center" }}>
+        <section className="v2-seo-section-a" style={{ padding: "80px 0", textAlign: "center" }}>
           <div className="v2-container" style={{ maxWidth: 700, margin: "0 auto", padding: "0 24px" }}>
             <h2 className="v2-section-title" style={{ marginBottom: 16 }}>
               Ready to Add an <span className="accent">AI Chatbot</span> to Your Website?
             </h2>
-            <p style={{ color: "var(--v2-text-muted, #aaa)", marginBottom: 40, fontSize: "1.1rem" }}>
+            <p className="v2-seo-desc" style={{ marginBottom: 40, fontSize: "1.1rem" }}>
               Book a free 30-minute call and we'll show you a live demo of what an AI chatbot
               would look and work like on your Irish business website.
             </p>

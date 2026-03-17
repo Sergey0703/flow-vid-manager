@@ -1,0 +1,57 @@
+# Security Headers for AI MediaFlow
+# This file configures HTTP security headers for production deployment
+# Compatible with Netlify, Vercel, and other static hosting providers
+
+/*
+  # Prevent clickjacking attacks
+  X-Frame-Options: DENY
+  
+  # Prevent MIME type sniffing vulnerabilities
+  X-Content-Type-Options: nosniff
+  
+  # Enable browser XSS protection
+  X-XSS-Protection: 1; mode=block
+  
+  # Control referrer information leakage
+  Referrer-Policy: strict-origin-when-cross-origin
+  
+  # Restrict browser APIs to prevent misuse
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=(), autoplay=(), fullscreen=(self)
+  
+  # Content Security Policy - strict for production
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-HASH_WILL_BE_GENERATED'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://jfxxtyfuccwmfeyltype.supabase.co; connect-src 'self' https://jfxxtyfuccwmfeyltype.supabase.co wss://realtime.supabase.com; media-src 'self' blob: https://jfxxtyfuccwmfeyltype.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;
+  
+  # HTTP Strict Transport Security (HTTPS only)
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  
+  # Cache control for security
+  Cache-Control: public, max-age=31536000, immutable
+
+# Specific headers for HTML files
+/*.html
+  # Additional security for HTML pages
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://jfxxtyfuccwmfeyltype.supabase.co; connect-src 'self' https://jfxxtyfuccwmfeyltype.supabase.co wss://realtime.supabase.com; media-src 'self' blob: https://jfxxtyfuccwmfeyltype.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
+  
+# Headers for API routes and sensitive endpoints
+/admin/*
+  # Stricter security for admin panel
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://jfxxtyfuccwmfeyltype.supabase.co; connect-src 'self' https://jfxxtyfuccwmfeyltype.supabase.co; object-src 'none'; frame-ancestors 'none';
+  Referrer-Policy: no-referrer
+
+# Headers for uploaded media files
+/uploads/*
+  # Security for user-generated content
+  X-Content-Type-Options: nosniff
+  Content-Disposition: attachment
+  X-Frame-Options: DENY
+
+# Headers for static assets
+/assets/*
+  # Long caching for static assets
+  Cache-Control: public, max-age=31536000, immutable
+  
+# Headers for service worker (if added later)
+/sw.js
+  # Prevent caching of service worker
+  Cache-Control: no-cache, no-store, must-revalidate

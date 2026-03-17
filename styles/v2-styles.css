@@ -1870,7 +1870,8 @@
     transition: transform 0.3s ease;
 }
 
-.v2-work-card:hover .v2-work-thumb img {
+.v2-work-card:hover .v2-work-thumb img,
+.v2-work-card:hover .v2-work-thumb span img {
     transform: scale(1.05);
 }
 

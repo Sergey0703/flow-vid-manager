@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navigation from "@/components/v2/Navigation";
 import FooterV2 from "@/components/v2/FooterV2";
+import ThemeScope from "@/components/v2/ThemeScope";
 
 export const metadata: Metadata = {
   title: "AI Chatbot Ireland | Website Chatbot for Irish Businesses | AIMediaFlow",
@@ -60,7 +61,7 @@ const faqSchema = {
 
 export default function AIChatbotIreland() {
   return (
-    <div className="v2-scope">
+    <ThemeScope>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -192,6 +193,6 @@ export default function AIChatbotIreland() {
         </section>
       </main>
       <FooterV2 />
-    </div>
+    </ThemeScope>
   );
 }

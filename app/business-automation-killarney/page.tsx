@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navigation from "@/components/v2/Navigation";
 import FooterV2 from "@/components/v2/FooterV2";
+import ThemeScope from "@/components/v2/ThemeScope";
 
 export const metadata: Metadata = {
   title: "Business Automation Killarney & Kerry | AI Process Automation | AIMediaFlow",
@@ -60,7 +61,7 @@ const faqSchema = {
 
 export default function BusinessAutomationKillarney() {
   return (
-    <div className="v2-scope">
+    <ThemeScope>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
@@ -190,6 +191,6 @@ export default function BusinessAutomationKillarney() {
         </section>
       </main>
       <FooterV2 />
-    </div>
+    </ThemeScope>
   );
 }

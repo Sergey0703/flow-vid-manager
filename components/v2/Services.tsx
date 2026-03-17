@@ -20,7 +20,7 @@ const Services = () => {
                         </div>
                         <h3>AI Phone Assistants</h3>
                         <p>Intelligent voice agents that answer, qualify, and handle customer calls around the clock — so you never miss a lead again.</p>
-                        <a href="#contact" className="v2-service-link">Get started →</a>
+                        <a href="/ai-phone-assistant-kerry" className="v2-service-link">Learn more →</a>
                     </div>
                     <div className="v2-service-card" style={{ animationDelay: "0.1s" }}>
                         <div className="v2-service-icon">
@@ -28,7 +28,7 @@ const Services = () => {
                         </div>
                         <h3>Smart Website Chatbots</h3>
                         <p>Conversational AI that qualifies visitors, answers FAQs, and books appointments — 24/7, on autopilot.</p>
-                        <a href="#contact" className="v2-service-link">Get started →</a>
+                        <a href="/ai-chatbot-ireland" className="v2-service-link">Learn more →</a>
                     </div>
                     <div className="v2-service-card" style={{ animationDelay: "0.2s" }}>
                         <div className="v2-service-icon">
@@ -36,7 +36,7 @@ const Services = () => {
                         </div>
                         <h3>Paperwork Automation</h3>
                         <p>Eliminate manual data entry and document processing with intelligent extraction and routing systems.</p>
-                        <a href="#contact" className="v2-service-link">Get started →</a>
+                        <a href="/business-automation-killarney" className="v2-service-link">Learn more →</a>
                     </div>
                     <div className="v2-service-card" style={{ animationDelay: "0.3s" }}>
                         <div className="v2-service-icon">

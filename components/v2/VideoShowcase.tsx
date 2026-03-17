@@ -32,7 +32,7 @@ const VideoShowcase = ({ videos }: VideoShowcaseProps) => {
                     {videos.map((video, index) => (
                         <Dialog key={video.id}>
                             <DialogTrigger asChild>
-                                <div className="v2-work-card" style={{ animationDelay: `${index * 0.1}s` }}>
+                                <button className="v2-work-card" style={{ animationDelay: `${index * 0.1}s`, background: "none", border: "none", textAlign: "left", cursor: "pointer", width: "100%", padding: 0 }}>
                                     <div className="v2-work-tag">AI Solution</div>
                                     <div className="v2-work-thumb">
                                         {video.thumbnail_url && (
@@ -52,7 +52,7 @@ const VideoShowcase = ({ videos }: VideoShowcaseProps) => {
                                     <div className="v2-work-title">{video.title}</div>
                                     <div className="v2-work-desc">{video.description}</div>
                                     <div className="v2-work-cta">Get something like this →</div>
-                                </div>
+                                </button>
                             </DialogTrigger>
                             <DialogContent className="max-w-4xl bg-black border-[var(--v2-border)] p-0 overflow-hidden sm:max-w-[90vw] lg:max-w-4xl">
                                 <div className="aspect-video w-full bg-black">

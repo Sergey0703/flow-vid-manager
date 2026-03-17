@@ -7,12 +7,12 @@
     --v2-cyan: #00c8e0;
     --v2-cyan-light: #4de0f4;
     --v2-cyan-glow: rgba(0, 200, 224, 0.25);
-    --v2-red: #ef4444;
+    --v2-red: #c0392b;
     --v2-red-glow: rgba(239, 68, 68, 0.3);
     --v2-purple: #a855f7;
     --v2-text: #f0f6fc;
     --v2-muted: #8b949e;
-    --v2-subtle: #6e7681;
+    --v2-subtle: #8b949e;
     --v2-font: 'Inter', system-ui, sans-serif;
     --v2-radius: 12px;
     --v2-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);

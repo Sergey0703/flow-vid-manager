@@ -141,7 +141,7 @@ export default function CeoPage() {
       <div className="card">
         <div className="card-inner">
           <Image
-            src="/photo.jpg"
+            src="/photo.png"
             alt="Serhii Baliasnyi"
             width={90}
             height={90}

@@ -60,7 +60,7 @@ export default function CeoPrintPage() {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         * { margin:0; padding:0; box-sizing:border-box; }
 
-        @page { size: A4 portrait; margin: 10mm; }
+        @page { size: A4 portrait; margin: 0; }
 
         body { font-family: 'Inter', sans-serif; background: #e0e4e8; }
 
@@ -73,13 +73,14 @@ export default function CeoPrintPage() {
         }
 
         .sheet {
-          width: 190mm;
+          width: 210mm;
           margin: 0 auto;
           background: white;
-          padding: 0;
+          padding: 5mm;
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 0;
+          box-sizing: border-box;
         }
 
         /* cut guides */
@@ -91,7 +92,7 @@ export default function CeoPrintPage() {
         /* CARD */
         .card {
           width: 85mm;
-          height: 54mm;
+          height: 52mm;
           background: linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
           border-radius: 3mm;
           padding: 5mm 5mm 4mm 5mm;
@@ -201,20 +202,20 @@ export default function CeoPrintPage() {
         @media print {
           body { background: #fff; }
           .hint { display: none; }
-          .sheet { width: 100%; }
+          .sheet { width: 210mm; padding: 5mm; }
           .card-wrap { border-color: #ddd; }
         }
 
         @media screen {
           .sheet {
-            transform: scale(0.72);
+            transform: scale(0.7);
             transform-origin: top center;
-            margin-bottom: -80mm;
+            margin-bottom: -90mm;
           }
         }
       `}</style>
 
-      <div className="hint">Ctrl+P → A4 · Margins: None · Scale: 100% · Save as PDF → send to print shop</div>
+      <div className="hint">Ctrl+P → Margins: None · Headers and footers: OFF · Scale: 100% · A4</div>
 
       <div className="sheet">
         {Array.from({ length: 10 }).map((_, i) => (

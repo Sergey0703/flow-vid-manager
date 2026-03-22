@@ -78,11 +78,35 @@ export default function CeoPage() {
           background: rgba(68,200,245,0.1);
           margin-bottom: 24px;
         }
-        .links {
+        .tagline {
+          font-size: 0.85rem;
+          color: #b0b8c8;
+          margin-bottom: 4px;
+          line-height: 1.4;
+        }
+        .link-btn--primary {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px 18px;
+          border-radius: 12px;
+          background: rgba(37,211,102,0.12);
+          border: 1px solid rgba(37,211,102,0.3);
+          color: #e0e0e0;
+          text-decoration: none;
+          font-size: 0.9rem;
+          font-weight: 600;
+          margin-bottom: 12px;
+          transition: background 0.2s;
+        }
+        .link-btn--primary:hover {
+          background: rgba(37,211,102,0.2);
+        }
+        .links-secondary {
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          margin-bottom: 24px;
+          gap: 10px;
+          margin-bottom: 20px;
         }
         .link-btn {
           display: flex;
@@ -131,9 +155,16 @@ export default function CeoPage() {
           transition: opacity 0.2s;
         }
         .save-btn:hover { opacity: 0.9; }
-        .footer {
-          margin-top: 20px;
+        .trust {
+          margin-top: 16px;
           font-size: 0.75rem;
+          color: #44C8F5;
+          opacity: 0.6;
+          letter-spacing: 0.03em;
+        }
+        .footer {
+          margin-top: 8px;
+          font-size: 0.72rem;
           color: #3a3a4a;
         }
       `}</style>
@@ -148,19 +179,21 @@ export default function CeoPage() {
             className="avatar"
           />
           <div className="name">Serhii Baliasnyi</div>
-          <div className="title">Founder & CEO</div>
-          <div className="company">AIMediaFlow · Kerry, Ireland</div>
+          <div className="title">Founder & CEO · AIMediaFlow</div>
+          <div className="tagline">Helping businesses automate workflows & content with AI</div>
+          <div className="company">Kerry, Ireland</div>
 
           <div className="divider" />
 
-          <div className="links">
-            <a href="https://wa.me/353852007612" className="link-btn" target="_blank" rel="noopener noreferrer">
-              <div className="icon icon-wa">💬</div>
-              <div className="link-label">
-                WhatsApp
-                <span>+353 85 2007 612</span>
-              </div>
-            </a>
+          <a href="https://wa.me/353852007612" className="link-btn link-btn--primary" target="_blank" rel="noopener noreferrer">
+            <div className="icon icon-wa">💬</div>
+            <div className="link-label">
+              Message me on WhatsApp
+              <span>+353 85 2007 612 · usually replies fast</span>
+            </div>
+          </a>
+
+          <div className="links-secondary">
             <a href="mailto:info@aimediaflow.net" className="link-btn">
               <div className="icon icon-email">✉️</div>
               <div className="link-label">
@@ -178,10 +211,11 @@ export default function CeoPage() {
           </div>
 
           <button className="save-btn" onClick={downloadVCard}>
-            + Save Contact
+            💾 Save my contact in 1 tap
           </button>
 
-          <div className="footer">AIMediaFlow · AI Agency · Kerry, Ireland</div>
+          <div className="trust">AI automation · Voice agents · Media workflows</div>
+          <div className="footer">AIMediaFlow · Kerry, Ireland</div>
         </div>
       </div>
     </>

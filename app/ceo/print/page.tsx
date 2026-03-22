@@ -318,13 +318,26 @@ export default function CeoPrintPage() {
         }
 
         /* ===== PRINT ===== */
+        @page {
+          size: A4 portrait;
+          margin: 0;
+        }
+
         @media print {
-          body { background: #fff; }
+          html, body {
+            width: 210mm;
+            height: 297mm;
+            background: #fff;
+          }
           .hint { display: none; }
           .sheet {
+            width: 210mm;
+            min-height: 0;
+            height: 297mm;
             margin: 0;
             box-shadow: none;
-            page-break-after: always;
+            transform: none !important;
+            padding: 10mm;
           }
         }
 

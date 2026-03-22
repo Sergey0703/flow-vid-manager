@@ -97,43 +97,48 @@ export default function CeoPrintPage() {
         }
 
         /* ===== A4 SHEET ===== */
+        /* A4 at 96dpi: 794×1123px. Padding 38px (10mm). Gap 19px (5mm).
+           Card: 321×204px (85×54mm). 2 cols × 5 rows = 10 cards.
+           Total width: 38+321+19+321+38 = 737px < 794px ✓
+           Total height: 38+(204×5)+(19×4)+38 = 38+1020+76+38 = 1172px ≈ 1123px → adjust gap */
         .sheet {
-          width: 210mm;
-          min-height: 297mm;
+          width: 794px;
+          height: 1123px;
           background: #fff;
           margin: 0 auto 24px;
-          padding: 10mm;
+          padding: 38px;
           display: grid;
-          grid-template-columns: 85mm 85mm;
-          grid-template-rows: repeat(5, 54mm);
-          gap: 5mm 5mm;
+          grid-template-columns: 321px 321px;
+          grid-template-rows: repeat(5, 204px);
+          gap: 9px 19px;
           box-shadow: 0 4px 24px rgba(0,0,0,0.18);
           position: relative;
+          overflow: hidden;
         }
 
-        /* cut lines between cards */
+        /* cut lines */
         .sheet::before {
           content: '';
           position: absolute;
-          top: 10mm; left: 10mm; right: 10mm; bottom: 10mm;
+          top: 38px; left: 38px; right: 38px; bottom: 38px;
           background-image:
             repeating-linear-gradient(
               to right,
               transparent,
-              transparent calc(85mm - 0.5px),
-              #ccc calc(85mm - 0.5px),
-              #ccc calc(85mm + 4.5px),
-              transparent calc(85mm + 4.5px),
-              transparent 90mm
+              transparent 320px,
+              #bbb 320px,
+              #bbb 321px,
+              transparent 321px,
+              transparent 340px
             ),
             repeating-linear-gradient(
               to bottom,
               transparent,
-              transparent calc(54mm - 0.5px),
-              #ccc calc(54mm - 0.5px),
-              #ccc calc(54mm + 4.5px),
-              transparent calc(54mm + 4.5px),
-              transparent 59mm
+              transparent 203px,
+              #bbb 203px,
+              #bbb 204px,
+              transparent 204px,
+              transparent 213px
             );
           pointer-events: none;
           z-index: 10;
@@ -141,8 +146,8 @@ export default function CeoPrintPage() {
 
         /* ===== CARD ===== */
         .card {
-          width: 85mm;
-          height: 54mm;
+          width: 321px;
+          height: 204px;
           background: linear-gradient(135deg, #f8fbff 0%, #eef4fb 100%);
           border-radius: 3mm;
           padding: 5mm 5.5mm 4.5mm 5.5mm;
@@ -319,34 +324,27 @@ export default function CeoPrintPage() {
 
         /* ===== PRINT ===== */
         @page {
-          size: A4 portrait;
+          size: 794px 1123px;
           margin: 0;
         }
 
         @media print {
-          html, body {
-            width: 210mm;
-            height: 297mm;
-            background: #fff;
-          }
+          html, body { background: #fff; margin: 0; padding: 0; }
           .hint { display: none; }
           .sheet {
-            width: 210mm;
-            min-height: 0;
-            height: 297mm;
             margin: 0;
             box-shadow: none;
             transform: none !important;
-            padding: 10mm;
           }
         }
 
-        /* ===== SCREEN — scale down A4 to fit ===== */
+        /* ===== SCREEN — scale down to fit viewport ===== */
         @media screen {
+          body { padding: 20px 0 40px; }
           .sheet {
             transform-origin: top center;
-            transform: scale(0.65);
-            margin-bottom: -100mm;
+            transform: scale(0.7);
+            margin-bottom: -330px;
           }
         }
       `}</style>

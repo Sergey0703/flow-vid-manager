@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AccessToken, RoomAgentDispatch, RoomConfiguration } from 'livekit-server-sdk';
+import { AccessToken, AgentDispatchClient } from 'livekit-server-sdk';
 
 const LIVEKIT_API_KEY    = process.env.LIVEKIT_API_KEY!;
 const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET!;
@@ -82,11 +82,14 @@ export async function POST(req: NextRequest) {
     canUpdateOwnMetadata: true,
   });
 
-  token.roomConfig = new RoomConfiguration({
-    agents: [new RoomAgentDispatch({ agentName })],
-  });
-
   const jwt = await token.toJwt();
+
+  // Explicit agent dispatch (RoomAgentDispatch via token config doesn't work with self-hosted workers)
+  const httpUrl = LIVEKIT_URL.replace('wss://', 'https://').replace('ws://', 'http://');
+  const dispatchClient = new AgentDispatchClient(httpUrl, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+  await dispatchClient.createDispatch(roomName, agentName).catch((e) =>
+    console.error('[livekit-token] dispatch error:', e?.message)
+  );
 
   return NextResponse.json({ wsUrl: LIVEKIT_URL, token: jwt, roomName }, { headers: corsHeaders });
 }

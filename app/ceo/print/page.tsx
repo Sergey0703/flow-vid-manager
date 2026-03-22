@@ -18,6 +18,7 @@ export default function CeoPrintPage() {
           justify-content: center;
           min-height: 100vh;
           font-family: 'Inter', -apple-system, sans-serif;
+          overflow-x: hidden;
         }
 
         .page {
@@ -26,6 +27,7 @@ export default function CeoPrintPage() {
           align-items: center;
           gap: 16px;
           padding: 24px;
+          width: 100%;
         }
 
         .hint {
@@ -47,6 +49,7 @@ export default function CeoPrintPage() {
           box-shadow: 0 4px 24px rgba(0,0,0,0.13);
           position: relative;
           overflow: hidden;
+          flex-shrink: 0;
         }
 
         /* top accent bar */
@@ -232,12 +235,22 @@ export default function CeoPrintPage() {
           font-weight: 600;
         }
 
+        /* screen: scale down so it fits */
+        @media screen {
+          .card {
+            transform: scale(0.85);
+            transform-origin: top center;
+          }
+          .page { gap: 0; }
+        }
+
         /* ===== PRINT ===== */
         @media print {
           body { background: #fff; }
           .hint { display: none; }
           .page { padding: 0; }
           .card {
+            transform: none;
             box-shadow: none;
             border: 0.3pt solid #ccc;
           }

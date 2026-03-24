@@ -1,6 +1,5 @@
 "use client";
 
-import NextImage from "next/image";
 
 export default function CeoCardPage() {
   return (
@@ -31,6 +30,8 @@ export default function CeoCardPage() {
           box-shadow: 0 16px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(68,200,245,0.15);
           max-width: 100%;
           width: 688px;
+          height: auto;
+          display: block;
         }
         .dl-btn {
           padding: 14px 36px;
@@ -57,13 +58,11 @@ export default function CeoCardPage() {
 
       <div className="label">Business Card · 85 × 54 mm</div>
 
-      <NextImage
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src="/card3.png"
         alt="Serhii Baliasnyi — Founder & CEO, AIMediaFlow"
-        width={1004}
-        height={638}
         className="card-img"
-        priority
       />
 
       <a className="dl-btn" href="/card3.png" download="serhii-baliasnyi-business-card.png">

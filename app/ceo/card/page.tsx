@@ -28,8 +28,8 @@ export default function CeoCardPage() {
         .card-img {
           border-radius: 12px;
           box-shadow: 0 16px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(68,200,245,0.15);
-          max-width: 100%;
-          width: 688px;
+          max-width: min(800px, 100%);
+          width: auto;
           height: auto;
           display: block;
         }

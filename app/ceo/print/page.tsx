@@ -30,7 +30,7 @@ export default function CeoPrintPage() {
         }
 
         .card-wrap {
-          padding: 2mm;
+          padding: 0 2mm;
           border: 0.3pt dashed #ccc;
           display: flex;
           align-items: center;

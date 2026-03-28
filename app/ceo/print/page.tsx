@@ -65,7 +65,7 @@ export default function CeoPrintPage() {
         {Array.from({ length: 10 }).map((_, i) => (
           <div className="card-wrap" key={i}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/card4.png" alt="Business card" />
+            <img src="/card5.png" alt="Business card" />
           </div>
         ))}
       </div>

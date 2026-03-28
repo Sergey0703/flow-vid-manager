@@ -58,4 +58,4 @@ Icon?
 # Build artifacts
 build/
 dist/
-out/
+out/openclaw-config/

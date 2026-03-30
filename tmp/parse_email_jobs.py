@@ -32,11 +32,14 @@ IT_KEYWORDS = re.compile(
 
 NON_IT_KEYWORDS = re.compile(
     r'^general operative|^sales assistant|^sales associate|^sales advisor|^sales representative|'
-    r'^security officer|^security guard|^team member|^team leader|^customer sales|'
-    r'^outbound.*sales|^inbound.*sales|^farm |^wind turbine|^solar pv|^mechanical fitter|'
-    r'^plumber|^electrician|^chef|^cook|^nurse|^midwife|^healthcare assistant|^care assistant|'
+    r'^field sales|^outbound.*sales|^inbound.*sales|^customer sales|'
+    r'^security officer|^security guard|^team member|^team leader|'
+    r'^farm |^wind turbine|^solar pv|^mechanical fitter|'
+    r'^plumber|^electrician|^chef|^cook|^sous chef|^head chef|^breakfast|^food.beverage|'
+    r'nurse|^midwife|^healthcare assistant|^care assistant|^social care|^support worker|'
     r'^driver|^warehouse|^logistics|^production operative|^factory|^retail|'
-    r'^receptionist|^cleaner|^housekeeper|^restaurant|^hotel|^hospitality',
+    r'^receptionist|^cleaner|^housekeeper|^restaurant|^hotel|^hospitality|^waiting staff|'
+    r'^barista|^bartender|^bar staff|^kitchen|^catering|^laundry|^housekeeping',
     re.IGNORECASE
 )
 
@@ -167,67 +170,84 @@ def parse_indeed(body):
     return jobs
 
 def parse_glassdoor(body):
-    """Extract Glassdoor jobs.
-    Email structure per job:
-      COMPANY X.X ★\n\nJOB TITLE\n\nLOCATION\n\n[SALARY]\n\n[easy apply]\n\nNd (URL...jobListingId=ID...)
-    So title is 2 lines after ★ line, company is on the ★ line itself.
+    """Extract Glassdoor jobs from job alert emails.
+
+    himalaya renders Glassdoor HTML emails as plain text with structure:
+        company name X.X ★
+
+        job title
+
+        location, kerry
+
+        €salary (employer est.)
+
+        easy apply
+
+        Nd (https://glassdoor.ie/partner/jobListing.htm?...jobListingId=ID...)
     """
     jobs = []
-    # Find each jobListingId
-    matches = list(re.finditer(r'jobListingId=(\d+)', body))
     seen = set()
-    for m in matches:
-        job_id = m.group(1)
+
+    # Split body into job card blocks using ★ as delimiter between cards
+    # Each card starts just after a ★ line and ends at the next ★ line
+    # We pair each job card block with its jobListingId from the URL inside it
+
+    # Find all ★ positions (each marks start of a job card)
+    star_positions = [m.start() for m in re.finditer(r'★', body)]
+
+    for star_pos in star_positions:
+        # The ★ line: "company name X.X ★"
+        line_start = body.rfind('\n', 0, star_pos) + 1
+        line_end = body.find('\n', star_pos)
+        star_line = body[line_start:line_end].strip() if line_end > 0 else body[line_start:].strip()
+
+        # Extract company: strip the rating (X.X ★) and any leading URL/garbage
+        company_raw = re.sub(r'\d+\.\d+\s*★.*', '', star_line).strip()
+        # Remove leading URL garbage (ends with closing paren or long alphanum token)
+        company_raw = re.sub(r'^.*\)', '', company_raw).strip()
+        company_raw = re.sub(r'[a-zA-Z0-9_\-]{30,}', '', company_raw).strip()
+        company = ' '.join(company_raw.split()) if len(company_raw) < 80 else ''
+
+        # Get block after the ★ line up to next ★ or 600 chars
+        block_start = line_end + 1 if line_end > 0 else star_pos + 1
+        next_star = body.find('★', block_start)
+        block_end = next_star if next_star > 0 and next_star - block_start < 800 else block_start + 600
+        block = body[block_start:block_end]
+
+        # Extract jobListingId from URL in this block
+        id_m = re.search(r'jobListingId=(\d+)', block)
+        if not id_m:
+            continue
+        job_id = id_m.group(1)
         if job_id in seen:
             continue
         seen.add(job_id)
-        idx = m.start()
-        # Look back up to 1200 chars
-        block = body[max(0, idx-1200):idx]
-        lines = [l.strip() for l in block.splitlines()]
-        # Find last ★ line — that's "company X.X ★"
-        star_idx = None
-        for i in range(len(lines)-1, -1, -1):
-            if '★' in lines[i]:
-                star_idx = i
-                break
-        if star_idx is not None:
-            # Company is on the ★ line — format: "...URL) company X.X ★"
-            star_line = lines[star_idx]
-            # Extract just the company part before the rating
-            company_m = re.search(r'\)\s+([a-zA-Z][^★\d]{2,40})\s+\d+\.\d+\s*★', star_line)
-            if company_m:
-                company = company_m.group(1).strip()
-            else:
-                # Fallback: strip rating and URL garbage
-                company = re.sub(r'https?://\S+', '', star_line)
-                company = re.sub(r'\s*\d+\.\d+\s*★.*', '', company).strip()
-                company = re.sub(r'[^a-zA-Z\s\-\.]', ' ', company).strip()
-                company = ' '.join(company.split())  # normalize spaces
-            # Title: first non-empty, non-noise line after ★
-            title = ''
-            for line in lines[star_idx+1:]:
-                line = line.strip()
-                if not line:
-                    continue
-                # Skip location/salary/apply noise or URL garbage
-                if re.search(r'€|\$|easy apply|apply now|employer est|^\d+[dh]|^http|kerry|killarney|tralee|ireland|remote|hybrid', line, re.IGNORECASE):
-                    continue
-                # Skip lines that look like URL fragments
-                if re.search(r'utm_|rdforyou|jobListingId|glassdoor\.ie|[a-zA-Z0-9]{40,}', line):
-                    continue
-                if len(line) > 5 and len(line) < 120:
-                    title = line
-                    break
-        else:
-            # Fallback: last meaningful line before URL
-            clean = [l.strip() for l in lines if l.strip() and not l.strip().startswith('http') and len(l.strip()) > 5]
-            noise = re.compile(r'€|\$|easy apply|^\d+[dh]|kerry|killarney|tralee|ireland|★', re.IGNORECASE)
-            clean = [l for l in clean if not noise.search(l)]
-            title = clean[-1] if clean else 'Glassdoor job'
-            company = clean[-2] if len(clean) >= 2 else ''
+
+        # Parse lines between ★ and URL: title, location, salary, days
+        url_start = block.find('http')
+        text_block = block[:url_start] if url_start > 0 else block
+
+        lines = [l.strip() for l in text_block.splitlines() if l.strip()]
+        noise = re.compile(
+            r'^easy apply$|^apply now$|^apply with|^\d+[dh]$|^\d+\s*(day|hour)|'
+            r'€|\$|employer est\.|glassdoor est\.|'
+            r'^kerry$|^killarney|^tralee|^ireland$|^remote$|^hybrid$|'
+            r'^<#part|^copyright|^privacy|^unsubscribe|^manage|^want more|'
+            r'^similar jobs|^create job|^looking for|^this message|'
+            r'utm_|jobListingId|glassdoor\.ie',
+            re.IGNORECASE
+        )
+        clean = [l for l in lines if not noise.search(l) and 3 < len(l) < 100]
+
+        # First clean line after ★ block = job title
+        title = clean[0] if clean else ''
+
+        if not title:
+            continue
+
         url = 'https://www.glassdoor.ie/job-listing/job?jobListingId=' + job_id
-        jobs.append({'id': job_id, 'source': 'glassdoor', 'title': title or 'Glassdoor job', 'company': company, 'url': url})
+        print(f'  [GD]   {job_id} "{title}" @ {company!r}')
+        jobs.append({'id': job_id, 'source': 'glassdoor', 'title': title, 'company': company, 'url': url})
     return jobs
 
 LOCATION_WHITELIST = re.compile(
@@ -240,7 +260,7 @@ LOCATION_BLACKLIST = re.compile(
     r'|\bsligo\b|\bclare\b|\btipperary\b|\bwicklow\b|\bkildare\b|\bmeath\b'
     r'|\blouth\b|\bcavan\b|\bmonaghan\b|\bdonegal\b|\bmayo\b|\broscommon\b'
     r'|\bletrim\b|\blongford\b|\bwestmeath\b|\boffaly\b|\blaois\b|\bcarlow\b'
-    r'|\bkilkenny\b|\beuropean union\b|\bemea\b|\bunited kingdom\b|\buk\b'
+    r'|\bkilkenny\b|\beuropean union\b|\beuropean economic area\b|\beea\b|\bemea\b|\bunited kingdom\b|\buk\b'
     r'|\blondon\b|\bmanchester\b|\bbelfas\b|\bd\d{1,2}\b',
     re.IGNORECASE
 )
@@ -260,45 +280,74 @@ def is_kerry_location(location_str):
     return True
 
 def parse_linkedin(body):
-    """Extract LinkedIn job IDs from comm/jobs/view/ links."""
+    """Extract LinkedIn jobs from job alert emails.
+
+    LinkedIn job alert email structure per job card:
+        Job Title
+        Company Name
+        Location
+
+        This company is actively hiring
+        [Apply with resume & profile]
+        View job: https://www.linkedin.com/comm/jobs/view/JOBID/...
+        ---------------------------------------------------------
+    """
     jobs = []
-    matches = list(re.finditer(r'linkedin\.com/comm/jobs/view/(\d+)', body))
     seen = set()
-    for m in matches:
-        job_id = m.group(1)
+
+    # Find all job card blocks by splitting on the separator line or "View job:" lines
+    # Each block ends at "View job: URL"
+    view_job_pattern = re.compile(
+        r'View job:\s*(https://www\.linkedin\.com/comm/jobs/view/(\d+)/[^\s]*)',
+        re.IGNORECASE
+    )
+
+    for m in view_job_pattern.finditer(body):
+        job_id = m.group(2)
+        job_url_full = m.group(1)
         if job_id in seen:
             continue
         seen.add(job_id)
+
+        # Get the block before "View job:" — up to the previous separator or start
         idx = m.start()
-        before = body[max(0, idx-600):idx]
-        lines = [l.strip() for l in before.splitlines() if l.strip()]
+        # Find start: previous "---" separator or beginning
+        prev_sep = body.rfind('-' * 10, 0, idx)
+        block_start = prev_sep + 1 if prev_sep >= 0 else max(0, idx - 800)
+        block = body[block_start:idx]
 
-        # Extract location: in LinkedIn emails the structure before "View job:" URL is:
-        # ... Title \n Company \n LOCATION \n (View job link follows)
-        # So the last few raw lines before the URL contain location info.
-        # We check the last 3 non-empty lines for location keywords.
-        raw_lines = [l.strip() for l in before.splitlines() if l.strip()]
-        location_candidate = ' '.join(raw_lines[-3:]) if raw_lines else ''
-        if not is_kerry_location(location_candidate):
-            print(f'  [SKIP] LinkedIn job {job_id}: non-Kerry location: {raw_lines[-3:]}')
-            continue
+        # Split into non-empty lines, strip whitespace
+        lines = [l.strip() for l in block.splitlines() if l.strip()]
 
-        # Filter noise for title extraction
+        # Remove noise lines (boilerplate text)
         noise = re.compile(
-            r'^view job|^jobs similar|^http|^\d+$|^new jobs|^apply now|'
-            r'^ireland$|^european union$|^united kingdom$|^remote$|^hybrid$|^subject:|'
-            r'^apply with|^see all|^promoted$|^actively recruiting|^be an early|'
-            r'^this company is|^high skills|^high experience|^be first|^early applicant|'
-            r'^to:|^from:|^date:|^message-id:|'
-            r'county kerry|killarney|tralee|dublin|cork|galway|county clare|county |'
-            r'@gmail\.com|@yahoo|@hotmail|'
-            r'^\d+ applicant|linkedin\.com|crossing hurdles|professional consultants',
+            r'^this company is|^apply with resume|^apply with|^be an early|^early applicant|'
+            r'^promoted$|^actively recruiting|^high skills match|^high experience match|'
+            r'^jobs where you|^based on your|^unlock personalized|^try premium|'
+            r'^see all jobs|^new jobs match|^your job alert|^view job|'
+            r'^https?://|^-{5,}',
             re.IGNORECASE
         )
-        clean_lines = [l for l in lines if not noise.search(l) and 5 < len(l) < 100]
-        title = clean_lines[-1] if clean_lines else 'LinkedIn job'
+        clean = [l for l in lines if not noise.search(l) and 3 < len(l) < 150]
+
+        if not clean:
+            continue
+
+        # Structure: last meaningful lines are: [..., TITLE, COMPANY, LOCATION]
+        # Location is the last line, company second-to-last, title third-to-last
+        location = clean[-1] if len(clean) >= 1 else ''
+        company = clean[-2] if len(clean) >= 2 else ''
+        title = clean[-3] if len(clean) >= 3 else clean[-1]
+
+        # Location filter — skip non-Kerry jobs
+        if not is_kerry_location(location):
+            print(f'  [SKIP] LinkedIn {job_id} "{title}" @ {company} — location: {location!r}')
+            continue
+
         url = 'https://ie.linkedin.com/jobs/view/' + job_id
-        jobs.append({'id': job_id, 'source': 'linkedin', 'title': title, 'company': '', 'url': url})
+        print(f'  [OK]   LinkedIn {job_id} "{title}" @ {company} — location: {location!r}')
+        jobs.append({'id': job_id, 'source': 'linkedin', 'title': title, 'company': company, 'url': url})
+
     return jobs
 
 def is_job_email(from_addr, subject):

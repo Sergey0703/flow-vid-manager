@@ -60,12 +60,12 @@ export default function CeoCardPage() {
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/card5.png"
+        src="/card7.png"
         alt="Serhii Baliasnyi — Founder & CEO, AIMediaFlow"
         className="card-img"
       />
 
-      <a className="dl-btn" href="/card5.png" download="serhii-baliasnyi-business-card.png">
+      <a className="dl-btn" href="/card7.png" download="serhii-baliasnyi-business-card.png">
         ⬇ Download PNG
       </a>
 

@@ -11,13 +11,13 @@ from livekit.agents import (
     AgentSession,
     JobContext,
     WorkerOptions,
+    WorkerType,
     cli,
 )
 from livekit import api as lk_api
 from livekit.plugins import openai as lk_openai, deepgram, silero
 from livekit.plugins import groq as lk_groq
 from livekit.plugins import simli
-from livekit.plugins.turn_detector.english import EnglishModel
 from session_logger import SessionLogger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -213,7 +213,6 @@ async def entrypoint(ctx: JobContext):
     agent = SecretaryAgent(session_log, ctx)
     session = AgentSession(
         vad=silero.VAD.load(),
-        turn_detection=EnglishModel(),
         min_endpointing_delay=0.5,
         max_endpointing_delay=4.0,
     )
@@ -254,5 +253,6 @@ async def entrypoint(ctx: JobContext):
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(
         entrypoint_fnc=entrypoint,
-        agent_name="aimediaflow-secretary"
+        agent_name="aimediaflow-secretary",
+        worker_type=WorkerType.ROOM,
     ))

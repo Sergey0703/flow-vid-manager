@@ -64,6 +64,21 @@
   }
 }
 
+/* Blog pages — light theme override */
+.blog-page,
+.blog-page * {
+  --background: 0 0% 100%;
+  --foreground: 215 28% 17%;
+}
+.blog-page {
+  background: #ffffff !important;
+  color: #1e293b !important;
+}
+body:has(.blog-page) {
+  background: #ffffff !important;
+  color: #1e293b !important;
+}
+
 @layer components {
   .glow-effect {
     box-shadow: var(--shadow-glow);

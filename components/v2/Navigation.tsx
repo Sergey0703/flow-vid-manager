@@ -68,6 +68,7 @@ const Navigation = ({ isLight: isLightProp, onToggleTheme: onToggleThemeProp }: 
                         <li><a href="/#how">How It Works</a></li>
                         <li><a href="/#faq">FAQ</a></li>
                         <li><a href="/#contact">Contact</a></li>
+                        <li><a href="/blog">Blog</a></li>
                         <li><a href="/agents" className="v2-nav-live-demo">Live Demo</a></li>
                         <li><a href="/shop" className="v2-nav-live-demo">Shop Demo</a></li>
                         <li><a href="/hotel-demo" className="v2-nav-live-demo">Hotel Demo</a></li>
@@ -93,6 +94,7 @@ const Navigation = ({ isLight: isLightProp, onToggleTheme: onToggleThemeProp }: 
                 <a href="/#how" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
                 <a href="/#faq" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
                 <a href="/#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
+                <a href="/blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
                 <a href="/agents" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>✦ Live Demo</a>
                 <a href="/shop" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>🛍️ Shop Demo</a>
                 <a href="/hotel-demo" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>🏨 Hotel Demo</a>

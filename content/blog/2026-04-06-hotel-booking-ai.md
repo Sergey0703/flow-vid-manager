@@ -7,7 +7,7 @@ status: ready
 editor_notes: "Expanded to 1,800+ words. Added real scenario, technical diagram, objections, comparison table, FAQ section."
 meta_description: "Cut Booking.com commission by 15-20% for Killarney hotels. Learn how an AI booking assistant pays for itself in under 2 months. Full deployment guide."
 fact_check: "All claims sourced"
-cover_image: "blog-covers/2026-04-06-hotel-booking-ai.webp"
+cover_image: ""
 author:
   name: "Serhii Baliasnyi"
   title: "Founder & CEO, AIMediaFlow"

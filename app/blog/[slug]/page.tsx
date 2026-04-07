@@ -1,5 +1,5 @@
 import { getAllPosts, getPostBySlug } from '@/lib/blog';
-import { MDXRemote } from 'next-mdx-remote/rsc';
+import ReactMarkdown from 'react-markdown';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -58,7 +58,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Article body */}
       <div style={{ fontSize: 18, lineHeight: 1.8, color: '#1e293b' }} className="prose">
-        <MDXRemote source={post.content} />
+        <ReactMarkdown>{post.content}</ReactMarkdown>
       </div>
 
       {/* Author block */}

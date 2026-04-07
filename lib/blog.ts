@@ -7,8 +7,10 @@ const COVERS_DIR = path.join(process.cwd(), 'public/blog-covers');
 
 function findCoverImage(slug: string, frontmatterCover?: string): string {
   if (frontmatterCover) return frontmatterCover;
+  // Check filesystem (works locally and during Vercel build)
   for (const ext of ['jpg', 'jpeg', 'webp', 'png']) {
-    if (fs.existsSync(path.join(COVERS_DIR, `${slug}.${ext}`))) {
+    const filePath = path.join(COVERS_DIR, `${slug}.${ext}`);
+    if (fs.existsSync(filePath)) {
       return `/blog-covers/${slug}.${ext}`;
     }
   }

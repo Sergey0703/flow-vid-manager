@@ -28,6 +28,7 @@ const MoonIcon = () => (
 const Navigation = ({ isLight: isLightProp, onToggleTheme: onToggleThemeProp }: NavigationProps) => {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [demoOpen, setDemoOpen] = useState(false);
     const [isLight, setIsLight] = useState(false);
 
     useEffect(() => {
@@ -69,9 +70,22 @@ const Navigation = ({ isLight: isLightProp, onToggleTheme: onToggleThemeProp }: 
                         <li><a href="/#faq">FAQ</a></li>
                         <li><a href="/#contact">Contact</a></li>
                         <li><a href="/blog">Blog</a></li>
-                        <li><a href="/agents" className="v2-nav-live-demo">Live Demo</a></li>
-                        <li><a href="/shop" className="v2-nav-live-demo">Shop Demo</a></li>
-                        <li><a href="/hotel-demo" className="v2-nav-live-demo">Hotel Demo</a></li>
+                        <li
+                            className="v2-nav-dropdown-wrap"
+                            onMouseEnter={() => setDemoOpen(true)}
+                            onMouseLeave={() => setDemoOpen(false)}
+                        >
+                            <span className="v2-nav-live-demo v2-nav-dropdown-trigger">
+                                Demo ▾
+                            </span>
+                            {demoOpen && (
+                                <ul className="v2-nav-dropdown">
+                                    <li><a href="/agents">✦ Live Demo</a></li>
+                                    <li><a href="/shop">🛍 Shop Demo</a></li>
+                                    <li><a href="/hotel-demo">🏨 Hotel Demo</a></li>
+                                </ul>
+                            )}
+                        </li>
                     </ul>
 
                     <div className="v2-nav-cta">
@@ -96,7 +110,7 @@ const Navigation = ({ isLight: isLightProp, onToggleTheme: onToggleThemeProp }: 
                 <a href="/#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
                 <a href="/blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
                 <a href="/agents" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>✦ Live Demo</a>
-                <a href="/shop" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>🛍️ Shop Demo</a>
+                <a href="/shop" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>🛍 Shop Demo</a>
                 <a href="/hotel-demo" className="v2-nav-live-demo" onClick={() => setMobileMenuOpen(false)}>🏨 Hotel Demo</a>
                 <a href="/#contact" className="v2-btn v2-btn-primary" style={{ textAlign: 'center' }} onClick={() => setMobileMenuOpen(false)}>Book a Demo</a>
             </nav>

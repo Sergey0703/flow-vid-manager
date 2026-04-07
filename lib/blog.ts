@@ -5,6 +5,14 @@ import matter from 'gray-matter';
 const BLOG_DIR = path.join(process.cwd(), 'content/blog');
 const COVERS_DIR = path.join(process.cwd(), 'public/blog-covers');
 
+function stripSchemaMarkup(content: string): string {
+  // Remove <div itemscope ...>...</div> and <script type="application/ld+json">...</script>
+  return content
+    .replace(/<div\s+itemscope[\s\S]*?<\/div>/gi, '')
+    .replace(/<script\s+type="application\/ld\+json"[\s\S]*?<\/script>/gi, '')
+    .trim();
+}
+
 function findCoverImage(slug: string, frontmatterCover?: string): string {
   if (frontmatterCover) return frontmatterCover;
   // Check filesystem (works locally and during Vercel build)
@@ -47,7 +55,7 @@ export function getAllPosts(): BlogPost[] {
         meta_description: data.meta_description || '',
         keywords: data.keywords || [],
         cover_image: findCoverImage(slug, data.cover_image),
-        content,
+        content: stripSchemaMarkup(content),
       };
     })
     .filter(Boolean)
@@ -67,7 +75,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
     date: data.date || '',
     meta_description: data.meta_description || '',
     keywords: data.keywords || [],
-    cover_image: data.cover_image || '',
-    content,
+    cover_image: findCoverImage(slug, data.cover_image),
+    content: stripSchemaMarkup(content),
   };
 }

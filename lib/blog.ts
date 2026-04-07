@@ -3,6 +3,17 @@ import path from 'path';
 import matter from 'gray-matter';
 
 const BLOG_DIR = path.join(process.cwd(), 'content/blog');
+const COVERS_DIR = path.join(process.cwd(), 'public/blog-covers');
+
+function findCoverImage(slug: string, frontmatterCover?: string): string {
+  if (frontmatterCover) return frontmatterCover;
+  for (const ext of ['jpg', 'jpeg', 'webp', 'png']) {
+    if (fs.existsSync(path.join(COVERS_DIR, `${slug}.${ext}`))) {
+      return `/blog-covers/${slug}.${ext}`;
+    }
+  }
+  return '';
+}
 
 export interface BlogPost {
   slug: string;
@@ -33,7 +44,7 @@ export function getAllPosts(): BlogPost[] {
         date: data.date || '',
         meta_description: data.meta_description || '',
         keywords: data.keywords || [],
-        cover_image: data.cover_image || '',
+        cover_image: findCoverImage(slug, data.cover_image),
         content,
       };
     })

@@ -1,5 +1,5 @@
 import Navigation from "@/components/v2/Navigation";
-import HeroV2Alt from "@/components/v2/HeroV2Alt";
+import HeroSection from "@/components/v2/HeroSection";
 import Stats from "@/components/v2/Stats";
 import Services from "@/components/v2/Services";
 import HowItWorks from "@/components/v2/HowItWorks";
@@ -66,7 +66,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Navigation />
       <main>
-        <HeroV2Alt agentName="aimediaflow-agent-local" />
+        <HeroSection />
         <Stats />
         <VideoShowcase videos={videos} />
         <Services />

@@ -1,0 +1,4 @@
+livekit-agents[groq,openai,silero]==1.5.1
+livekit-plugins-turn-detector==1.5.1
+python-dotenv==1.0.1
+aiohttp==3.12.15

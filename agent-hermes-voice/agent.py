@@ -32,25 +32,6 @@ logger = logging.getLogger("hermes-voice")
 HERMES_BIN = os.getenv("HERMES_BIN", "/home/hermes_user/.local/bin/hermes")
 HERMES_HOME = os.getenv("HERMES_HOME", "/home/hermes_user/.hermes")
 HERMES_USER = os.getenv("HERMES_USER", "hermes_user")
-LIGHTRAG_QUERY = os.getenv("LIGHTRAG_QUERY", "/opt/lightrag/venv/bin/python3 /opt/lightrag/query.py")
-
-
-async def query_lightrag(query: str) -> str:
-    try:
-        cmd = LIGHTRAG_QUERY.split() + [query]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
-        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=30)
-        result = stdout.decode().strip()
-        if result and "don't have enough information" not in result.lower():
-            return result
-        return ""
-    except Exception as e:
-        logger.warning(f"LightRAG query failed: {e}")
-        return ""
 
 
 def clean_hermes_output(text: str) -> str:
@@ -195,14 +176,7 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     logger.info("Connected to LiveKit room")
 
-    # Load memory context from LightRAG (after connect)
-    memory_context = await query_lightrag("Serhii current projects servers tasks")
-    if memory_context:
-        logger.info(f"Memory loaded: {len(memory_context)} chars")
-
     instructions = AGENT_INSTRUCTION
-    if memory_context:
-        instructions += f"\n\nCONTEXT FROM MEMORY:\n{memory_context}"
 
     session = AgentSession(
         stt=groq.STT(model="whisper-large-v3-turbo"),

@@ -1,11 +1,8 @@
----
-title: "Cutting Administrative Burden: AI Automation for Irish SMEs"
-date: 2026-04-10
-audience: Irish SMEs
-keywords: AI automation, administrative burden, Irish SMEs, productivity
+Title: Cutting Administrative Burden: AI Automation for Irish SMEs
+Date: 2026-04-10
 status: ready
-meta_description: Discover how AI automation can help Irish SMEs reduce administrative burden and increase productivity.
----
+Meta Description: Discover how AI automation can help Irish SMEs reduce administrative burden and increase productivity.
+Keywords: AI automation, administrative burden, Irish SMEs, productivity
 
 # Introduction
 57% of SMEs report increased admin burden. AI can automate data entry, document processing, and compliance paperwork — freeing business owners from hours of tedious work. [Learn more](https://www.irishtimes.com/business/technology/irish-business-use-of-ai-to-increase-significantly-1.4484710)
@@ -44,3 +41,5 @@ A: Yes, AI automation is secure. AI-powered automation tools use advanced securi
 
 # CTA
 Book a free 15-min AI audit at [aimediaflow.net](http://aimediaflow.net) to discover how AI automation can help your business.
+---
+**Author:** Serhii Baliasnyi, Founder & CEO, AIMediaFlow

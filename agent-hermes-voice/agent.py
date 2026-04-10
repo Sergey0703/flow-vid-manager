@@ -32,6 +32,7 @@ logger = logging.getLogger("hermes-voice")
 HERMES_BIN = os.getenv("HERMES_BIN", "/home/hermes_user/.local/bin/hermes")
 HERMES_HOME = os.getenv("HERMES_HOME", "/home/hermes_user/.hermes")
 HERMES_USER = os.getenv("HERMES_USER", "hermes_user")
+VOICE_SESSION_FILE = os.path.join(HERMES_HOME, ".voice_session_id")
 
 
 def clean_hermes_output(text: str) -> str:
@@ -42,23 +43,46 @@ def clean_hermes_output(text: str) -> str:
             continue
         if re.match(r'^\s*(Hermes Agent|❯|●|✢|✽|✶|✸|✿|\*)\s', line):
             continue
+        if line.startswith("session_id:"):
+            continue
         clean.append(line)
     result = '\n'.join(clean).strip()
     result = re.sub(r'\x1b\[[0-9;]*m', '', result)
     return result.strip()
 
 
-async def get_telegram_session_id() -> str:
-    """Find the most recent named (Telegram) session ID."""
+def get_voice_session_id() -> str:
+    """Read last voice session ID from file."""
     try:
-        env = {
-            **os.environ,
-            "HOME": f"/home/{HERMES_USER}",
-            "USER": HERMES_USER,
-            "HERMES_HOME": HERMES_HOME,
-            "NO_COLOR": "1",
-            "TERM": "dumb",
-        }
+        if os.path.exists(VOICE_SESSION_FILE):
+            session_id = open(VOICE_SESSION_FILE).read().strip()
+            if session_id:
+                return session_id
+    except Exception:
+        pass
+    return ""
+
+
+def save_voice_session_id(session_id: str):
+    """Save voice session ID to file for next call."""
+    try:
+        with open(VOICE_SESSION_FILE, "w") as f:
+            f.write(session_id)
+    except Exception as e:
+        logger.warning(f"Could not save session ID: {e}")
+
+
+async def get_latest_voice_session_id() -> str:
+    """Get the most recent non-cron session ID from hermes sessions list."""
+    env = {
+        **os.environ,
+        "HOME": f"/home/{HERMES_USER}",
+        "USER": HERMES_USER,
+        "HERMES_HOME": HERMES_HOME,
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+    }
+    try:
         proc = await asyncio.create_subprocess_exec(
             HERMES_BIN, "sessions", "list",
             stdout=asyncio.subprocess.PIPE,
@@ -67,24 +91,25 @@ async def get_telegram_session_id() -> str:
         )
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=10)
         for line in stdout.decode().splitlines():
-            # Skip header, cron jobs, and unnamed sessions (starting with —)
-            if line.startswith(("Title", "─", "—", " ")) or "cron" in line:
+            if line.startswith(("Preview", "─", "—")) or "cron" in line.lower():
                 continue
             parts = line.rsplit(None, 1)
             if len(parts) == 2:
-                session_id = parts[-1].strip()
-                if session_id and not session_id.startswith("cron"):
-                    logger.info(f"Using Telegram session: {session_id}")
-                    return session_id
+                sid = parts[-1].strip()
+                if sid and sid != "ID" and not sid.startswith("cron"):
+                    return sid
     except Exception as e:
-        logger.warning(f"Could not find Telegram session: {e}")
+        logger.warning(f"Could not get latest session ID: {e}")
     return ""
 
 
 async def ask_hermes(message: str) -> str:
     try:
-        session_id = await get_telegram_session_id()
-        resume_args = ["--resume", session_id] if session_id else ["--continue"]
+        session_id = get_voice_session_id()
+        if session_id:
+            extra_args = ["--resume", session_id]
+        else:
+            extra_args = ["--pass-session-id"]
         env = {
             **os.environ,
             "HOME": f"/home/{HERMES_USER}",
@@ -95,13 +120,24 @@ async def ask_hermes(message: str) -> str:
             "LITELLM_BASE_URL": "http://localhost:4000",
         }
         proc = await asyncio.create_subprocess_exec(
-            HERMES_BIN, "chat", "-q", message, *resume_args, "-Q",
+            HERMES_BIN, "chat", "-q", message, *extra_args, "-Q",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
             env=env,
+            cwd=f"/home/{HERMES_USER}",
         )
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
         raw = stdout.decode().strip()
+
+        # Extract and save session_id from first call
+        if not session_id:
+            for line in raw.splitlines():
+                if line.startswith("session_id:"):
+                    new_id = line.split(":", 1)[1].strip()
+                    save_voice_session_id(new_id)
+                    logger.info(f"Voice session saved: {new_id}")
+                    break
+
         response = clean_hermes_output(raw)
         if not response:
             return "I didn't get a response. Please try again."

@@ -1,9 +1,10 @@
 ---
 title: "Cutting Administrative Burden: AI Automation for Irish SMEs"
-date: 2026-04-10
+date: "2026-04-10"
 audience: Irish SMEs
 keywords: AI automation, administrative burden, Irish SMEs, productivity
 status: ready
+cover_image: /blog-covers/2026-04-10-cutting-administrative-burden-ai-automation-for-irish-smes.jpg
 meta_description: Discover how AI automation can help Irish SMEs reduce administrative burden and increase productivity.
 ---
 

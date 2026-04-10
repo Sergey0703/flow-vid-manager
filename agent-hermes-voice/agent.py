@@ -31,6 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger("hermes-voice")
 
 HERMES_API_URL = os.getenv("HERMES_API_URL", "http://localhost:8642/v1/chat/completions")
+HERMES_API_KEY = os.getenv("HERMES_API_KEY", "voice-hermes-2026")
 HERMES_HOME = os.getenv("HERMES_HOME", "/home/hermes_user/.hermes")
 VOICE_SESSION_FILE = os.path.join(HERMES_HOME, ".voice_api_session_id")
 
@@ -57,6 +58,8 @@ def save_voice_session_id(session_id: str):
 async def ask_hermes(message: str) -> str:
     session_id = get_voice_session_id()
     headers = {"Content-Type": "application/json"}
+    if HERMES_API_KEY:
+        headers["Authorization"] = f"Bearer {HERMES_API_KEY}"
     if session_id:
         headers["X-Hermes-Session-Id"] = session_id
 

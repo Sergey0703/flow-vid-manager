@@ -1,7 +1,7 @@
 import logging
 import os
 import asyncio
-import subprocess
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,7 +13,12 @@ from livekit.agents import (
     RoomInputOptions,
     WorkerOptions,
     cli,
+    llm,
+    APIConnectOptions,
+    NOT_GIVEN,
+    NotGivenOr,
 )
+from livekit.agents.llm import ChatChunk, ChoiceDelta
 from livekit.plugins import groq, openai, silero
 from livekit.plugins.turn_detector.english import EnglishModel
 
@@ -31,7 +36,6 @@ LIGHTRAG_QUERY = os.getenv("LIGHTRAG_QUERY", "/opt/lightrag/venv/bin/python3 /op
 
 
 async def query_lightrag(query: str) -> str:
-    """Load context from LightRAG at session start."""
     try:
         cmd = LIGHTRAG_QUERY.split() + [query]
         proc = await asyncio.create_subprocess_exec(
@@ -50,26 +54,21 @@ async def query_lightrag(query: str) -> str:
 
 
 def clean_hermes_output(text: str) -> str:
-    """Remove terminal UI elements from Hermes output."""
-    import re
     lines = text.splitlines()
     clean = []
     for line in lines:
-        # Skip box drawing characters, spinner lines, header/footer frames
         if any(c in line for c in ['╭', '╰', '│', '─', '✗', '✓', '◐', '◑', '◒', '◓', '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']):
             continue
-        # Skip lines that look like UI status
         if re.match(r'^\s*(Hermes Agent|❯|●|✢|✽|✶|✸|✿|\*)\s', line):
             continue
         clean.append(line)
     result = '\n'.join(clean).strip()
-    # Remove ANSI escape codes
     result = re.sub(r'\x1b\[[0-9;]*m', '', result)
     return result.strip()
 
 
-async def ask_hermes(message: str) -> str:
-    """Send message to Hermes and get response."""
+async def get_telegram_session_id() -> str:
+    """Find the most recent named (Telegram) session ID."""
     try:
         env = {
             **os.environ,
@@ -78,11 +77,44 @@ async def ask_hermes(message: str) -> str:
             "HERMES_HOME": HERMES_HOME,
             "NO_COLOR": "1",
             "TERM": "dumb",
-            # LiteLLM proxy runs on host, not inside container
-            "LITELLM_BASE_URL": "http://host.docker.internal:4000",
         }
         proc = await asyncio.create_subprocess_exec(
-            HERMES_BIN, "chat", "-q", message,
+            HERMES_BIN, "sessions", "list",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+            env=env,
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=10)
+        for line in stdout.decode().splitlines():
+            # Skip header, cron jobs, and unnamed sessions (starting with —)
+            if line.startswith(("Title", "─", "—", " ")) or "cron" in line:
+                continue
+            parts = line.rsplit(None, 1)
+            if len(parts) == 2:
+                session_id = parts[-1].strip()
+                if session_id and not session_id.startswith("cron"):
+                    logger.info(f"Using Telegram session: {session_id}")
+                    return session_id
+    except Exception as e:
+        logger.warning(f"Could not find Telegram session: {e}")
+    return ""
+
+
+async def ask_hermes(message: str) -> str:
+    try:
+        session_id = await get_telegram_session_id()
+        resume_args = ["--resume", session_id] if session_id else ["--continue"]
+        env = {
+            **os.environ,
+            "HOME": f"/home/{HERMES_USER}",
+            "USER": HERMES_USER,
+            "HERMES_HOME": HERMES_HOME,
+            "NO_COLOR": "1",
+            "TERM": "dumb",
+            "LITELLM_BASE_URL": "http://localhost:4000",
+        }
+        proc = await asyncio.create_subprocess_exec(
+            HERMES_BIN, "chat", "-q", message, *resume_args, "-Q",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
             env=env,
@@ -101,65 +133,84 @@ async def ask_hermes(message: str) -> str:
         return "Sorry, I had trouble processing that. Please try again."
 
 
-AGENT_INSTRUCTION = """You are a voice interface for Hermes, Serhii's personal AI assistant.
-Your job is to relay messages between Serhii and Hermes accurately.
+class HermesLLMStream(llm.LLMStream):
+    def __init__(self, hermes_llm, *, chat_ctx, tools, conn_options):
+        super().__init__(hermes_llm, chat_ctx=chat_ctx, tools=tools, conn_options=conn_options)
 
-IMPORTANT:
-- When Serhii speaks, pass his message to Hermes using the ask_hermes tool
-- Speak Hermes's response out loud naturally
-- Do NOT answer questions yourself — always use ask_hermes
-- Keep your own words minimal — just relay what Hermes says
+    async def _run(self) -> None:
+        # Get last user message
+        user_message = ""
+        for msg in reversed(self._chat_ctx.messages()):
+            if msg.role == "user":
+                user_message = msg.text_content or ""
+                break
 
-CRITICAL VOICE RULES:
-- NO markdown, NO bold, NO bullet points
-- Plain natural speech only
-- If Hermes response contains markdown, read it as plain text
-"""
-
-
-class HermesVoiceAgent(Agent):
-    def __init__(self, memory_context: str = "", session_ref=None) -> None:
-        instructions = AGENT_INSTRUCTION
-        if memory_context:
-            instructions += f"\n\nCONTEXT FROM MEMORY:\n{memory_context}"
-        super().__init__(instructions=instructions)
-        self._session_ref = session_ref
-        logger.info("HermesVoiceAgent initialized")
-
-    async def on_user_turn_completed(self, turn_ctx, new_message):
-        """Intercept user message, send to Hermes, speak response."""
-        user_text = new_message.text_content or ""
-        if not user_text.strip():
+        if not user_message:
             return
 
-        logger.info(f"USER: {user_text}")
+        logger.info(f"USER: {user_message}")
+        response = await ask_hermes(user_message)
+        logger.info(f"HERMES RESPONSE: {response}")
 
-        # Say something while Hermes is thinking
-        if self._session_ref:
-            await self._session_ref.say("One moment.", allow_interruptions=False)
+        # Stream response word by word
+        words = response.split()
+        for i, word in enumerate(words):
+            chunk = word + (" " if i < len(words) - 1 else "")
+            await self._event_ch.send(
+                ChatChunk(
+                    id="hermes",
+                    delta=ChoiceDelta(role="assistant", content=chunk)
+                )
+            )
 
-        response = await ask_hermes(user_text)
-        logger.info(f"HERMES: {response[:120]}")
 
-        if self._session_ref:
-            await self._session_ref.say(response, allow_interruptions=True)
+class HermesLLM(llm.LLM):
+    def chat(
+        self,
+        *,
+        chat_ctx,
+        tools=None,
+        conn_options=APIConnectOptions(),
+        parallel_tool_calls=NOT_GIVEN,
+        tool_choice=NOT_GIVEN,
+        extra_kwargs=NOT_GIVEN,
+    ) -> llm.LLMStream:
+        return HermesLLMStream(
+            self,
+            chat_ctx=chat_ctx,
+            tools=tools or [],
+            conn_options=conn_options,
+        )
+
+
+AGENT_INSTRUCTION = """You are Hermes, Serhii's personal AI assistant speaking via voice.
+Keep responses concise and natural for voice conversation.
+No markdown, no bullet points — plain speech only.
+"""
 
 
 async def entrypoint(ctx: JobContext):
     logger.info("Hermes Voice Agent starting")
 
-    # Load memory context from LightRAG
+    await ctx.connect()
+    logger.info("Connected to LiveKit room")
+
+    # Load memory context from LightRAG (after connect)
     memory_context = await query_lightrag("Serhii current projects servers tasks")
     if memory_context:
         logger.info(f"Memory loaded: {len(memory_context)} chars")
 
+    instructions = AGENT_INSTRUCTION
+    if memory_context:
+        instructions += f"\n\nCONTEXT FROM MEMORY:\n{memory_context}"
+
     session = AgentSession(
         stt=groq.STT(model="whisper-large-v3-turbo"),
-        llm=groq.LLM(model="llama-3.3-70b-versatile"),
+        llm=HermesLLM(),
         tts=openai.TTS(
             model="tts-1",
             voice="echo",
-            base_url="http://host.docker.internal:8001/v1",
+            base_url="http://localhost:8001/v1",
             api_key="not-needed",
         ),
         vad=silero.VAD.load(),
@@ -168,15 +219,19 @@ async def entrypoint(ctx: JobContext):
         max_endpointing_delay=4.0,
     )
 
-    agent = HermesVoiceAgent(memory_context=memory_context, session_ref=session)
+    agent = Agent(instructions=instructions)
 
     @session.on("user_input_transcribed")
     def on_transcribed(event):
-        if getattr(event, 'is_final', False):
-            logger.info(f"STT: {getattr(event, 'transcript', '')}")
+        logger.info(f"STT event: is_final={getattr(event, 'is_final', '?')} transcript={getattr(event, 'transcript', '')!r}")
 
-    await ctx.connect()
-    logger.info("Connected to LiveKit room")
+    @session.on("user_state_changed")
+    def on_user_state(event):
+        logger.info(f"User state: {event}")
+
+    @session.on("agent_state_changed")
+    def on_agent_state(event):
+        logger.info(f"Agent state: {event}")
 
     await session.start(
         room=ctx.room,
@@ -184,9 +239,8 @@ async def entrypoint(ctx: JobContext):
         room_input_options=RoomInputOptions(video_enabled=False),
     )
 
-    await session.generate_reply(
-        instructions="Greet Serhii briefly, tell him Hermes is ready. One sentence."
-    )
+    await asyncio.sleep(2)
+    await session.say("Hermes is ready. How can I help you?")
 
 
 if __name__ == "__main__":

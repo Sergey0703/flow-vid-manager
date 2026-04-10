@@ -2,6 +2,7 @@ import logging
 import os
 import asyncio
 import re
+import aiohttp
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,30 +30,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-voice")
 
-HERMES_BIN = os.getenv("HERMES_BIN", "/home/hermes_user/.local/bin/hermes")
+HERMES_API_URL = os.getenv("HERMES_API_URL", "http://localhost:8642/v1/chat/completions")
 HERMES_HOME = os.getenv("HERMES_HOME", "/home/hermes_user/.hermes")
-HERMES_USER = os.getenv("HERMES_USER", "hermes_user")
-VOICE_SESSION_FILE = os.path.join(HERMES_HOME, ".voice_session_id")
-
-
-def clean_hermes_output(text: str) -> str:
-    lines = text.splitlines()
-    clean = []
-    for line in lines:
-        if any(c in line for c in ['╭', '╰', '│', '─', '✗', '✓', '◐', '◑', '◒', '◓', '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']):
-            continue
-        if re.match(r'^\s*(Hermes Agent|❯|●|✢|✽|✶|✸|✿|\*)\s', line):
-            continue
-        if line.startswith("session_id:"):
-            continue
-        clean.append(line)
-    result = '\n'.join(clean).strip()
-    result = re.sub(r'\x1b\[[0-9;]*m', '', result)
-    return result.strip()
+VOICE_SESSION_FILE = os.path.join(HERMES_HOME, ".voice_api_session_id")
 
 
 def get_voice_session_id() -> str:
-    """Read last voice session ID from file."""
     try:
         if os.path.exists(VOICE_SESSION_FILE):
             session_id = open(VOICE_SESSION_FILE).read().strip()
@@ -64,7 +47,6 @@ def get_voice_session_id() -> str:
 
 
 def save_voice_session_id(session_id: str):
-    """Save voice session ID to file for next call."""
     try:
         with open(VOICE_SESSION_FILE, "w") as f:
             f.write(session_id)
@@ -72,81 +54,47 @@ def save_voice_session_id(session_id: str):
         logger.warning(f"Could not save session ID: {e}")
 
 
-async def get_latest_voice_session_id() -> str:
-    """Get the most recent non-cron session ID from hermes sessions list."""
-    env = {
-        **os.environ,
-        "HOME": f"/home/{HERMES_USER}",
-        "USER": HERMES_USER,
-        "HERMES_HOME": HERMES_HOME,
-        "NO_COLOR": "1",
-        "TERM": "dumb",
-    }
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            HERMES_BIN, "sessions", "list",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-            env=env,
-        )
-        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=10)
-        for line in stdout.decode().splitlines():
-            if line.startswith(("Preview", "─", "—")) or "cron" in line.lower():
-                continue
-            parts = line.rsplit(None, 1)
-            if len(parts) == 2:
-                sid = parts[-1].strip()
-                if sid and sid != "ID" and not sid.startswith("cron"):
-                    return sid
-    except Exception as e:
-        logger.warning(f"Could not get latest session ID: {e}")
-    return ""
-
-
 async def ask_hermes(message: str) -> str:
+    session_id = get_voice_session_id()
+    headers = {"Content-Type": "application/json"}
+    if session_id:
+        headers["X-Hermes-Session-Id"] = session_id
+
+    payload = {
+        "model": "hermes-agent",
+        "messages": [{"role": "user", "content": message}],
+        "stream": False,
+    }
+
     try:
-        session_id = get_voice_session_id()
-        if session_id:
-            extra_args = ["--resume", session_id]
-        else:
-            extra_args = ["--pass-session-id"]
-        env = {
-            **os.environ,
-            "HOME": f"/home/{HERMES_USER}",
-            "USER": HERMES_USER,
-            "HERMES_HOME": HERMES_HOME,
-            "NO_COLOR": "1",
-            "TERM": "dumb",
-            "LITELLM_BASE_URL": "http://localhost:4000",
-        }
-        proc = await asyncio.create_subprocess_exec(
-            HERMES_BIN, "chat", "-q", message, *extra_args, "-Q",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-            env=env,
-            cwd=f"/home/{HERMES_USER}",
-        )
-        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
-        raw = stdout.decode().strip()
+        async with aiohttp.ClientSession() as http:
+            async with http.post(
+                HERMES_API_URL,
+                json=payload,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=60),
+            ) as resp:
+                if resp.status != 200:
+                    text = await resp.text()
+                    logger.error(f"Hermes API error {resp.status}: {text[:200]}")
+                    return "Sorry, I had trouble processing that. Please try again."
 
-        # Extract and save session_id from first call
-        if not session_id:
-            for line in raw.splitlines():
-                if line.startswith("session_id:"):
-                    new_id = line.split(":", 1)[1].strip()
-                    save_voice_session_id(new_id)
-                    logger.info(f"Voice session saved: {new_id}")
-                    break
+                # Save session ID for continuity
+                new_session_id = resp.headers.get("X-Hermes-Session-Id", "")
+                if new_session_id and new_session_id != session_id:
+                    save_voice_session_id(new_session_id)
+                    logger.info(f"Voice session saved: {new_session_id}")
 
-        response = clean_hermes_output(raw)
-        if not response:
-            return "I didn't get a response. Please try again."
-        return response
+                data = await resp.json()
+                content = data["choices"][0]["message"]["content"]
+                logger.info(f"HERMES RESPONSE: {content[:200]}")
+                return content or "I didn't get a response. Please try again."
+
     except asyncio.TimeoutError:
-        logger.error("Hermes timed out")
+        logger.error("Hermes API timed out")
         return "Sorry, I'm taking too long to think. Please try again."
     except Exception as e:
-        logger.error(f"Hermes error: {e}")
+        logger.error(f"Hermes API error: {e}")
         return "Sorry, I had trouble processing that. Please try again."
 
 
@@ -155,7 +103,6 @@ class HermesLLMStream(llm.LLMStream):
         super().__init__(hermes_llm, chat_ctx=chat_ctx, tools=tools, conn_options=conn_options)
 
     async def _run(self) -> None:
-        # Get last user message
         user_message = ""
         for msg in reversed(self._chat_ctx.messages()):
             if msg.role == "user":
@@ -167,7 +114,6 @@ class HermesLLMStream(llm.LLMStream):
 
         logger.info(f"USER: {user_message}")
         response = await ask_hermes(user_message)
-        logger.info(f"HERMES RESPONSE: {response}")
 
         # Stream response word by word
         words = response.split()
@@ -212,8 +158,6 @@ async def entrypoint(ctx: JobContext):
     await ctx.connect()
     logger.info("Connected to LiveKit room")
 
-    instructions = AGENT_INSTRUCTION
-
     session = AgentSession(
         stt=groq.STT(model="whisper-large-v3-turbo"),
         llm=HermesLLM(),
@@ -229,7 +173,7 @@ async def entrypoint(ctx: JobContext):
         max_endpointing_delay=4.0,
     )
 
-    agent = Agent(instructions=instructions)
+    agent = Agent(instructions=AGENT_INSTRUCTION)
 
     @session.on("user_input_transcribed")
     def on_transcribed(event):

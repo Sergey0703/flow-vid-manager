@@ -7,7 +7,7 @@ status: ready
 editor_notes: "Expanded to 1,800+ words. Added real scenario, technical diagram, objections, comparison table, FAQ section."
 meta_description: "Cut Booking.com commission by 15-20% for Killarney hotels. Learn how an AI booking assistant pays for itself in under 2 months. Full deployment guide."
 fact_check: "All claims sourced"
-cover_image: ""
+cover_image: "blog-covers/2026-04-06-hotel-booking-ai.jpg"
 author:
   name: "Serhii Baliasnyi"
   title: "Founder & CEO, AIMediaFlow"
@@ -15,6 +15,8 @@ author:
   linkedin: "https://www.linkedin.com/in/serhii-baliasnyi-290b72246/"
   email: "sergey070373@gmail.com"
 ---
+
+# How Irish Hotels Save 15%+ OTA Commission with AI
 
 > You are losing 15-20% of every booking by handing it to Booking.com. In 2026, that is not inevitable — it is a choice.
 
@@ -228,3 +230,17 @@ The question is not "Can I afford to deploy AI?" It is "Can I afford to keep pay
 
 ---
 > **Book a free 15-min AI Infrastructure Audit at [aimediaflow.net](https://aimediaflow.net)**
+
+---
+
+<div style="display:flex;align-items:center;gap:16px;padding:20px;border-top:1px solid #e0e0e0;margin-top:40px">
+  <img src="author-photo.jpg" alt="Serhii Baliasnyi" style="width:80px;height:80px;border-radius:50%;object-fit:cover">
+  <div>
+    <strong>Serhii Baliasnyi</strong><br>
+    <em>Founder & CEO, AIMediaFlow</em><br>
+    AI automation for Irish SMEs — helping hotels, restaurants, and professional services save time and cut costs with practical AI tools.<br>
+    <a href="https://www.linkedin.com/in/serhii-baliasnyi-290b72246/">LinkedIn</a> · <a href="https://aimediaflow.net">AIMediaFlow</a>
+  </div>
+</div>
+
+> Edited & Published by AIMediaFlow | aimediaflow.net | 2026-04-06

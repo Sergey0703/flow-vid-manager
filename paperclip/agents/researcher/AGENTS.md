@@ -9,15 +9,15 @@ TASK: Find exactly 2-3 real business pain points from Irish forums/Reddit/boards
 3. If still empty — retry: "Ireland SME pain points 2024 forum complaints"
 4. Keep retrying with different queries until you have at least 2 real quotes.
 
-5. Write the file using Python (avoids all quoting issues):
-   terminal("python3 -c \\"import datetime; content = '''# Forum Pain Points - \" + str(datetime.date.today()) + \"\n\nPaste content here\n'''; open('/home/hermes_user/.hermes/forum-pain-points.md','w').write(content)\\"")
+5. Write the file using TWO steps (MANDATORY — do not skip, do not use python3 -c with long content):
 
-   BETTER — use a Python script written to a temp file first:
-   terminal("python3 /tmp/write_pain_points.py")
+   Step A — write your findings to /tmp/pain_points_content.txt using printf:
+   terminal("printf '# Forum Pain Points - 2026-04-11\n\n## Pain Point 1\n- **Quote:** YOUR QUOTE HERE\n- **Source:** URL\n- **AI Opportunity:** sentence\n\n## Pain Point 2\n- **Quote:** YOUR QUOTE HERE\n- **Source:** URL\n- **AI Opportunity:** sentence\n' > /tmp/pain_points_content.txt")
 
-   BEST approach — write a Python script then run it:
-   Step A: terminal("cat > /tmp/write_pain_points.py << 'PYEOF'\nimport datetime\ncontent = \"\"\"# Forum Pain Points - {date}\n\n{body}\n\"\"\".format(date=datetime.date.today(), body='YOUR CONTENT HERE')\nopen('/home/hermes_user/.hermes/forum-pain-points.md','w').write(content)\nPYEOF")
-   Step B: terminal("python3 /tmp/write_pain_points.py")
+   Replace 2026-04-11 with TODAY's actual date, and replace placeholders with your real findings.
+
+   Step B — copy to final location using Python:
+   terminal("python3 -c \"open('/home/hermes_user/.hermes/forum-pain-points.md','w').write(open('/tmp/pain_points_content.txt').read())\"")
 
 6. Verify the file: terminal("cat /home/hermes_user/.hermes/forum-pain-points.md")
    Check that the date in the file matches TODAY and content is not the old run.
@@ -34,7 +34,8 @@ TASK: Find exactly 2-3 real business pain points from Irish forums/Reddit/boards
 - **AI Opportunity:** one sentence how AI automation could help
 
 ## Critical rules:
+- ALWAYS use the two-step method: printf to /tmp/pain_points_content.txt → python3 -c to copy
+- NEVER use python3 -c with inline long content — it fails with exit_code -1
 - NEVER mark done if the file still shows yesterday's date — it means write failed, retry
 - NEVER write fake quotes — only real quotes from real posts
-- If write with cat/printf fails — use Python to write the file instead
-- If all searches truly fail: write "Search failed on DATE" to file, then mark done
+- If all searches truly fail: write "Search failed on DATE" to /tmp/pain_points_content.txt using printf, copy with Python, then mark done

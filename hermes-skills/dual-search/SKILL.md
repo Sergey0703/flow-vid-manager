@@ -4,7 +4,7 @@ description: |
   Dual web search using Tavily + SearXNG for maximum coverage and reliability.
   Always use both engines and merge results. Falls back to SearXNG-only if Tavily fails.
 category: research
-version: 1.0
+version: 1.2
 ---
 
 # Dual Search
@@ -14,58 +14,81 @@ version: 1.0
 Always search using **both** Tavily and SearXNG, then merge results.
 This ensures coverage even when Tavily credits run out or one engine returns poor results.
 
-## Endpoints
+## Engines
 
-- **Tavily**: `web_search` tool (native Hermes tool, uses `TAVILY_API_KEY`)
-- **SearXNG**: `http://localhost:8888/search?q=QUERY&format=json` via `web_fetch`
+- **Tavily**: native `web_search` tool
+- **SearXNG**: via `terminal` tool using Python + urllib (NOT curl, NOT web_extract)
 
 ## How to Use
 
 ### Step 1 — Tavily search
-Call the native `web_search` tool with your query.
-Save results as list of `{title, url, content}`.
+Call the native `web_search` tool:
+```
+web_search("your query", max_results=5)
+```
 
-### Step 2 — SearXNG search
-Call `web_fetch` on:
+### Step 2 — SearXNG search via terminal (Python)
+Run this exact Python snippet via the `terminal` tool:
+```python
+import urllib.request, urllib.parse, json
+q = urllib.parse.quote_plus("YOUR QUERY HERE")
+url = f"http://localhost:8888/search?q={q}&format=json"
+req = urllib.request.Request(url, headers={"Accept": "application/json"})
+with urllib.request.urlopen(req, timeout=10) as r:
+    data = json.loads(r.read())
+results = data["results"][:8]
+for r in results:
+    print(r["title"], "|", r["url"])
+print(f"Total: {len(results)} SearXNG results")
 ```
-http://localhost:8888/search?q=YOUR+QUERY+URL+ENCODED&format=json
-```
-Parse JSON response. Extract `results[]` → each has `title`, `url`, `content`.
-Take top 5-10 by `score`.
 
 ### Step 3 — Merge & deduplicate
-Combine both lists. Deduplicate by `url`. Prefer results that appear in both engines (higher confidence).
+Combine both lists. Deduplicate by `url`. Prefer results that appear in both engines.
 
 ### Step 4 — Fallback rules
-- If Tavily returns error / empty → use SearXNG results only (don't stop)
-- If SearXNG unreachable → use Tavily results only (don't stop)
+- If Tavily returns error/empty → use SearXNG results only
+- If SearXNG Python script fails → use Tavily results only
 - Never fail silently — always return what you have
 
-## Example (pseudo-steps)
+## Full Example for Cron Jobs
 
+```python
+import urllib.request, urllib.parse, json
+
+query = "Irish SMEs AI automation 2025"
+
+# --- SearXNG ---
+q = urllib.parse.quote_plus(query)
+req = urllib.request.Request(
+    f"http://localhost:8888/search?q={q}&format=json",
+    headers={"Accept": "application/json"}
+)
+with urllib.request.urlopen(req, timeout=10) as r:
+    data = json.loads(r.read())
+
+searxng = [{"title": r["title"], "url": r["url"], "content": r.get("content","")} 
+           for r in data["results"][:8]]
+
+print(f"SearXNG: {len(searxng)} results")
+for r in searxng:
+    print("-", r["title"], "|", r["url"])
 ```
-query = "Irish SMEs admin burden AI automation"
 
-# Tavily
-tavily_results = web_search(query, max_results=5)
-
-# SearXNG
-searxng_raw = web_fetch("http://localhost:8888/search?q=Irish+SMEs+admin+burden+AI+automation&format=json")
-searxng_results = parse searxng_raw["results"][:8]
-
-# Merge
-all_results = deduplicate(tavily_results + searxng_results, key="url")
-```
+Then separately call `web_search` tool for Tavily results, combine both lists.
 
 ## When to Use
 
-Use this skill whenever you need to do web research, especially in:
-- Cron jobs (Forum Pain Points, Case Studies, Facts, Morning Aggregator)
-- Any research task where missing results = incomplete output
+Use in ALL research cron jobs:
+- Forum Pain Points Monitor
+- Case Studies Monitor
+- SME Facts Monitor
+- Morning Topics Aggregator
+- Blog Analyst (Outline Builder)
 
-## SearXNG Query Tips
+## SearXNG Result Fields
 
-- URL-encode spaces as `+`
-- Add `&language=en` for English results
-- Add `&categories=general` (default) or `&categories=news` for recent news
-- Max results per page: use `&pageno=1` (default)
+- `title` — page title
+- `url` — page URL
+- `content` — snippet
+- `engines` — which engines found it (brave, duckduckgo, startpage...)
+- `score` — higher = more engines agree = more reliable

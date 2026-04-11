@@ -70,7 +70,7 @@ CREATE TABLE topics (
 
 ### Analyst (06:15)
 - Query: `SELECT * FROM topics WHERE status IN ('new', 'new/seed', 'new/verified') LIMIT 1`.
-- Uses `web_search` (Tavily + SearXNG) to find 3-5 verified sources.
+- Uses **dual-search skill**: `web_search` (Tavily) + `web_fetch` SearXNG (`http://localhost:8888/search?q=...&format=json`). Always both, merge results, deduplicate by URL.
 - Saves JSON outline with `topic_id`, `hook`, `sections`, `sources`, `cta`.
 - Updates DB: `status='analyzed'`.
 

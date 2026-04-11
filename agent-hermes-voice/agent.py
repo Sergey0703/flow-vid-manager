@@ -171,9 +171,8 @@ async def entrypoint(ctx: JobContext):
             api_key="not-needed",
         ),
         vad=silero.VAD.load(),
-        turn_detection=EnglishModel(),
         min_endpointing_delay=0.5,
-        max_endpointing_delay=4.0,
+        max_endpointing_delay=6.0,
     )
 
     agent = Agent(instructions=AGENT_INSTRUCTION)
@@ -189,6 +188,15 @@ async def entrypoint(ctx: JobContext):
     @session.on("agent_state_changed")
     def on_agent_state(event):
         logger.info(f"Agent state: {event}")
+
+    @session.on("metrics_collected")
+    def on_metrics(event):
+        metrics = getattr(event, 'metrics', event)
+        logger.info(f"Metrics: {metrics}")
+
+    @session.on("speech_created")
+    def on_speech(event):
+        logger.info(f"Speech created (VAD detected user speaking): {getattr(event, 'source', '?')}")
 
     await session.start(
         room=ctx.room,

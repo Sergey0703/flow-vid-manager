@@ -46,6 +46,99 @@ Instructions live on server at:
 
 ---
 
+## CRITICAL DISCOVERY: How Issue Description Works as Agent Instructions
+
+**This is the most important lesson learned.** When an agent runs via "Run Heartbeat"
+(no taskId in context), it goes into the `{{#noTask}}` branch of execute.js which instructs
+it to:
+1. Curl the issues list API to find pending `todo` issues assigned to it
+2. Read the full issue body via API
+3. **Execute the work described in the issue description**
+4. Mark the issue as done
+
+**This means: the `description` field of the issue IS the agent's task instructions.**
+
+### How to create an issue with proper instructions
+
+Use this Python script on the server (handles special characters safely):
+
+```python
+# Save as /tmp/create_issue.py on server, then: python3 /tmp/create_issue.py
+import subprocess
+
+description = (
+    "STEP 1: Use web_search: <your search query>\n"
+    "STEP 2: If fewer than 2 results - retry with different query\n"
+    "STEP 3: Write file /home/hermes_user/.hermes/<output-file>.md in this exact markdown:\n\n"
+    "# Title - YYYY-MM-DD\n\n"
+    "## [Section]\n"
+    "- **Field:** value\n\n"
+    "Write using tee command. Verify with cat. Only mark done after file shows correct content."
+)
+
+escaped = description.replace("'", "''")
+sql = (
+    "INSERT INTO issues (company_id, project_id, title, description, status, assignee_agent_id) "
+    "VALUES ("
+    "'b984404a-8587-41d0-9354-a6251bd0fd94',"
+    "'91ab5627-dedf-4265-b215-5fc80826f0a8',"
+    "'<Issue title>',"
+    "'" + escaped + "',"
+    "'todo',"
+    "'<AGENT_ID>'"
+    ") RETURNING id;"
+)
+open('/tmp/create_issue.sql', 'w').write(sql)
+```
+
+Then run:
+```bash
+docker cp /tmp/create_issue.sql paperclip-db:/tmp/create_issue.sql
+docker exec paperclip-db psql -U paperclip -d paperclip -f /tmp/create_issue.sql
+```
+
+**Why Python and not direct psql?** The description contains special characters (quotes,
+newlines, parentheses) that break shell quoting. Python handles escaping cleanly.
+
+### Issue description template for research agents
+
+```
+Search <source> for <topic> and write to file.
+
+STEP 1: Use web_search: <query 1>
+STEP 2: If fewer than 2 results - retry: <query 2>
+STEP 3: Write file /home/hermes_user/.hermes/<filename>.md in this exact markdown:
+
+# <Title> - YYYY-MM-DD
+
+## [Section Title]
+- **Quote:** exact quote from real post
+- **Source:** URL
+- **AI Opportunity:** one sentence
+
+## [Section Title 2]
+- **Quote:** exact quote 2
+- **Source:** URL 2
+- **AI Opportunity:** one sentence
+
+Write using tee command. Verify with cat. Only mark done after file shows correct content.
+```
+
+### What happened on first successful run (2026-04-12)
+
+Run `ae517ab7` ran for 5 minutes, made 32 tool calls, then crashed with "Process lost —
+server may have restarted". BUT the file was already written before the crash. The agent:
+1. Fetched issues list via curl → found issue `1e499665`
+2. Read issue description with step-by-step instructions
+3. Did web_search for Irish SME pain points
+4. Wrote `/home/hermes_user/.hermes/forum-pain-points.md` with 5 real pain points
+5. Crashed before posting the done comment — but file was saved
+
+Result: issue was marked `done` and file contained proper markdown with quotes from
+Reddit, boards.ie, Irish Times, Oireachtas debates.
+
+---
+
 ## Key File: execute.js
 
 **Path on server:**

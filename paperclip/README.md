@@ -1,76 +1,353 @@
-# Paperclip — AIMediaFlow Agent Setup
+# Paperclip — AIMediaFlow Setup & Recovery Guide
 
-Server: **65.21.3.89:3100**
-Started via: `pm2 start /opt/paperclip/start.sh --name paperclip`
+## Overview
+
+Paperclip is an AI agent platform running on **Server 2 (65.21.3.89)** via PM2.
+- UI: `http://65.21.3.89:3100/AIM`
+- API: `http://127.0.0.1:3100/api` (localhost only)
+- PM2 service name: `paperclip`
+- Company ID: `b984404a-8587-41d0-9354-a6251bd0fd94`
+- DB: Docker container `paperclip-db`, PostgreSQL, user/db: `paperclip`
 
 ## Agents
 
-| Name | ID | Adapter | Toolsets |
+| Agent | ID | Toolsets |
+|---|---|---|
+| Researcher | `ccc8c5e8-cc55-4432-aa16-0bc73391049e` | web, terminal |
+| SME Facts Researcher | `acf7ffec-4aef-43be-b83b-828170c15b17` | web, terminal |
+| Case Studies Researcher | `527db020-5bf8-41e0-bf8d-20e007e7056e` | web, terminal |
+| AgentMail Monitor | `b948c00d-abbd-45a0-8520-e8458fc7b11c` | web, terminal |
+| CEO | `5423deab-0b1c-4a88-b533-5b88e24c1f19` | — |
+| Chief Editor | `f18ff445-0515-4397-b814-2a754bd245b1` | web, terminal |
+
+Instructions live on server at:
+`/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/<AGENT_ID>/instructions/AGENTS.md`
+
+## Projects & Routines
+
+| Project | ID |
+|---|---|
+| Onboarding | `91ab5627-dedf-4265-b215-5fc80826f0a8` |
+
+| Routine | Agent | Schedule | ID |
 |---|---|---|---|
-| Researcher | `ccc8c5e8-cc55-4432-aa16-0bc73391049e` | hermes_local | web, terminal |
-| Chief Editor | `f18ff445-0515-4397-b814-2a754bd245b1` | hermes_local | web, terminal |
-| CEO | `5423deab-0b1c-4a88-b533-5b88e24c1f19` | hermes_local | — |
-| SME Facts Researcher | `acf7ffec-4aef-43be-b83b-828170c15b17` | hermes_local | web, terminal |
-| Case Studies Researcher | `527db020-5bf8-41e0-bf8d-20e007e7056e` | hermes_local | web, terminal |
-| AgentMail Monitor | `b948c00d-abbd-45a0-8520-e8458fc7b11c` | hermes_local | web, terminal |
+| Forum Pain Points Monitor | Researcher | `15 5 * * *` Europe/Dublin | `dd24ed39-ecbf-47e5-8b85-fb818c2c8ebb` |
+| SME Facts Monitor | SME Facts Researcher | `0 5 * * *` Europe/Dublin | `7274106d-413f-43df-85c5-9653529d75b0` |
+| Case Studies Monitor | Case Studies Researcher | `30 5 * * *` Europe/Dublin | `79fe0dc4-7a1a-4553-8e47-936bc9753d89` |
+| AgentMail Monitor | AgentMail Monitor | `45 5 * * *` Europe/Dublin | `bc1f09da-848f-4253-91a9-7bd1ee44f826` |
+| Morning Topics Aggregator | Chief Editor | `0 6 * * *` UTC | `825fdd59-3a16-41bf-a1e7-f33c1a907eb1` |
 
-Instructions: `paperclip/agents/<name>/AGENTS.md`
-On server: `/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/<id>/instructions/AGENTS.md`
+## Output Files (on server)
 
-## Routines
+- `/home/hermes_user/.hermes/forum-pain-points.md` — Researcher
+- `/home/hermes_user/.hermes/verified-sme-facts.md` — SME Facts Researcher
+- `/home/hermes_user/.hermes/competitor-case-studies.md` — Case Studies Researcher
+- `/home/hermes_user/.hermes/email-sourced-topics.md` — AgentMail Monitor
 
-| Name | Agent | Schedule | Timezone |
-|---|---|---|---|
-| Forum Pain Points Monitor | Researcher | `15 5 * * *` | Europe/Dublin |
-| SME Facts Monitor | SME Facts Researcher | `0 5 * * *` | Europe/Dublin |
-| Case Studies Monitor | Case Studies Researcher | `30 5 * * *` | Europe/Dublin |
-| AgentMail Monitor | AgentMail Monitor | `45 5 * * *` | Europe/Dublin |
-| Morning Topics Aggregator | Chief Editor | `0 6 * * *` | UTC |
+---
 
-## Key lessons
+## Key File: execute.js
 
-- Issues must be created via API with `status: "todo"` to trigger `issue_assigned` wake
-- Issues with `status: "backlog"` do NOT trigger wake (hardcoded in `issue-assignment-wakeup.ts:31`)
-- Routines create issues with `status: "todo"` automatically — wake works correctly
-- Agent writes files via two-step method: `printf '...' > /tmp/content.txt` then `python3 -c "open(dest).write(open('/tmp/content.txt').read())"` — avoids exit_code -1 from long inline python3 -c strings
-- JWT auth: sign with `BETTER_AUTH_SECRET`, `run_id` must be real UUID from `heartbeat_runs`
-
-## Manual run via API
-
-```bash
-# Generate JWT (run on server)
-python3 /tmp/create_jwt.py  # see script below
-
-# Trigger routine manually
-curl -s -X POST "http://localhost:3100/api/routines/<routine-id>/run" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"source":"manual"}'
-
-# Or create issue directly
-curl -s -X POST "http://localhost:3100/api/companies/b984404a-8587-41d0-9354-a6251bd0fd94/issues" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"Task title","status":"todo","assigneeAgentId":"<agent-id>"}'
+**Path on server:**
+```
+/opt/paperclip/node_modules/.pnpm/hermes-paperclip-adapter@0.2.0/node_modules/hermes-paperclip-adapter/dist/server/execute.js
 ```
 
-## Routine IDs
+This file controls how Paperclip launches Hermes agents.
+**It gets overwritten on every Paperclip update** (`npm install` / update). Must be re-patched after every update.
 
-| Routine | ID |
-|---|---|
-| Forum Pain Points Monitor | `dd24ed39-ecbf-47e5-8b85-fb818c2c8ebb` |
-| SME Facts Monitor | `7274106d-413f-43df-85c5-9653529d75b0` |
-| Case Studies Monitor | `79fe0dc4-7a1a-4553-8e47-936bc9753d89` |
-| AgentMail Monitor | `bc1f09da-848f-4253-91a9-7bd1ee44f826` |
-| Morning Topics Aggregator | `825fdd59-3a16-41bf-a1e7-f33c1a907eb1` |
+### What patches are applied and WHY
 
-## Company ID
+#### Patch 1 — `ctx.context` fallback for taskId (buildPrompt section)
 
-`b984404a-8587-41d0-9354-a6251bd0fd94`
+**Problem:** When Paperclip runs a heartbeat, it passes task/issue data in `ctx.context`
+(the `contextSnapshot` object from DB), NOT in `ctx.config` (the `runtimeConfig`).
+The original code only reads from `ctx.config`:
 
-## Output files (on server)
+```js
+// ORIGINAL — broken
+const taskId = cfgString(ctx.config?.taskId);
+```
 
-- `/home/hermes_user/.hermes/forum-pain-points.md` — Researcher output
-- `/home/hermes_user/.hermes/verified-sme-facts.md` — SME Facts Monitor output
-- `/home/hermes_user/.hermes/competitor-case-studies.md` — Case Studies Monitor output
-- `/home/hermes_user/.hermes/email-sourced-topics.md` — AgentMail Monitor output
+Without this fix, `taskId` is always empty → the `{{#taskId}}` block in AGENTS.md never
+renders → agent falls into `{{#noTask}}` branch → looks for issues via curl instead of
+working on the assigned task.
+
+**Fix:**
+```js
+const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);
+const taskTitle = cfgString(ctx.config?.taskTitle) ?? cfgString(ctx.context?.taskTitle) ?? "";
+const taskBody = cfgString(ctx.config?.taskBody) ?? cfgString(ctx.context?.taskBody) ?? "";
+const commentId = cfgString(ctx.config?.commentId) ?? cfgString(ctx.context?.commentId) ?? "";
+const wakeReason = cfgString(ctx.config?.wakeReason) ?? cfgString(ctx.context?.wakeReason) ?? "";
+```
+
+#### Patch 2 — `paperclipApiKey` in template vars
+
+**Problem:** Agent needs to authenticate against the Paperclip API (update issue status,
+post comments). The API key (`ctx.authToken`) was not exposed as a template variable,
+so `{{paperclipApiKey}}` in curl commands expanded to empty string → 401 Unauthorized.
+
+**Fix:** Added on the **SAME LINE** as `paperclipApiUrl` (critical — see TSX crash below):
+```js
+paperclipApiUrl, paperclipApiKey: ctx.authToken || "",
+```
+
+#### Patch 3 — `taskId` from `ctx.context` in execute() section
+
+Same as Patch 1, but in the second location where `taskId` is read (the `execute()` function
+that sets process env vars):
+```js
+const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);
+```
+
+#### Patch 4 — Inject `PAPERCLIP_API_KEY` and `HOME` into process env
+
+**Problem 1:** Hermes terminal tools need `PAPERCLIP_API_KEY` as an env var for `$PAPERCLIP_API_KEY`
+substitution in shell commands. Without it, all curl calls to Paperclip API return 401.
+
+**Problem 2:** `HOME` is not set in the spawned process environment. This breaks any tool
+that relies on `~` or `$HOME` paths (e.g., writing to `/home/hermes_user/.hermes/`).
+
+**Fix:**
+```js
+if (ctx.authToken)
+    env.PAPERCLIP_API_KEY = ctx.authToken;
+if (!env.HOME)
+    env.HOME = "/home/hermes_user";
+```
+
+---
+
+### CRITICAL: TSX Parse Error at Line 133
+
+When Patch 2 was added on a **new line**, it shifted template content and caused a fatal crash:
+
+```
+SyntaxError: Unexpected token at line 133
+```
+
+Root cause: Line 133 in the template section contains `{{#noTask}}`. The `{` at the start
+of a line is parsed by Paperclip's TSX/bundler as the beginning of a JSX expression.
+This is a **fatal crash** — Paperclip worker dies and restarts in a loop (you'll see
+restart counter climb in `pm2 list`).
+
+**Rule:** `paperclipApiKey: ctx.authToken || ""` MUST be on the same line as `paperclipApiUrl,`
+— never on its own line.
+
+---
+
+## adapter_config.json — paperclipApiUrl
+
+Each agent's `adapter_config.json` must include:
+```json
+"paperclipApiUrl": "http://127.0.0.1:3100/api"
+```
+
+**Why:** Without this, `buildPaperclipEnv()` resolves the API URL with wrong port (3101
+instead of 3100). The agent gets wrong `{{paperclipApiUrl}}` in its prompt and all API
+calls fail with connection refused.
+
+---
+
+## Hermes Config — approvals.mode
+
+**Path:** `/home/hermes_user/.hermes/config.yaml`
+
+```yaml
+approvals:
+  mode: autonomous
+```
+
+**Why:** Default is `mode: manual`. In manual mode, Hermes blocks before running terminal
+commands with flags like `-c` (e.g., `python3 -c "..."`). Since Paperclip runs Hermes
+headlessly, there's no one to approve → run hangs, times out, or is blocked with
+"DANGEROUS COMMAND" error.
+
+**Must always be `autonomous`** so agents can run commands without interactive prompts.
+
+---
+
+## How Heartbeat Runs Work
+
+When you click **"Run Heartbeat"** in the UI (or it fires on schedule):
+
+1. Paperclip creates a `heartbeat_runs` record with `context_snapshot` containing
+   `wakeSource`, `actorId`, workspace info, etc.
+2. `execute.js` is called with `ctx` containing the run context
+3. `buildPrompt()` reads `taskId` from `ctx.config` → with our patch also from `ctx.context`
+4. If `taskId` found → `{{#taskId}}` block renders → agent works on the specific issue
+5. If `taskId` empty → `{{#noTask}}` block renders → agent queries API for pending issues
+
+**Known behavior:** "Run Heartbeat" button does NOT pass an `issueId` in `context_snapshot`.
+So `taskId` is always empty even with the patch, and agent goes to `{{#noTask}}` branch.
+In `{{#noTask}}`, the agent uses curl to find pending issues assigned to it, then works on them.
+
+**"Assign Task" button** (top-right in Researcher UI) is the correct way to run agent
+on a specific issue — it passes the issue ID in context.
+
+---
+
+## Full Recovery Procedure
+
+### Step 1 — Check if patches are present
+
+```bash
+ssh -i .ssh_hetzner_key root@65.21.3.89 "
+  F=/opt/paperclip/node_modules/.pnpm/hermes-paperclip-adapter@0.2.0/node_modules/hermes-paperclip-adapter/dist/server/execute.js
+  echo ctx.context: \$(grep -c 'ctx.context?.taskId' \$F)
+  echo PAPERCLIP_API_KEY: \$(grep -c 'PAPERCLIP_API_KEY' \$F)
+  echo HOME patch: \$(grep -c 'hermes_user' \$F)
+  echo paperclipApiKey: \$(grep -c 'paperclipApiKey' \$F)
+"
+# Expected: ctx.context: 2, PAPERCLIP_API_KEY: 3+, HOME patch: 1+, paperclipApiKey: 2+
+```
+
+### Step 2 — Apply patches from this repo
+
+```bash
+# Clone repo on server (or use scp)
+ssh -i .ssh_hetzner_key root@65.21.3.89 "bash /path/to/paperclip/server/restore.sh"
+```
+
+Or from local machine:
+```bash
+scp -i .ssh_hetzner_key paperclip/server/restore.sh root@65.21.3.89:/tmp/restore.sh
+ssh -i .ssh_hetzner_key root@65.21.3.89 "bash /tmp/restore.sh"
+```
+
+`restore.sh` does everything: patches execute.js, restores all adapter_configs in DB,
+restarts Paperclip.
+
+### Step 3 — Verify no TSX crash
+
+```bash
+ssh -i .ssh_hetzner_key root@65.21.3.89 "pm2 logs paperclip --lines 20 --nostream"
+```
+
+- ✅ `INFO: GET / 200` → Paperclip is up
+- ❌ `SyntaxError: Unexpected token at line 133` → TSX crash, paperclipApiKey on wrong line
+
+### Step 4 — Restore agent instructions
+
+```bash
+BASE="root@65.21.3.89:/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents"
+KEY="-i .ssh_hetzner_key"
+
+scp $KEY paperclip/agents/researcher/AGENTS.md          $BASE/ccc8c5e8-cc55-4432-aa16-0bc73391049e/instructions/AGENTS.md
+scp $KEY paperclip/agents/sme-facts-researcher/AGENTS.md $BASE/acf7ffec-4aef-43be-b83b-828170c15b17/instructions/AGENTS.md
+scp $KEY paperclip/agents/case-studies-researcher/AGENTS.md $BASE/527db020-5bf8-41e0-bf8d-20e007e7056e/instructions/AGENTS.md
+scp $KEY paperclip/agents/agentmail-monitor/AGENTS.md   $BASE/b948c00d-abbd-45a0-8520-e8458fc7b11c/instructions/AGENTS.md
+```
+
+### Step 5 — Check hermes approvals.mode
+
+```bash
+ssh -i .ssh_hetzner_key root@65.21.3.89 "grep 'mode:' /home/hermes_user/.hermes/config.yaml"
+# Must show: mode: autonomous
+```
+
+If not:
+```bash
+ssh -i .ssh_hetzner_key root@65.21.3.89 "
+  sed -i 's/mode: manual/mode: autonomous/' /home/hermes_user/.hermes/config.yaml
+"
+```
+
+---
+
+## Diagnosing Run Failures
+
+### Agent completes instantly with no tool calls
+
+```bash
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "SELECT event_type, message FROM heartbeat_run_events WHERE run_id = 'RUN_ID' ORDER BY seq;"
+```
+
+Only `run started` + `run succeeded` → patches not applied or Hermes not starting.
+
+### Check full run output
+
+```bash
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "SELECT stdout_excerpt FROM heartbeat_runs WHERE id = 'RUN_ID';"
+```
+
+| stdout shows | Cause | Fix |
+|---|---|---|
+| `No issues found` | taskId empty, no pending issues in API | Create issue with `status=todo`, assign to agent |
+| `DANGEROUS COMMAND` | `approvals.mode: manual` | Set to `autonomous` in config.yaml |
+| Agent searched but didn't write file | AGENTS.md instructions ambiguous | Make instructions explicit with mandatory steps |
+| `SyntaxError line 133` | TSX crash from newline in patch | Put `paperclipApiKey` on same line as `paperclipApiUrl` |
+
+### Check latest runs
+
+```bash
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "SELECT id, status, started_at, finished_at FROM heartbeat_runs
+   WHERE agent_id = 'AGENT_ID' ORDER BY created_at DESC LIMIT 5;"
+```
+
+### Delete all issues (clean slate)
+
+FK constraints require deletion in order:
+```bash
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "DELETE FROM issue_read_states WHERE issue_id IN (SELECT id FROM issues WHERE company_id = 'b984404a-8587-41d0-9354-a6251bd0fd94');"
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "DELETE FROM issue_comments WHERE issue_id IN (SELECT id FROM issues WHERE company_id = 'b984404a-8587-41d0-9354-a6251bd0fd94');"
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "DELETE FROM issues WHERE company_id = 'b984404a-8587-41d0-9354-a6251bd0fd94';"
+```
+
+### Create issue manually
+
+```bash
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "INSERT INTO issues (company_id, project_id, title, description, status, assignee_agent_id)
+   VALUES (
+     'b984404a-8587-41d0-9354-a6251bd0fd94',
+     '91ab5627-dedf-4265-b215-5fc80826f0a8',
+     'Task title', 'Description', 'todo',
+     'AGENT_ID'
+   ) RETURNING id;"
+```
+
+### Reset issue to todo
+
+```bash
+docker exec paperclip-db psql -U paperclip -d paperclip -c \
+  "UPDATE issues SET status = 'todo' WHERE id = 'ISSUE_ID';"
+```
+
+---
+
+## File Structure (this repo)
+
+```
+paperclip/
+├── README.md                            ← this file (full docs)
+├── start.sh                             ← pm2 start script
+├── server/
+│   ├── execute.js.patch                 ← diff of all patches with explanation
+│   └── restore.sh                       ← full restore: patch + DB + restart
+└── agents/
+    ├── researcher/
+    │   ├── AGENTS.md                    ← agent instructions
+    │   └── adapter_config.json          ← includes paperclipApiUrl fix
+    ├── sme-facts-researcher/
+    │   ├── AGENTS.md
+    │   └── adapter_config.json
+    ├── case-studies-researcher/
+    │   ├── AGENTS.md
+    │   └── adapter_config.json
+    ├── agentmail-monitor/
+    │   ├── AGENTS.md
+    │   └── adapter_config.json
+    ├── ceo/
+    │   └── AGENTS.md
+    └── chief-editor/
+        ├── AGENTS.md
+        └── adapter_config.json
+```

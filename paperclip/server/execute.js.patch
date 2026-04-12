@@ -14,8 +14,13 @@
 
 @@ vars object in buildPrompt() @@
 -        paperclipApiUrl,
-+        paperclipApiUrl,
-+        paperclipApiKey: ctx.authToken || "",
++        paperclipApiUrl, paperclipApiKey: ctx.authToken || "",
+
+CRITICAL: paperclipApiKey MUST be on the SAME LINE as paperclipApiUrl.
+If placed on a new line, it shifts line 133 of the template section which contains
+{{#noTask}}. The TSX lexer treats the opening { as JSX and crashes with:
+  SyntaxError: Unexpected token at line 133
+This is a fatal crash — PM2 will show restart counter climbing rapidly.
 
 @@ execute() function — env block @@
 -    const taskId = cfgString(ctx.config?.taskId);

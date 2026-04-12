@@ -249,7 +249,7 @@ calls fail with connection refused.
 
 ```yaml
 approvals:
-  mode: autonomous
+  mode: off
 ```
 
 **Why:** Default is `mode: manual`. In manual mode, Hermes blocks before running terminal
@@ -257,7 +257,7 @@ commands with flags like `-c` (e.g., `python3 -c "..."`). Since Paperclip runs H
 headlessly, there's no one to approve → run hangs, times out, or is blocked with
 "DANGEROUS COMMAND" error.
 
-**Must always be `autonomous`** so agents can run commands without interactive prompts.
+**Must always be `off`** so agents can run commands without interactive prompts.
 
 ---
 
@@ -337,13 +337,14 @@ scp $KEY paperclip/agents/agentmail-monitor/AGENTS.md   $BASE/b948c00d-abbd-45a0
 
 ```bash
 ssh -i .ssh_hetzner_key root@65.21.3.89 "grep 'mode:' /home/hermes_user/.hermes/config.yaml"
-# Must show: mode: autonomous
+# Must show: mode: off
 ```
 
 If not:
 ```bash
 ssh -i .ssh_hetzner_key root@65.21.3.89 "
-  sed -i 's/mode: manual/mode: autonomous/' /home/hermes_user/.hermes/config.yaml
+  sed -i 's/mode: manual/mode: off/' /home/hermes_user/.hermes/config.yaml
+  sed -i 's/mode: autonomous/mode: off/' /home/hermes_user/.hermes/config.yaml
 "
 ```
 
@@ -370,7 +371,7 @@ docker exec paperclip-db psql -U paperclip -d paperclip -c \
 | stdout shows | Cause | Fix |
 |---|---|---|
 | `No issues found` | taskId empty, no pending issues in API | Create issue with `status=todo`, assign to agent |
-| `DANGEROUS COMMAND` | `approvals.mode: manual` | Set to `autonomous` in config.yaml |
+| `DANGEROUS COMMAND` | `approvals.mode` not `off` | Set to `mode: off` in config.yaml — `autonomous` is NOT a valid value, it falls back to `manual` |
 | Agent searched but didn't write file | AGENTS.md instructions ambiguous | Make instructions explicit with mandatory steps |
 | `SyntaxError line 133` | TSX crash from newline in patch | Put `paperclipApiKey` on same line as `paperclipApiUrl` |
 

@@ -1,6 +1,6 @@
 --- execute.js.orig
 +++ execute.js
-@@ -97,11 +97,11 @@
+@@ buildPrompt() function @@
 -    const taskId = cfgString(ctx.config?.taskId);
 -    const taskTitle = cfgString(ctx.config?.taskTitle) || "";
 -    const taskBody = cfgString(ctx.config?.taskBody) || "";
@@ -11,13 +11,34 @@
 +    const taskBody = cfgString(ctx.config?.taskBody) ?? cfgString(ctx.context?.taskBody) ?? "";
 +    const commentId = cfgString(ctx.config?.commentId) ?? cfgString(ctx.context?.commentId) ?? "";
 +    const wakeReason = cfgString(ctx.config?.wakeReason) ?? cfgString(ctx.context?.wakeReason) ?? "";
-@@ -298,1 +298,1 @@
+
+@@ vars object in buildPrompt() @@
+-        paperclipApiUrl,
++        paperclipApiUrl,
++        paperclipApiKey: ctx.authToken || "",
+
+@@ execute() function — env block @@
 -    const taskId = cfgString(ctx.config?.taskId);
 +    const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);
 
-WHY: ctx.config is runtimeConfig (resolved adapterConfig), but taskId lives in
-ctx.context (contextSnapshot). Without this patch, {{#taskId}} block is always
-empty and agent falls into {{#noTask}} branch trying to list issues via curl.
+@@ execute() function — after PAPERCLIP_RUN_ID @@
+-    if (ctx.runId)
+-        env.PAPERCLIP_RUN_ID = ctx.runId;
++    if (ctx.runId)
++        env.PAPERCLIP_RUN_ID = ctx.runId;
++    if (ctx.authToken)
++        env.PAPERCLIP_API_KEY = ctx.authToken;
++    if (!env.HOME)
++        env.HOME = "/home/hermes_user";
+
+WHY:
+1. ctx.config is runtimeConfig (resolved adapterConfig), but taskId lives in
+   ctx.context (contextSnapshot). Without this, {{#taskId}} block is always
+   empty and agent falls into {{#noTask}} branch trying to list issues via curl.
+2. paperclipApiKey added to template vars so agent can use {{paperclipApiKey}}
+   in curl commands for Authorization: Bearer header.
+3. PAPERCLIP_API_KEY injected into process env so hermes tools can use it.
+4. HOME must be set — hermes_user home may not be in process.env.
 
 FILE: /opt/paperclip/node_modules/.pnpm/hermes-paperclip-adapter@0.2.0/node_modules/hermes-paperclip-adapter/dist/server/execute.js
-Apply after every `npm install` or Paperclip update.
+Apply after every `npm install` or Paperclip update using: bash paperclip/server/restore.sh

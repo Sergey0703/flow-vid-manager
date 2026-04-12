@@ -4,15 +4,49 @@
 
 EXECUTE_JS="/opt/paperclip/node_modules/.pnpm/hermes-paperclip-adapter@0.2.0/node_modules/hermes-paperclip-adapter/dist/server/execute.js"
 
-echo "Patching execute.js: read taskId from ctx.context (contextSnapshot)..."
-sed -i 's/const taskId = cfgString(ctx\.config?.taskId);/const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);/g' "$EXECUTE_JS"
-sed -i 's/const taskTitle = cfgString(ctx\.config?.taskTitle) || \"\";/const taskTitle = cfgString(ctx.config?.taskTitle) ?? cfgString(ctx.context?.taskTitle) ?? \"\";/g' "$EXECUTE_JS"
-sed -i 's/const taskBody = cfgString(ctx\.config?.taskBody) || \"\";/const taskBody = cfgString(ctx.config?.taskBody) ?? cfgString(ctx.context?.taskBody) ?? \"\";/g' "$EXECUTE_JS"
-sed -i 's/const commentId = cfgString(ctx\.config?.commentId) || \"\";/const commentId = cfgString(ctx.config?.commentId) ?? cfgString(ctx.context?.commentId) ?? \"\";/g' "$EXECUTE_JS"
-sed -i 's/const wakeReason = cfgString(ctx\.config?.wakeReason) || \"\";/const wakeReason = cfgString(ctx.config?.wakeReason) ?? cfgString(ctx.context?.wakeReason) ?? \"\";/g' "$EXECUTE_JS"
+echo "Patching execute.js via Python (safer than sed for complex replacements)..."
+python3 << 'PYEOF'
+import sys
+f = '/opt/paperclip/node_modules/.pnpm/hermes-paperclip-adapter@0.2.0/node_modules/hermes-paperclip-adapter/dist/server/execute.js'
+content = open(f).read()
+
+# Patch 1: taskId + other fields from ctx.context (buildPrompt section)
+content = content.replace(
+    'const taskId = cfgString(ctx.config?.taskId);\n    const taskTitle = cfgString(ctx.config?.taskTitle) || "";\n    const taskBody = cfgString(ctx.config?.taskBody) || "";\n    const commentId = cfgString(ctx.config?.commentId) || "";\n    const wakeReason = cfgString(ctx.config?.wakeReason) || "";',
+    'const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);\n    const taskTitle = cfgString(ctx.config?.taskTitle) ?? cfgString(ctx.context?.taskTitle) ?? "";\n    const taskBody = cfgString(ctx.config?.taskBody) ?? cfgString(ctx.context?.taskBody) ?? "";\n    const commentId = cfgString(ctx.config?.commentId) ?? cfgString(ctx.context?.commentId) ?? "";\n    const wakeReason = cfgString(ctx.config?.wakeReason) ?? cfgString(ctx.context?.wakeReason) ?? "";'
+)
+
+# Patch 2: add paperclipApiKey to template vars
+content = content.replace(
+    '        paperclipApiUrl,\n    };',
+    '        paperclipApiUrl,\n        paperclipApiKey: ctx.authToken || "",\n    };'
+)
+
+# Patch 3: taskId from ctx.context in execute() section
+content = content.replace(
+    '    const taskId = cfgString(ctx.config?.taskId);\n    if (taskId)\n        env.PAPERCLIP_TASK_ID = taskId;',
+    '    const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);\n    if (taskId)\n        env.PAPERCLIP_TASK_ID = taskId;'
+)
+
+# Patch 4: inject PAPERCLIP_API_KEY + HOME into env
+content = content.replace(
+    '    if (ctx.runId)\n        env.PAPERCLIP_RUN_ID = ctx.runId;',
+    '    if (ctx.runId)\n        env.PAPERCLIP_RUN_ID = ctx.runId;\n    if (ctx.authToken)\n        env.PAPERCLIP_API_KEY = ctx.authToken;\n    if (!env.HOME)\n        env.HOME = "/home/hermes_user";'
+)
+
+open(f, 'w').write(content)
+print('ctx.context patches:', content.count('ctx.context?.taskId'))
+print('paperclipApiKey var:', content.count('paperclipApiKey: ctx.authToken'))
+print('PAPERCLIP_API_KEY:', content.count('PAPERCLIP_API_KEY'))
+print('HOME patch:', content.count('hermes_user'))
+PYEOF
 
 echo "Verifying patch..."
-grep -c 'ctx.context' "$EXECUTE_JS" && echo "OK: patch applied" || echo "ERROR: patch failed"
+python3 -c "
+c = open('$EXECUTE_JS').read()
+ok = c.count('ctx.context?.taskId') >= 2 and c.count('PAPERCLIP_API_KEY') >= 1
+print('OK: all patches applied' if ok else 'ERROR: patches missing')
+"
 
 echo ""
 echo "Restoring agent adapter_configs in DB..."

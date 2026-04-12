@@ -1,0 +1,23 @@
+--- execute.js.orig
++++ execute.js
+@@ -97,11 +97,11 @@
+-    const taskId = cfgString(ctx.config?.taskId);
+-    const taskTitle = cfgString(ctx.config?.taskTitle) || "";
+-    const taskBody = cfgString(ctx.config?.taskBody) || "";
+-    const commentId = cfgString(ctx.config?.commentId) || "";
+-    const wakeReason = cfgString(ctx.config?.wakeReason) || "";
++    const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);
++    const taskTitle = cfgString(ctx.config?.taskTitle) ?? cfgString(ctx.context?.taskTitle) ?? "";
++    const taskBody = cfgString(ctx.config?.taskBody) ?? cfgString(ctx.context?.taskBody) ?? "";
++    const commentId = cfgString(ctx.config?.commentId) ?? cfgString(ctx.context?.commentId) ?? "";
++    const wakeReason = cfgString(ctx.config?.wakeReason) ?? cfgString(ctx.context?.wakeReason) ?? "";
+@@ -298,1 +298,1 @@
+-    const taskId = cfgString(ctx.config?.taskId);
++    const taskId = cfgString(ctx.config?.taskId) ?? cfgString(ctx.context?.taskId) ?? cfgString(ctx.context?.issueId);
+
+WHY: ctx.config is runtimeConfig (resolved adapterConfig), but taskId lives in
+ctx.context (contextSnapshot). Without this patch, {{#taskId}} block is always
+empty and agent falls into {{#noTask}} branch trying to list issues via curl.
+
+FILE: /opt/paperclip/node_modules/.pnpm/hermes-paperclip-adapter@0.2.0/node_modules/hermes-paperclip-adapter/dist/server/execute.js
+Apply after every `npm install` or Paperclip update.

@@ -1,0 +1,17 @@
+{
+  "toolsets": "web,terminal",
+  "paperclipSkillSync": {
+    "desiredSkills": [
+      "paperclipai/paperclip/paperclip",
+      "paperclipai/paperclip/paperclip-create-agent",
+      "paperclipai/paperclip/paperclip-create-plugin",
+      "paperclipai/paperclip/para-memory-files",
+      "local/63cff8d1a8/content-factory-pipeline",
+      "local/1548aa4440/dual-search"
+    ]
+  },
+  "instructionsFilePath": "/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/ccc8c5e8-cc55-4432-aa16-0bc73391049e/instructions/AGENTS.md",
+  "instructionsRootPath": "/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/ccc8c5e8-cc55-4432-aa16-0bc73391049e/instructions",
+  "instructionsEntryFile": "AGENTS.md",
+  "instructionsBundleMode": "managed"
+}

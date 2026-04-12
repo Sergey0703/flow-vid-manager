@@ -1,0 +1,15 @@
+{
+  "toolsets": "web,terminal",
+  "paperclipSkillSync": {
+    "desiredSkills": [
+      "paperclipai/paperclip/paperclip",
+      "paperclipai/paperclip/para-memory-files",
+      "local/63cff8d1a8/content-factory-pipeline",
+      "local/1548aa4440/dual-search"
+    ]
+  },
+  "instructionsFilePath": "/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/acf7ffec-4aef-43be-b83b-828170c15b17/instructions/AGENTS.md",
+  "instructionsRootPath": "/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/acf7ffec-4aef-43be-b83b-828170c15b17/instructions",
+  "instructionsEntryFile": "AGENTS.md",
+  "instructionsBundleMode": "managed"
+}

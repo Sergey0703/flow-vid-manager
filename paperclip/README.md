@@ -245,7 +245,9 @@ calls fail with connection refused.
 
 ## Hermes Config — approvals.mode
 
-**Path:** `/home/hermes_user/.hermes/config.yaml`
+**Path:** `/root/.hermes/config.yaml` (Paperclip runs as root, HOME=/root)
+
+NOTE: `/home/hermes_user/.hermes/config.yaml` also exists but is NOT used by Paperclip agents.
 
 ```yaml
 approvals:
@@ -336,15 +338,15 @@ scp $KEY paperclip/agents/agentmail-monitor/AGENTS.md   $BASE/b948c00d-abbd-45a0
 ### Step 5 — Check hermes approvals.mode
 
 ```bash
-ssh -i .ssh_hetzner_key root@65.21.3.89 "grep 'mode:' /home/hermes_user/.hermes/config.yaml"
+ssh -i .ssh_hetzner_key root@65.21.3.89 "grep 'mode:' /root/.hermes/config.yaml"
 # Must show: mode: off
 ```
 
 If not:
 ```bash
 ssh -i .ssh_hetzner_key root@65.21.3.89 "
-  sed -i 's/mode: manual/mode: off/' /home/hermes_user/.hermes/config.yaml
-  sed -i 's/mode: autonomous/mode: off/' /home/hermes_user/.hermes/config.yaml
+  sed -i 's/mode: manual/mode: off/' /root/.hermes/config.yaml
+  sed -i 's/mode: autonomous/mode: off/' /root/.hermes/config.yaml
 "
 ```
 

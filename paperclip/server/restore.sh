@@ -93,7 +93,8 @@ restore_agent "Case Studies Researcher" "527db020-5bf8-41e0-bf8d-20e007e7056e" '
   "paperclipSkillSync": {"desiredSkills": ["paperclipai/paperclip/paperclip","paperclipai/paperclip/para-memory-files","local/63cff8d1a8/content-factory-pipeline","local/1548aa4440/dual-search"]},
   "instructionsFilePath": "/opt/paperclip-data/instances/default/companies/'"$COMPANY"'/agents/527db020-5bf8-41e0-bf8d-20e007e7056e/instructions/AGENTS.md",
   "instructionsRootPath": "/opt/paperclip-data/instances/default/companies/'"$COMPANY"'/agents/527db020-5bf8-41e0-bf8d-20e007e7056e/instructions",
-  "instructionsEntryFile": "AGENTS.md", "instructionsBundleMode": "managed"
+  "instructionsEntryFile": "AGENTS.md", "instructionsBundleMode": "managed",
+  "paperclipApiUrl": "http://127.0.0.1:3100/api"
 }'
 
 # AgentMail Monitor
@@ -104,6 +105,14 @@ restore_agent "AgentMail Monitor" "b948c00d-abbd-45a0-8520-e8458fc7b11c" '{
   "instructionsRootPath": "/opt/paperclip-data/instances/default/companies/'"$COMPANY"'/agents/b948c00d-abbd-45a0-8520-e8458fc7b11c/instructions",
   "instructionsEntryFile": "AGENTS.md", "instructionsBundleMode": "managed"
 }'
+
+echo ""
+echo "Fixing approvals.mode in /root/.hermes/config.yaml..."
+# Paperclip runs as root (HOME=/root), so hermes reads /root/.hermes/config.yaml
+# Valid values: off, smart, manual. Must be "off" for headless runs.
+sed -i 's/mode: manual/mode: off/' /root/.hermes/config.yaml
+sed -i 's/mode: autonomous/mode: off/' /root/.hermes/config.yaml
+grep "approvals:" -A2 /root/.hermes/config.yaml
 
 echo ""
 echo "Restarting Paperclip..."

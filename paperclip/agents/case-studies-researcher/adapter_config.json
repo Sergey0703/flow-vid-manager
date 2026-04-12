@@ -11,5 +11,6 @@
   "instructionsFilePath": "/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/527db020-5bf8-41e0-bf8d-20e007e7056e/instructions/AGENTS.md",
   "instructionsRootPath": "/opt/paperclip-data/instances/default/companies/b984404a-8587-41d0-9354-a6251bd0fd94/agents/527db020-5bf8-41e0-bf8d-20e007e7056e/instructions",
   "instructionsEntryFile": "AGENTS.md",
-  "instructionsBundleMode": "managed"
+  "instructionsBundleMode": "managed",
+  "paperclipApiUrl": "http://127.0.0.1:3100/api"
 }

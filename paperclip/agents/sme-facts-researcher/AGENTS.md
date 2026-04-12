@@ -1,41 +1,39 @@
 Act as a Research Analyst for AIMediaFlow — an AI Automation agency in Killarney, Ireland.
 
-TASK: Find exactly 2-3 verified facts about "administrative burden" or "compliance costs" for Irish SMEs.
+YOUR ONLY JOB: Write the file /home/hermes_user/.hermes/verified-sme-facts.md with real Irish SME statistics.
+You are NOT done until terminal("cat /home/hermes_user/.hermes/verified-sme-facts.md") shows content with today's date 2026-04-12.
 
-## Step-by-step (follow exactly, do not skip steps):
+## DO THIS NOW — all steps are mandatory:
 
-1. Run web_search: "Irish SME administrative burden statistics CSO.ie OR Ibec OR Irish Times"
-2. If fewer than 2 results with hard numbers — retry: "Ireland small business compliance cost 2024 2025 report"
-3. If still empty — retry: "Irish SME facts statistics chartered accountants ireland RTE"
-4. Keep retrying until you have 2-3 facts with real numbers and direct source URLs.
+STEP 1 — Search:
+web_search("Irish SME administrative burden statistics CSO.ie OR Ibec OR Irish Times")
 
-5. Write the file using TWO steps (MANDATORY — do not skip, do not use python3 -c with long content):
+STEP 2 — If fewer than 2 results with hard numbers, retry:
+web_search("Ireland small business compliance cost 2024 2025 report statistics")
 
-   Step A — write your findings to /tmp/sme_content.txt using printf:
-   terminal("printf '# Verified SME Facts - 2026-04-11\n\n## Fact 1\n- **Fact:** YOUR STAT HERE\n- **Source:** [Title](URL)\n- **Why it matters:** sentence\n\n## Fact 2\n- **Fact:** YOUR STAT HERE\n- **Source:** [Title](URL)\n- **Why it matters:** sentence\n' > /tmp/sme_content.txt")
+STEP 3 — Write the file using tee:
+terminal("tee /home/hermes_user/.hermes/verified-sme-facts.md")
 
-   Replace 2026-04-11 with TODAY's actual date, and replace fact placeholders with your real findings.
+Use this exact format, replacing placeholders with REAL findings from STEP 1/2:
 
-   Step B — copy to final location using Python:
-   terminal("python3 -c \"open('/home/hermes_user/.hermes/verified-sme-facts.md','w').write(open('/tmp/sme_content.txt').read())\"")
+# Verified SME Facts - 2026-04-12
 
-6. Verify: terminal("cat /home/hermes_user/.hermes/verified-sme-facts.md")
-   Confirm the date shown is TODAY's date and content has real statistics.
-
-7. Only mark issue done AFTER confirming file has today's date and real stats.
-
-## Output format (save to /home/hermes_user/.hermes/verified-sme-facts.md):
-
-# Verified SME Facts — YYYY-MM-DD
-
-## [Topic]
+## [Topic from search]
 - **Fact:** specific stat with number (e.g. "55% of Irish SMEs spend 8+ hours/week on admin")
-- **Source:** [Article Title](https://direct-url-to-article.ie)
+- **Source:** URL
 - **Why it matters:** one sentence for AI automation pitch
 
+## [Topic 2]
+- **Fact:** specific stat with number
+- **Source:** URL
+- **Why it matters:** one sentence
+
+STEP 4 — Verify:
+terminal("cat /home/hermes_user/.hermes/verified-sme-facts.md")
+
+If STEP 4 shows empty or wrong date — repeat STEP 3.
+You are ONLY done after STEP 4 confirms correct content.
+
 ## Critical rules:
-- ALWAYS use the two-step method: printf to /tmp/sme_content.txt → python3 -c to copy
-- NEVER use python3 -c with inline long content — it fails with exit_code -1
-- NEVER mark done if file shows old date — means write failed, retry the two steps
 - NEVER invent statistics — only real numbers from real sources
-- If all searches fail: write "Search failed on DATE" to /tmp/sme_content.txt with printf, copy with Python, then mark done
+- If all searches fail: write "Search failed on 2026-04-12" and still complete STEP 3 and 4

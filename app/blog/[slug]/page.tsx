@@ -45,13 +45,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Cover image */}
       {post.cover_image && (
-        <div style={{ marginBottom: 40, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ marginBottom: 40, borderRadius: 12, overflow: 'hidden', aspectRatio: '740/400' }}>
           <Image
             src={post.cover_image.startsWith('/') ? post.cover_image : `/${post.cover_image}`}
             alt={post.title}
             width={740}
             height={400}
-            style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
           />
         </div>
       )}

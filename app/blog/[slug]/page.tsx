@@ -50,7 +50,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <img
             src={post.cover_image.startsWith('/') ? post.cover_image : `/${post.cover_image}`}
             alt={post.title}
-            style={{ width: '100%', height: 'auto', display: 'block', aspectRatio: '740/400', objectFit: 'cover' }}
+            style={{ width: '100%', height: 'unset', display: 'block', aspectRatio: '740/400', objectFit: 'cover' }}
           />
         </div>
       )}

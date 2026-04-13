@@ -28,10 +28,10 @@ You are the Editorial Manager. Your job is to ensure the research and editorial 
 
 Wake up an agent:
 ```bash
-curl -s -X POST "$PAPERCLIP_API_URL/agents/AGENT_ID/wakeup" \
+curl -s -X POST "$PAPERCLIP_API_URL/api/agents/AGENT_ID/wakeup" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"source": "on_demand", "triggerDetail": "editorial_manager"}'
+  -d '{"source": "on_demand", "triggerDetail": "manual"}'
 ```
 
 **SQLite DB** at `/home/hermes_user/.hermes/topics-db.sqlite`
@@ -68,10 +68,10 @@ sqlite3 /home/hermes_user/.hermes/topics-db.sqlite \
 
 If there are 0 `new` topics AND all research files are fresh → wake up Chief Editor:
 ```bash
-curl -s -X POST "$PAPERCLIP_API_URL/agents/f18ff445-0515-4397-b814-2a754bd245b1/wakeup" \
+curl -s -X POST "$PAPERCLIP_API_URL/api/agents/f18ff445-0515-4397-b814-2a754bd245b1/wakeup" \
   -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"source": "on_demand", "triggerDetail": "editorial_manager"}'
+  -d '{"source": "on_demand", "triggerDetail": "manual"}'
 ```
 
 If there are already `new` topics in DB → Chief Editor already ran, no action needed.

@@ -1,10 +1,12 @@
 ---
+cover_image: blog-covers/2026-04-13-irish-smes-missing-out-on-ai-roi.jpg
 title: Why 99.8% of Irish Businesses Are Missing Out on AI ROI
 date: 2026-04-13
 category: sme
 author: AIMediaFlow
 status: ready
 ---
+cover_image: blog-covers/2026-04-13-irish-smes-missing-out-on-ai-roi.jpg
 
 Two-thirds of Ireland's workforce is employed by SMEs, yet a shocking number of these businesses are missing out on the productivity gains that AI can deliver. While larger corporations invest heavily in automation and intelligent systems, the average Irish small business owner is still drowning in manual processes that eat up countless hours every week.
 

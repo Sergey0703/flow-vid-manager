@@ -561,3 +561,15 @@ VALUES (
 );
 ```
 
+
+---
+
+## Editorial Manager (added 2026-04-13)
+
+| Agent | ID | Reports To | Schedule (UTC) |
+|---|---|---|---|
+| Editorial Manager | `46ad48c3-e8b0-4c5e-b369-6da7fbfa6251` | CEO | `0 7 * * *` UTC |
+
+Subordinates: Researcher, SME Facts Researcher, Case Studies Researcher, Mail Monitor, Chief Editor
+
+Routine ID: see DB — `SELECT id FROM routines WHERE assignee_agent_id = '46ad48c3-e8b0-4c5e-b369-6da7fbfa6251';`

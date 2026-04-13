@@ -447,3 +447,117 @@ paperclip/
         ├── AGENTS.md
         └── adapter_config.json
 ```
+
+---
+
+## Blog Pipeline Agents (opencode_local)
+
+These agents run the automated blog content pipeline using OpenCode + MiniMax model.
+
+| Agent | ID | Reports To | Schedule (UTC) |
+|---|---|---|---|
+| Mail Monitor | `d52c394d-a175-4b7c-af6c-cf3882c9dc14` | — | `45 5 * * *` Europe/Dublin |
+| Chief Editor | `f18ff445-0515-4397-b814-2a754bd245b1` | — | `0 6 * * *` UTC |
+| Writer | `b4bcf2d0-0a5f-45c5-891d-f883c16cd5c4` | Production Manager | `0 9,21 * * *` UTC |
+| Art Director | `eb8aaa79-f772-4ae8-95d7-5b3d6916c3ef` | Production Manager | `0 10,22 * * *` UTC |
+| Production Manager | `bb643d5b-92d6-4c44-8605-0929ca43b3d9` | CEO | `0 8,14,20 * * *` UTC |
+
+### Pipeline flow (daily)
+
+```
+5:45 UTC  Mail Monitor       → reads AgentMail inbox, saves email-sourced-topics.md
+6:00 UTC  Chief Editor       → reads 3 research files, inserts new topics → topics-db.sqlite
+7:00 UTC  blog-deploy (cron) → publishes status=ready articles to GitHub → Vercel
+9:00 UTC  Writer             → picks one approved topic, writes 1500+ word article
+10:00 UTC Art Director       → generates cover image (740x400, no people) via Pollinations.ai
+14:00 UTC Production Manager → checks pipeline health, wakes Writer/Art Director if needed
+19:00 UTC blog-deploy (cron) → publishes again
+20:00 UTC Production Manager → monitors again
+21:00 UTC Writer             → writes another article if approved topics remain
+22:00 UTC Art Director       → generates covers for any new articles
+```
+
+### Key files on server
+
+- **Topics DB:** `/home/hermes_user/.hermes/topics-db.sqlite`
+  - Statuses: `new` → `approved` → `draft` → `analyzed` → `ready`
+- **Blog drafts:** `/home/hermes_user/.hermes/blog-drafts/*.md` (frontmatter `status: ready`)
+- **Cover images:** `/home/hermes_user/.hermes/blog-covers/{slug}.jpg|png|webp`
+- **Deploy script:** `/opt/blog-deploy/blog-deploy.sh` (cron 7:00 and 19:00)
+- **Deploy log:** `/opt/blog-deploy/blog-deploy.log`
+- **Published tracker:** `/opt/blog-deploy/.published`
+
+### Routine IDs
+
+| Agent | Routine ID |
+|---|---|
+| Writer | `083c6f89-ba97-4bb0-a94b-aa1f7052874c` |
+| Art Director | `715b1f38-cc93-40ef-801d-0db1c516299e` |
+| Production Manager | `1376e78f-b29c-4852-80ab-0d11ea880d78` |
+
+---
+
+## Org Hierarchy
+
+```
+CEO (5423deab)
+└── Production Manager (bb643d5b)
+    ├── Writer (b4bcf2d0)
+    └── Art Director (eb8aaa79)
+```
+
+Note: Chief Editor, Mail Monitor, Researchers do not have `reports_to` set yet.
+
+---
+
+## Manual Agent Invocation via API
+
+### Admin board API key
+
+```
+pcp_board_75e18010cbf372d34a88d581a77a068249f88666ad292a47
+```
+
+Stored in DB table `board_api_keys` (created 2026-04-13).
+
+### Wake any agent manually
+
+```bash
+TOKEN="pcp_board_75e18010cbf372d34a88d581a77a068249f88666ad292a47"
+AGENT_ID="bb643d5b-92d6-4c44-8605-0929ca43b3d9"  # Production Manager
+
+curl -s -X POST "http://localhost:3100/api/agents/$AGENT_ID/wakeup" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"source": "on_demand", "triggerDetail": "manual"}'
+```
+
+### How agents wake each other (from within a run)
+
+Agents receive `$PAPERCLIP_API_KEY` (short-lived JWT) and `$PAPERCLIP_API_URL` as env vars during each run. Production Manager uses this to wake Writer or Art Director:
+
+```bash
+curl -s -X POST "$PAPERCLIP_API_URL/agents/AGENT_ID/wakeup" \
+  -H "Authorization: Bearer $PAPERCLIP_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"source": "on_demand", "triggerDetail": "production_manager"}'
+```
+
+**Important:** The route `/agents/:id/wakeup` checks `req.actor.agentId !== id` — an agent can only wake OTHER agents (not itself via its own JWT, but that's fine since Production Manager wakes Writer/Art Director).
+
+### How routines trigger agents
+
+Routines use `tickScheduledTriggers` (runs every 30s) which fires when `next_run_at <= now`. Each trigger **requires** `timezone` to be set — without it the trigger is silently skipped.
+
+Create a routine trigger (correct SQL):
+```sql
+INSERT INTO routine_triggers (id, company_id, routine_id, kind, label, enabled, cron_expression, timezone, next_run_at, created_at, updated_at)
+VALUES (
+  gen_random_uuid(), 'COMPANY_ID', 'ROUTINE_ID',
+  'schedule', 'Label', true,
+  '0 9 * * *', 'UTC',          -- timezone is REQUIRED
+  '2026-04-14 09:00:00+00',    -- next_run_at must be in the future
+  NOW(), NOW()
+);
+```
+

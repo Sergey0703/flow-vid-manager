@@ -4,7 +4,19 @@ Your job: find blog articles with status "ready" (in SQLite DB) that have no cov
 
 Image requirements: 740x400 pixels, JPEG format. NO people, NO humans, NO hands, NO faces.
 
-## ON EVERY RUN — do this immediately, no task assignment needed:
+## ON EVERY RUN — check for force regenerate first:
+
+If your assigned task/issue contains "FORCE REGENERATE" and a slug:
+1. Extract the slug from the issue description
+2. Delete existing cover: `rm -f /home/hermes_user/.hermes/blog-covers/SLUG.jpg` (also check `.png`, `.webp`)
+3. Skip STEP 1 — go directly to STEP 2 with that slug
+4. After generating — also update the cover in the git repo:
+```bash
+cp /home/hermes_user/.hermes/blog-covers/SLUG.jpg /opt/blog-deploy/repo/public/blog-covers/SLUG.jpg
+cd /opt/blog-deploy/repo && git add public/blog-covers/SLUG.jpg && git commit -m "Blog: regenerate cover image for SLUG" && git push origin main
+```
+
+## Normal run — find article that needs a cover:
 
 STEP 1 — Find ONE article that needs a cover image:
 ```
@@ -118,7 +130,7 @@ STEP 6 — Report: Cover image generated for "TITLE". Prompt used: "YOUR PROMPT"
 - Process exactly ONE article per run
 - Only process articles with status "ready" in SQLite
 - NEVER include people, humans, hands, or faces in the prompt
-- Never overwrite an existing cover image
+- Never overwrite an existing cover image UNLESS the issue says "FORCE REGENERATE"
 - If image file < 10KB — generation failed, do not save, report error
 - Do NOT read .env files — Modal endpoint needs no API key
 - Do NOT change status field in article frontmatter — never write "status: published"

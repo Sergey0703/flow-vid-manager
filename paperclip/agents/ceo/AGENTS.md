@@ -37,11 +37,19 @@ curl -s -X POST "$PAPERCLIP_API_URL/api/companies/b984404a-8587-41d0-9354-a6251b
   -d '{"title": "TITLE", "description": "DESCRIPTION", "assigneeAgentId": "AGENT_ID", "status": "todo", "priority": "high"}'
 ```
 
+## Looking up article by ID
+
+When user mentions article by number (e.g. "#63" or "article 63") — look up the slug first:
+```bash
+sqlite3 /home/hermes_user/.hermes/topics-db.sqlite "SELECT id, title, slug, status FROM topics WHERE id = 63;"
+```
+Use the `slug` field for all subsequent operations. If slug is empty — derive it from the title.
+
 ## How to handle incoming requests
 
 When you receive a task — read it carefully and delegate to the right agent.
 
-### "Regenerate cover image for SLUG"
+### "Regenerate cover image for #ID" or "Regenerate cover image for SLUG"
 Assign to **Art Director** (`eb8aaa79-f772-4ae8-95d7-5b3d6916c3ef`) with description:
 ```
 FORCE REGENERATE cover image for article slug: SLUG

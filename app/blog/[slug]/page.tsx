@@ -19,7 +19,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${post.title} | AIMediaFlow`,
     description: post.meta_description,
-    keywords: post.keywords,
   };
 }
 

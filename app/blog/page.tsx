@@ -3,13 +3,15 @@ import Image from 'next/image';
 import { getAllPosts } from '@/lib/blog';
 import type { Metadata } from 'next';
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: 'Blog — AI Automation Insights | AIMediaFlow',
   description: 'Expert articles on AI automation for Irish businesses — hotels, clinics, retail. Practical guides and real ROI numbers.',
 };
 
-export default function BlogPage() {
-  const posts = getAllPosts();
+export default async function BlogPage() {
+  const posts = await getAllPosts();
 
   return (
     <main style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px', fontFamily: 'Georgia, serif' }}>

@@ -1,81 +1,122 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+import { Client } from '@notionhq/client';
+import type { PageObjectResponse, BlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 
-const BLOG_DIR = path.join(process.cwd(), 'content/blog');
-const COVERS_DIR = path.join(process.cwd(), 'public/blog-covers');
-
-function stripSchemaMarkup(content: string): string {
-  // Remove <div itemscope ...>...</div> and <script type="application/ld+json">...</script>
-  return content
-    .replace(/<div\s+itemscope[\s\S]*?<\/div>/gi, '')
-    .replace(/<script\s+type="application\/ld\+json"[\s\S]*?<\/script>/gi, '')
-    .trim();
-}
-
-function findCoverImage(slug: string, frontmatterCover?: string): string {
-  if (frontmatterCover) return frontmatterCover;
-  // Check filesystem (works locally and during Vercel build)
-  for (const ext of ['jpg', 'jpeg', 'webp', 'png']) {
-    const filePath = path.join(COVERS_DIR, `${slug}.${ext}`);
-    if (fs.existsSync(filePath)) {
-      return `/blog-covers/${slug}.${ext}`;
-    }
-  }
-  return '';
-}
+const notion = new Client({ auth: process.env.NOTION_TOKEN });
+const DATABASE_ID = process.env.NOTION_DATABASE_ID!;
 
 export interface BlogPost {
   slug: string;
   title: string;
   date: string;
   meta_description: string;
-  keywords: string[];
-  cover_image?: string;
+  cover_image: string;
   content: string;
 }
 
-export function getAllPosts(): BlogPost[] {
-  if (!fs.existsSync(BLOG_DIR)) return [];
-
-  const files = fs.readdirSync(BLOG_DIR).filter(f => f.endsWith('.md'));
-
-  return files
-    .map(filename => {
-      const slug = filename.replace(/\.md$/, '');
-      const raw = fs.readFileSync(path.join(BLOG_DIR, filename), 'utf-8');
-      const { data, content } = matter(raw);
-
-      if (data.status && data.status !== 'ready' && data.status !== 'published') return null;
-
-      return {
-        slug,
-        title: data.title || slug,
-        date: data.date || '',
-        meta_description: data.meta_description || '',
-        keywords: data.keywords || [],
-        cover_image: findCoverImage(slug, data.cover_image),
-        content: stripSchemaMarkup(content),
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => (a!.date < b!.date ? 1 : -1)) as BlogPost[];
+function richTextToString(rt: any[]): string {
+  return rt.map((t: any) => t.plain_text).join('');
 }
 
-export function getPostBySlug(slug: string): BlogPost | null {
-  const filePath = path.join(BLOG_DIR, `${slug}.md`);
-  if (!fs.existsSync(filePath)) return null;
+function blocksToMarkdown(blocks: BlockObjectResponse[]): string {
+  const lines: string[] = [];
 
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  const { data, content } = matter(raw);
+  for (const block of blocks) {
+    const b = block as any;
+    switch (b.type) {
+      case 'paragraph':
+        lines.push(richTextToString(b.paragraph.rich_text));
+        lines.push('');
+        break;
+      case 'heading_1':
+        lines.push(`# ${richTextToString(b.heading_1.rich_text)}`);
+        lines.push('');
+        break;
+      case 'heading_2':
+        lines.push(`## ${richTextToString(b.heading_2.rich_text)}`);
+        lines.push('');
+        break;
+      case 'heading_3':
+        lines.push(`### ${richTextToString(b.heading_3.rich_text)}`);
+        lines.push('');
+        break;
+      case 'bulleted_list_item':
+        lines.push(`- ${richTextToString(b.bulleted_list_item.rich_text)}`);
+        break;
+      case 'numbered_list_item':
+        lines.push(`1. ${richTextToString(b.numbered_list_item.rich_text)}`);
+        break;
+      case 'quote':
+        lines.push(`> ${richTextToString(b.quote.rich_text)}`);
+        lines.push('');
+        break;
+      case 'code':
+        lines.push('```');
+        lines.push(richTextToString(b.code.rich_text));
+        lines.push('```');
+        lines.push('');
+        break;
+      case 'divider':
+        lines.push('---');
+        lines.push('');
+        break;
+      default:
+        break;
+    }
+  }
 
-  return {
-    slug,
-    title: data.title || slug,
-    date: data.date || '',
-    meta_description: data.meta_description || '',
-    keywords: data.keywords || [],
-    cover_image: findCoverImage(slug, data.cover_image),
-    content: stripSchemaMarkup(content),
-  };
+  return lines.join('\n');
+}
+
+export async function getAllPosts(): Promise<BlogPost[]> {
+  const response = await notion.databases.query({
+    database_id: DATABASE_ID,
+    filter: {
+      property: 'Status',
+      select: { equals: 'ready' },
+    },
+    sorts: [{ property: 'Date', direction: 'descending' }],
+  });
+
+  const posts = await Promise.all(
+    response.results.map(async (page) => {
+      const p = page as PageObjectResponse;
+      const props = p.properties as any;
+
+      const title = richTextToString(props.Title?.title || []);
+      const slug = richTextToString(props.Slug?.rich_text || []) || p.id;
+      const date = props.Date?.date?.start || '';
+      const meta_description = richTextToString(props['Meta Description']?.rich_text || []);
+      const cover_image = props['Cover URL']?.url || '';
+
+      return { slug, title, date, meta_description, cover_image, content: '' };
+    })
+  );
+
+  return posts;
+}
+
+export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+  const response = await notion.databases.query({
+    database_id: DATABASE_ID,
+    filter: {
+      property: 'Slug',
+      rich_text: { equals: slug },
+    },
+  });
+
+  if (!response.results.length) return null;
+
+  const page = response.results[0] as PageObjectResponse;
+  const props = page.properties as any;
+
+  const title = richTextToString(props.Title?.title || []);
+  const date = props.Date?.date?.start || '';
+  const meta_description = richTextToString(props['Meta Description']?.rich_text || []);
+  const cover_image = props['Cover URL']?.url || '';
+
+  // Fetch page blocks for content
+  const blocksResp = await notion.blocks.children.list({ block_id: page.id });
+  const content = blocksToMarkdown(blocksResp.results as BlockObjectResponse[]);
+
+  return { slug, title, date, meta_description, cover_image, content };
 }

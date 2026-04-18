@@ -28,7 +28,7 @@ export default async function BlogPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
           {posts.map(post => {
             const coverSrc = post.cover_image
-              ? (post.cover_image.startsWith('/') ? post.cover_image : `/${post.cover_image}`)
+              ? (post.cover_image.startsWith('http') ? post.cover_image : post.cover_image.startsWith('/') ? post.cover_image : `/${post.cover_image}`)
               : null;
             return (
               <article key={post.slug} style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: 48 }}>

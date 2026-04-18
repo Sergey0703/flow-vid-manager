@@ -50,7 +50,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div style={{ marginBottom: 40, borderRadius: 12, overflow: 'hidden' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={post.cover_image.startsWith('/') ? post.cover_image : `/${post.cover_image}`}
+            src={post.cover_image.startsWith('http') ? post.cover_image : post.cover_image.startsWith('/') ? post.cover_image : `/${post.cover_image}`}
             alt={post.title}
             style={{ width: '100%', height: 'unset', display: 'block', aspectRatio: '740/400', objectFit: 'cover' }}
           />

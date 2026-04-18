@@ -1,5 +1,5 @@
 ---
-title: Survival Guide: How Irish Restaurants Use AI to Beat 60-Year Business Closures
+title: "Survival Guide: How Irish Restaurants Use AI to Beat 60-Year Business Closures"
 date: 2026-04-18
 category: sme
 author: AIMediaFlow

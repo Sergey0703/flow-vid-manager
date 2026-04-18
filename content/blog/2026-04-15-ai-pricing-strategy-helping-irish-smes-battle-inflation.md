@@ -1,5 +1,5 @@
 ---
-title: AI Pricing Strategy: Helping Irish SMEs Battle Inflation
+title: "AI Pricing Strategy: Helping Irish SMEs Battle Inflation"
 date: 2026-04-15
 category: sme
 author: AIMediaFlow

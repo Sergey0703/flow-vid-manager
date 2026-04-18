@@ -82,7 +82,7 @@ export async function getAllPosts(): Promise<BlogPost[]> {
       const p = page as PageObjectResponse;
       const props = p.properties as any;
 
-      const title = richTextToString(props.Title?.title || []);
+      const title = richTextToString(props.Name?.title || props.Title?.rich_text || []);
       const slug = richTextToString(props.Slug?.rich_text || []) || p.id;
       const date = props.Date?.date?.start || '';
       const meta_description = richTextToString(props['Meta Description']?.rich_text || []);
@@ -109,7 +109,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   const page = response.results[0] as PageObjectResponse;
   const props = page.properties as any;
 
-  const title = richTextToString(props.Title?.title || []);
+  const title = richTextToString(props.Name?.title || props.Title?.rich_text || []);
   const date = props.Date?.date?.start || '';
   const meta_description = richTextToString(props['Meta Description']?.rich_text || []);
   const cover_image = props['Cover URL']?.url || '';

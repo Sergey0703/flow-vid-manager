@@ -12,6 +12,11 @@ const nextConfig = {
         hostname: "aimediaflow.net",
         pathname: "/blog-covers/**",
       },
+      {
+        protocol: "https",
+        hostname: "pub-d5061a8e65134997928a0186ab6064c6.r2.dev",
+        pathname: "/**",
+      },
     ],
   },
   async rewrites() {

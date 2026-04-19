@@ -10,11 +10,7 @@ If your assigned task/issue contains "FORCE REGENERATE" and a slug:
 1. Extract the slug from the issue description
 2. Delete existing cover: `rm -f /home/hermes_user/.hermes/blog-covers/SLUG.jpg` (also check `.png`, `.webp`)
 3. Skip STEP 1 — go directly to STEP 2 with that slug
-4. After generating — also update the cover in the git repo:
-```bash
-cp /home/hermes_user/.hermes/blog-covers/SLUG.jpg /opt/blog-deploy/repo/public/blog-covers/SLUG.jpg
-cd /opt/blog-deploy/repo && git add public/blog-covers/SLUG.jpg && git commit -m "Blog: regenerate cover image for SLUG" && git push origin main
-```
+4. After generating — upload to R2 and update Notion (same as STEP 5 in normal run, use the slug from the issue)
 
 ## Normal run — find article that needs a cover:
 
@@ -104,15 +100,43 @@ else:
 PYEOF
 ```
 
-STEP 5 — Update cover_image field in the article frontmatter:
+STEP 5 — Upload to Cloudflare R2 and update Notion Cover URL:
+```bash
+slug='SLUG_HERE'
+rclone copy /home/hermes_user/.hermes/blog-covers/${slug}.jpg r2-blog:blog-covers/${slug}.jpg
+echo "Uploaded to R2"
 ```
-python3 << 'PYEOF'
-import re
+
+Then update Notion Cover URL:
+```python3 << 'PYEOF'
+import requests, re
+
+TOKEN = open('/home/hermes_user/.hermes/.env').read().split('NOTION_TOKEN=')[1].split('\n')[0].strip() if 'NOTION_TOKEN' in open('/home/hermes_user/.hermes/.env').read() else ''
+import os
+if not TOKEN:
+    TOKEN = os.environ.get('NOTION_TOKEN', '')
+DB_ID = '346a5fd841ed80a5adbbfd885c9d552b'
+R2_BASE = 'https://pub-d5061a8e65134997928a0186ab6064c6.r2.dev'
 slug = 'SLUG_HERE'
+
+headers = {'Authorization': f'Bearer {TOKEN}', 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json'}
+resp = requests.post(f'https://api.notion.com/v1/databases/{DB_ID}/query',
+    headers=headers, json={'filter': {'property': 'Slug', 'rich_text': {'equals': slug}}})
+pages = resp.json().get('results', [])
+if pages:
+    pid = pages[0]['id']
+    new_url = f'{R2_BASE}/{slug}.jpg'
+    r = requests.patch(f'https://api.notion.com/v1/pages/{pid}',
+        headers=headers, json={'properties': {'Cover URL': {'url': new_url}}})
+    print(f'Notion updated: {r.status_code} — {new_url}')
+else:
+    print('Page not found in Notion')
+
+# Also update frontmatter
 filepath = f'/home/hermes_user/.hermes/blog-drafts/{slug}.md'
 with open(filepath) as f:
     content = f.read()
-new_line = f'cover_image: blog-covers/{slug}.jpg'
+new_line = f'cover_image: {R2_BASE}/{slug}.jpg'
 if 'cover_image:' in content:
     content = re.sub(r'cover_image:.*', new_line, content)
 else:
@@ -123,7 +147,7 @@ print('Frontmatter updated')
 PYEOF
 ```
 
-STEP 6 — Report: Cover image generated for "TITLE". Prompt used: "YOUR PROMPT". Size: X bytes. Done.
+STEP 6 — Report: Cover image generated for "TITLE". Uploaded to R2. Notion Cover URL updated. Done.
 
 ## RULES:
 - Always run STEPS 1-6, even with no assigned task

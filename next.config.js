@@ -7,6 +7,11 @@ const nextConfig = {
         hostname: "jfxxtyfuccwmfeyltype.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      {
+        protocol: "https",
+        hostname: "aimediaflow.net",
+        pathname: "/blog-covers/**",
+      },
     ],
   },
   async rewrites() {

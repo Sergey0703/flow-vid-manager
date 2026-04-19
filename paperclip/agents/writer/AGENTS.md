@@ -50,6 +50,7 @@ date: YYYY-MM-DD
 category: CATEGORY
 author: AIMediaFlow
 status: ready
+meta_description: ONE SENTENCE SUMMARY (150-160 chars, for SEO and blog list preview)
 ---
 
 STEP 4 — Finalize:

@@ -27,6 +27,10 @@ export const CATEGORY_LABELS: Record<string, string> = {
   finance: 'Finance',
 };
 
+export function getCategoryLabel(category: string): string {
+  return CATEGORY_LABELS[category] ?? category.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function richTextToString(rt: any[]): string {
   return rt.map((t: any) => t.plain_text).join('');
 }

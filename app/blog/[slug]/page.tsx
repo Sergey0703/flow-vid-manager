@@ -1,4 +1,4 @@
-import { getAllPosts, getPostBySlug, getPillarByCategory, CATEGORY_LABELS } from '@/lib/blog';
+import { getAllPosts, getPostBySlug, getPillarByCategory, getCategoryLabel } from '@/lib/blog';
 import ReactMarkdown from 'react-markdown';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -30,7 +30,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const pillar = post.post_type === 'cluster' && post.category
     ? await getPillarByCategory(post.category)
     : null;
-  const categoryLabel = post.category ? (CATEGORY_LABELS[post.category] || post.category) : '';
+  const categoryLabel = post.category ? getCategoryLabel(post.category) : '';
 
   return (
     <main style={{ maxWidth: 740, margin: '0 auto', padding: '48px 24px', fontFamily: 'Georgia, serif' }}>

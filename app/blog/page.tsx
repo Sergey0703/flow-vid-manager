@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllPosts, getAllCategories, CATEGORY_LABELS } from '@/lib/blog';
+import { getAllPosts, getAllCategories, getCategoryLabel } from '@/lib/blog';
 import type { Metadata } from 'next';
 
 export const revalidate = 60;
@@ -73,7 +73,7 @@ export default async function BlogPage({
                 color: activeCategory === cat ? '#ffffff' : '#475569',
               }}
             >
-              {CATEGORY_LABELS[cat] || cat}
+              {getCategoryLabel(cat)}
             </Link>
           ))}
         </div>
@@ -121,7 +121,7 @@ export default async function BlogPage({
                           borderRadius: 10,
                         }}
                       >
-                        {CATEGORY_LABELS[post.category] || post.category}
+                        {getCategoryLabel(post.category)}
                       </Link>
                     )}
                     {post.post_type === 'pillar' && (

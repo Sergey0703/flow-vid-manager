@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getPostsByCategory, getPillarByCategory, CATEGORY_LABELS } from '@/lib/blog';
+import { getPostsByCategory, getPillarByCategory, getCategoryLabel } from '@/lib/blog';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
@@ -8,7 +8,7 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
   const { category } = await params;
-  const label = CATEGORY_LABELS[category] || category;
+  const label = getCategoryLabel(category);
   return {
     title: `${label} — AI Automation | AIMediaFlow`,
     description: `AI automation guides for ${label} in Ireland. Practical articles with real ROI numbers.`,
@@ -20,7 +20,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   const posts = await getPostsByCategory(category);
   if (!posts.length) notFound();
 
-  const label = CATEGORY_LABELS[category] || category;
+  const label = getCategoryLabel(category);
   const pillar = await getPillarByCategory(category);
   const clusters = posts.filter(p => p.post_type !== 'pillar');
 

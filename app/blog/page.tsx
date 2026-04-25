@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllPosts, getAllCategories, getCategoryLabel } from '@/lib/blog';
+import { getAllPosts, getAllCategories, getAllPillars, getCategoryLabel } from '@/lib/blog';
 import type { Metadata } from 'next';
 
 export const revalidate = 60;
@@ -23,10 +23,12 @@ export default async function BlogPage({
 
   const allPosts = await getAllPosts();
   const categories = await getAllCategories();
+  const pillars = await getAllPillars();
 
+  const clusterPosts = allPosts.filter(p => p.post_type !== 'pillar');
   const filtered = activeCategory
-    ? allPosts.filter(p => p.category === activeCategory)
-    : allPosts;
+    ? clusterPosts.filter(p => p.category === activeCategory)
+    : clusterPosts;
 
   const totalPages = Math.ceil(filtered.length / POSTS_PER_PAGE);
   const pagePosts = filtered.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
@@ -76,6 +78,47 @@ export default async function BlogPage({
               {getCategoryLabel(cat)}
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* Full Guides — always visible on page 1, no category filter */}
+      {currentPage === 1 && !activeCategory && pillars.length > 0 && (
+        <div style={{ marginBottom: 56 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', margin: 0, fontFamily: 'sans-serif' }}>
+              Full Guides
+            </h2>
+            <Link href="/blog/guides" style={{ fontSize: 13, color: '#7c3aed', fontWeight: 600, textDecoration: 'none', fontFamily: 'sans-serif' }}>
+              See all guides →
+            </Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+            {pillars.map(pillar => (
+              <Link key={pillar.slug} href={`/blog/${pillar.slug}`} style={{ textDecoration: 'none' }}>
+                <div style={{
+                  padding: '20px',
+                  background: '#f5f3ff',
+                  borderRadius: 10,
+                  borderLeft: '4px solid #7c3aed',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: '#7c3aed', fontFamily: 'sans-serif' }}>
+                    {getCategoryLabel(pillar.category)}
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', lineHeight: 1.35 }}>
+                    {pillar.title}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#7c3aed', fontWeight: 600, marginTop: 'auto', fontFamily: 'sans-serif' }}>
+                    Read full guide →
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <hr style={{ margin: '40px 0 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
         </div>
       )}
 

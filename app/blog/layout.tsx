@@ -30,6 +30,9 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
             <Link href="/blog" style={{ color: 'hsl(190, 100%, 50%)', fontSize: 14, textDecoration: 'none', fontWeight: 600, fontFamily: 'sans-serif' }}>
               Blog
             </Link>
+            <Link href="/blog/guides" style={{ color: '#a78bfa', fontSize: 14, textDecoration: 'none', fontWeight: 600, fontFamily: 'sans-serif' }}>
+              Full Guides
+            </Link>
             <a
               href="https://wa.me/353852007612"
               style={{

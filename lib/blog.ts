@@ -120,6 +120,11 @@ export async function getPillarByCategory(category: string): Promise<BlogPost | 
   return posts.find(p => p.post_type === 'pillar') || null;
 }
 
+export async function getAllPillars(): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  return posts.filter(p => p.post_type === 'pillar');
+}
+
 export async function getAllCategories(): Promise<string[]> {
   const posts = await getAllPosts();
   const cats = new Set(posts.map(p => p.category).filter(Boolean));

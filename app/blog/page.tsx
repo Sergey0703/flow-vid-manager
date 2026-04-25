@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getAllPosts } from '@/lib/blog';
+import { getAllPosts, getAllCategories, CATEGORY_LABELS } from '@/lib/blog';
 import type { Metadata } from 'next';
 
 export const revalidate = 60;
@@ -15,24 +15,71 @@ const POSTS_PER_PAGE = 6;
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; category?: string }>;
 }) {
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page || '1', 10));
-  const posts = await getAllPosts();
-  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
-  const pagePosts = posts.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
+  const activeCategory = params.category || '';
+
+  const allPosts = await getAllPosts();
+  const categories = await getAllCategories();
+
+  const filtered = activeCategory
+    ? allPosts.filter(p => p.category === activeCategory)
+    : allPosts;
+
+  const totalPages = Math.ceil(filtered.length / POSTS_PER_PAGE);
+  const pagePosts = filtered.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
 
   return (
     <main style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px', fontFamily: 'Georgia, serif' }}>
       <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8, color: '#0f172a' }}>
         AI Insights
       </h1>
-      <p style={{ fontSize: 18, color: '#64748b', marginBottom: 48 }}>
+      <p style={{ fontSize: 18, color: '#64748b', marginBottom: 32 }}>
         Practical guides on AI automation for Irish businesses
       </p>
 
-      {posts.length === 0 ? (
+      {/* Category tabs */}
+      {categories.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 40 }}>
+          <Link
+            href="/blog"
+            style={{
+              padding: '6px 14px',
+              borderRadius: 20,
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
+              fontFamily: 'sans-serif',
+              background: !activeCategory ? '#0f172a' : '#f1f5f9',
+              color: !activeCategory ? '#ffffff' : '#475569',
+            }}
+          >
+            All
+          </Link>
+          {categories.map(cat => (
+            <Link
+              key={cat}
+              href={`/blog?category=${cat}`}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 20,
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontFamily: 'sans-serif',
+                background: activeCategory === cat ? '#0f172a' : '#f1f5f9',
+                color: activeCategory === cat ? '#ffffff' : '#475569',
+              }}
+            >
+              {CATEGORY_LABELS[cat] || cat}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
         <p style={{ color: '#94a3b8' }}>No articles yet. Check back soon.</p>
       ) : (
         <>
@@ -54,10 +101,46 @@ export default async function BlogPage({
                       />
                     </Link>
                   )}
-                  <time style={{ fontSize: 13, color: '#94a3b8', letterSpacing: 1 }}>
-                    {new Date(post.date).toLocaleDateString('en-IE', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  </time>
-                  <h2 style={{ fontSize: 24, fontWeight: 700, margin: '8px 0 12px', lineHeight: 1.3 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <time style={{ fontSize: 13, color: '#94a3b8', letterSpacing: 1 }}>
+                      {new Date(post.date).toLocaleDateString('en-IE', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </time>
+                    {post.category && (
+                      <Link
+                        href={`/blog?category=${post.category}`}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: 0.5,
+                          textTransform: 'uppercase',
+                          color: '#0891b2',
+                          textDecoration: 'none',
+                          fontFamily: 'sans-serif',
+                          background: '#e0f2fe',
+                          padding: '2px 8px',
+                          borderRadius: 10,
+                        }}
+                      >
+                        {CATEGORY_LABELS[post.category] || post.category}
+                      </Link>
+                    )}
+                    {post.post_type === 'pillar' && (
+                      <span style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: 0.5,
+                        textTransform: 'uppercase',
+                        color: '#7c3aed',
+                        fontFamily: 'sans-serif',
+                        background: '#ede9fe',
+                        padding: '2px 8px',
+                        borderRadius: 10,
+                      }}>
+                        Full Guide
+                      </span>
+                    )}
+                  </div>
+                  <h2 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 12px', lineHeight: 1.3 }}>
                     <Link href={`/blog/${post.slug}`} style={{ color: '#0f172a', textDecoration: 'none' }}>
                       {post.title}
                     </Link>
@@ -80,20 +163,18 @@ export default async function BlogPage({
             <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 48, paddingTop: 24, borderTop: '1px solid #e2e8f0' }}>
               {currentPage > 1 ? (
                 <Link
-                  href={`/blog?page=${currentPage - 1}`}
+                  href={`/blog?page=${currentPage - 1}${activeCategory ? `&category=${activeCategory}` : ''}`}
                   style={{ color: '#0891b2', fontWeight: 600, fontSize: 15, textDecoration: 'none' }}
                 >
                   ← Newer articles
                 </Link>
               ) : <span />}
-
               <span style={{ fontSize: 14, color: '#94a3b8' }}>
                 Page {currentPage} of {totalPages}
               </span>
-
               {currentPage < totalPages ? (
                 <Link
-                  href={`/blog?page=${currentPage + 1}`}
+                  href={`/blog?page=${currentPage + 1}${activeCategory ? `&category=${activeCategory}` : ''}`}
                   style={{ color: '#0891b2', fontWeight: 600, fontSize: 15, textDecoration: 'none' }}
                 >
                   Older articles →

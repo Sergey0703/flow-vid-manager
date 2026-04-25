@@ -1,4 +1,4 @@
-import { getAllPosts, getPostBySlug } from '@/lib/blog';
+import { getAllPosts, getPostBySlug, getPillarByCategory, CATEGORY_LABELS } from '@/lib/blog';
 import ReactMarkdown from 'react-markdown';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -27,6 +27,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
+  const pillar = post.post_type === 'cluster' && post.category
+    ? await getPillarByCategory(post.category)
+    : null;
+  const categoryLabel = post.category ? (CATEGORY_LABELS[post.category] || post.category) : '';
+
   return (
     <main style={{ maxWidth: 740, margin: '0 auto', padding: '48px 24px', fontFamily: 'Georgia, serif' }}>
 
@@ -37,10 +42,32 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Header */}
       <header style={{ margin: '24px 0 40px' }}>
-        <time style={{ fontSize: 13, color: '#94a3b8', letterSpacing: 1 }}>
-          {new Date(post.date).toLocaleDateString('en-IE', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </time>
-        <h1 style={{ fontSize: 36, fontWeight: 700, lineHeight: 1.25, margin: '12px 0 0', color: '#0f172a' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <time style={{ fontSize: 13, color: '#94a3b8', letterSpacing: 1 }}>
+            {new Date(post.date).toLocaleDateString('en-IE', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </time>
+          {categoryLabel && (
+            <Link
+              href={`/blog?category=${post.category}`}
+              style={{
+                fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase',
+                color: '#0891b2', textDecoration: 'none', fontFamily: 'sans-serif',
+                background: '#e0f2fe', padding: '2px 8px', borderRadius: 10,
+              }}
+            >
+              {categoryLabel}
+            </Link>
+          )}
+          {post.post_type === 'pillar' && (
+            <span style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase',
+              color: '#7c3aed', fontFamily: 'sans-serif', background: '#ede9fe', padding: '2px 8px', borderRadius: 10,
+            }}>
+              Full Guide
+            </span>
+          )}
+        </div>
+        <h1 style={{ fontSize: 36, fontWeight: 700, lineHeight: 1.25, margin: '0', color: '#0f172a' }}>
           {post.title}
         </h1>
       </header>
@@ -61,6 +88,46 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <div style={{ fontSize: 18, lineHeight: 1.8, color: '#1e293b' }} className="prose">
         <ReactMarkdown>{post.content}</ReactMarkdown>
       </div>
+
+      {/* Pillar link for cluster articles */}
+      {pillar && (
+        <div style={{
+          marginTop: 48,
+          padding: '20px 24px',
+          background: '#f5f3ff',
+          borderRadius: 10,
+          borderLeft: '4px solid #7c3aed',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+        }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: '#7c3aed', fontFamily: 'sans-serif', marginBottom: 4 }}>
+              Full Guide
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#0f172a' }}>
+              {pillar.title}
+            </div>
+          </div>
+          <Link
+            href={`/blog/${pillar.slug}`}
+            style={{
+              background: '#7c3aed',
+              color: 'white',
+              padding: '10px 20px',
+              borderRadius: 8,
+              fontWeight: 700,
+              textDecoration: 'none',
+              fontSize: 14,
+              whiteSpace: 'nowrap',
+              fontFamily: 'sans-serif',
+            }}
+          >
+            Read full guide →
+          </Link>
+        </div>
+      )}
 
       {/* Author block */}
       <div style={{

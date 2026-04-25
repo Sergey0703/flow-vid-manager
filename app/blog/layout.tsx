@@ -19,8 +19,8 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
           justifyContent: 'space-between',
         }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <span style={{ color: '#ffffff', fontWeight: 700, fontSize: 18, fontFamily: 'sans-serif', letterSpacing: '-0.3px' }}>
-              AI<span style={{ color: 'hsl(190, 100%, 50%)' }}>Media</span>Flow
+            <span style={{ fontWeight: 700, fontSize: 18, fontFamily: 'sans-serif', letterSpacing: '-0.3px' }}>
+              <span style={{ color: '#ef4444' }}>AI</span><span style={{ color: '#ffffff' }}>MediaFlow</span>
             </span>
           </Link>
           <nav style={{ display: 'flex', gap: 28, alignItems: 'center' }}>

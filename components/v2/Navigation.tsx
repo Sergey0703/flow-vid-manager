@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const THEME_KEY = "v2-theme";
 
@@ -29,6 +29,7 @@ const Navigation = ({ isLight: isLightProp, onToggleTheme: onToggleThemeProp }: 
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [demoOpen, setDemoOpen] = useState(false);
+    const demoCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isLight, setIsLight] = useState(false);
 
     useEffect(() => {
@@ -72,8 +73,13 @@ const Navigation = ({ isLight: isLightProp, onToggleTheme: onToggleThemeProp }: 
                         <li><a href="/blog">Blog</a></li>
                         <li
                             className="v2-nav-dropdown-wrap"
-                            onMouseEnter={() => setDemoOpen(true)}
-                            onMouseLeave={() => setDemoOpen(false)}
+                            onMouseEnter={() => {
+                                if (demoCloseTimer.current) clearTimeout(demoCloseTimer.current);
+                                setDemoOpen(true);
+                            }}
+                            onMouseLeave={() => {
+                                demoCloseTimer.current = setTimeout(() => setDemoOpen(false), 150);
+                            }}
                         >
                             <span className="v2-nav-live-demo v2-nav-dropdown-trigger">
                                 Demo ▾

@@ -24,9 +24,6 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
             </span>
           </Link>
           <nav style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
-            <Link href="/" style={{ color: 'hsl(200, 20%, 65%)', fontSize: 14, textDecoration: 'none', fontFamily: 'sans-serif' }}>
-              Home
-            </Link>
             <Link href="/blog" style={{ color: 'hsl(190, 100%, 50%)', fontSize: 14, textDecoration: 'none', fontWeight: 600, fontFamily: 'sans-serif' }}>
               Blog
             </Link>

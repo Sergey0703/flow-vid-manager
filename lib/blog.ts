@@ -16,6 +16,7 @@ export interface BlogPost {
 }
 
 export const CATEGORY_LABELS: Record<string, string> = {
+  'ai-trends': 'AI Trends & News',
   dental: 'Dental Clinics',
   legal: 'Legal & Solicitors',
   hospitality: 'Hotels & Hospitality',

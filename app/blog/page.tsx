@@ -8,6 +8,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'Blog — AI Automation Insights | AIMediaFlow',
   description: 'Expert articles on AI automation for Irish businesses — hotels, clinics, retail. Practical guides and real ROI numbers.',
+  alternates: { canonical: 'https://aimediaflow.net/blog' },
 };
 
 const POSTS_PER_PAGE = 6;

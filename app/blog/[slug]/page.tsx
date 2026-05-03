@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${post.title} | AIMediaFlow`,
     description: post.meta_description,
+    alternates: { canonical: `https://aimediaflow.net/blog/${slug}` },
   };
 }
 

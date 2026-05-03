@@ -15,12 +15,12 @@ const FooterV2 = () => {
                     <div>
                         <h4>Services</h4>
                         <ul>
-                            <li><a href="/ai-phone-assistant-kerry">AI Phone Assistants</a></li>
-                            <li><a href="/ai-chatbot-ireland">Website Chatbots</a></li>
+                            <li><a href="/ai-phone-assistant-kerry">AI Phone Assistant Kerry</a></li>
+                            <li><a href="/ai-chatbot-ireland">AI Chatbot Ireland</a></li>
                             <li><a href="/ai-chatbot-kerry">AI Chatbot Kerry</a></li>
-                            <li><a href="/business-automation-killarney">Business Automation</a></li>
+                            <li><a href="/whatsapp-chatbot-ireland">WhatsApp Chatbot Ireland</a></li>
+                            <li><a href="/business-automation-killarney">Business Automation Killarney</a></li>
                             <li><a href="/#services">AI Marketing Videos</a></li>
-                            <li><a href="/#services">AI Strategy &amp; Consulting</a></li>
                             <li><a href="/#services">Workflow Automation</a></li>
                         </ul>
                     </div>

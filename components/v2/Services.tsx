@@ -19,7 +19,7 @@ const Services = () => {
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.05 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                         </div>
                         <h3>AI Phone Assistants</h3>
-                        <p>Intelligent voice agents that answer, qualify, and handle customer calls around the clock — so you never miss a lead again.</p>
+                        <p>Intelligent voice agents that answer, qualify, and handle customer calls around the clock — so you never miss a lead again. Built for <a href="/ai-chatbot-kerry" style={{ color: 'var(--v2-cyan)', textDecoration: 'none' }}>Kerry businesses</a>.</p>
                         <a href="/ai-phone-assistant-kerry" className="v2-service-link">Learn more →</a>
                     </div>
                     <div className="v2-service-card" style={{ animationDelay: "0.1s" }}>
@@ -27,7 +27,7 @@ const Services = () => {
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                         </div>
                         <h3>Smart Website Chatbots</h3>
-                        <p>Conversational AI that qualifies visitors, answers FAQs, and books appointments — 24/7, on autopilot.</p>
+                        <p>Conversational AI that qualifies visitors, answers FAQs, and books appointments — 24/7, on autopilot. Works on your website and <a href="/whatsapp-chatbot-ireland" style={{ color: 'var(--v2-cyan)', textDecoration: 'none' }}>WhatsApp</a>.</p>
                         <a href="/ai-chatbot-ireland" className="v2-service-link">Learn more →</a>
                     </div>
                     <div className="v2-service-card" style={{ animationDelay: "0.2s" }}>

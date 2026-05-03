@@ -17,6 +17,7 @@ const FooterV2 = () => {
                         <ul>
                             <li><a href="/ai-phone-assistant-kerry">AI Phone Assistants</a></li>
                             <li><a href="/ai-chatbot-ireland">Website Chatbots</a></li>
+                            <li><a href="/ai-chatbot-kerry">AI Chatbot Kerry</a></li>
                             <li><a href="/business-automation-killarney">Business Automation</a></li>
                             <li><a href="/#services">AI Marketing Videos</a></li>
                             <li><a href="/#services">AI Strategy &amp; Consulting</a></li>

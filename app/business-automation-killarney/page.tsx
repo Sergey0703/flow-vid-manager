@@ -20,6 +20,29 @@ export const metadata: Metadata = {
   },
 };
 
+const localBusinessSchema = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  name: "AIMediaFlow",
+  description: "Business automation and AI services for Killarney and Kerry businesses.",
+  url: "https://aimediaflow.net",
+  telephone: "+353852007612",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Killarney",
+    addressRegion: "Kerry",
+    addressCountry: "IE",
+  },
+  areaServed: [
+    { "@type": "City", name: "Killarney" },
+    { "@type": "City", name: "Tralee" },
+    { "@type": "City", name: "Kenmare" },
+    { "@type": "City", name: "Killorglin" },
+    { "@type": "City", name: "Listowel" },
+    { "@type": "AdministrativeArea", name: "Kerry" },
+  ],
+};
+
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -65,6 +88,10 @@ export default function BusinessAutomationKillarney() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
       />
       <Navigation />
       <main>
@@ -147,6 +174,40 @@ export default function BusinessAutomationKillarney() {
                 <p className="v2-seo-desc" style={{ lineHeight: 1.7 }}>{item.acceptedAnswer.text}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Local trust */}
+        <section className="v2-seo-section-a" style={{ padding: "60px 0" }}>
+          <div className="v2-container" style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
+            <h2 className="v2-section-title" style={{ marginBottom: 24 }}>
+              Killarney-Based. <span className="accent">Kerry-Focused.</span>
+            </h2>
+            <p className="v2-seo-desc" style={{ fontSize: "1.1rem", maxWidth: 720, margin: "0 auto 32px" }}>
+              We are an AI agency based in Killarney, County Kerry. We work with hotels, restaurants,
+              dental clinics, solicitor firms and retail businesses across Kerry — and we understand
+              the challenges local SMEs face. When you automate with us, you get a local team that
+              is available to meet in person, not a faceless overseas provider.
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+              {["Killarney", "Tralee", "Kenmare", "Killorglin", "Listowel", "Dingle"].map((city) => (
+                <span key={city} className="v2-section-tag" style={{ margin: 0 }}>{city}</span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Internal links */}
+        <section className="v2-seo-section-b" style={{ padding: "60px 0" }}>
+          <div className="v2-container" style={{ maxWidth: 800, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
+            <h2 className="v2-section-title" style={{ marginBottom: 32 }}>
+              More <span className="accent">AI Services</span> for Kerry Businesses
+            </h2>
+            <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+              <Link href="/ai-chatbot-kerry" className="v2-btn-secondary">AI Chatbot Kerry</Link>
+              <Link href="/ai-chatbot-ireland" className="v2-btn-secondary">AI Chatbot Ireland</Link>
+              <Link href="/ai-phone-assistant-kerry" className="v2-btn-secondary">AI Phone Assistant Kerry</Link>
+            </div>
           </div>
         </section>
 

@@ -220,6 +220,22 @@ export default function HotelDemo() {
             </div>
           </div>
 
+          {/* SEO static content */}
+          <noscript>
+            <section style={{ marginBottom: 32 }}>
+              <h2>AI Phone Receptionist for Hotels — Live Demo</h2>
+              <p>This live demo shows how AIMediaFlow&apos;s AI phone receptionist handles hotel bookings automatically. Call the AI agent, make a reservation, and watch it appear on the calendar in real time — no human staff required.</p>
+              <p>Our AI receptionist works 24/7 for hotels, B&amp;Bs, and guesthouses across Kerry and Ireland. It handles room availability checks, bookings, and guest queries over the phone using natural conversation.</p>
+              <ul>
+                <li>Instant booking confirmation</li>
+                <li>Real-time calendar update</li>
+                <li>Works with any phone system</li>
+                <li>Supports Irish English accent</li>
+              </ul>
+              <p>Interested in an AI receptionist for your Kerry hotel? <a href="/ai-phone-assistant-kerry">Learn more about our AI Phone Assistant</a> or <a href="/#contact">contact us</a>.</p>
+            </section>
+          </noscript>
+
           {/* Room calendars */}
           {rooms.length === 0 ? (
             <div style={{ textAlign: "center", color: "var(--v2-muted)", padding: 60 }}>Loading rooms…</div>

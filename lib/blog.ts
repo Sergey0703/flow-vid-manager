@@ -141,8 +141,20 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   if (!response.results.length) return null;
 
   const page = response.results[0] as PageObjectResponse;
-  const blocksResp = await notion.blocks.children.list({ block_id: page.id });
-  const content = blocksToMarkdown(blocksResp.results as BlockObjectResponse[]);
+
+  const allBlocks: BlockObjectResponse[] = [];
+  let cursor: string | undefined;
+  do {
+    const blocksResp = await notion.blocks.children.list({
+      block_id: page.id,
+      page_size: 100,
+      ...(cursor ? { start_cursor: cursor } : {}),
+    });
+    allBlocks.push(...(blocksResp.results as BlockObjectResponse[]));
+    cursor = blocksResp.has_more ? (blocksResp.next_cursor ?? undefined) : undefined;
+  } while (cursor);
+
+  const content = blocksToMarkdown(allBlocks);
 
   return { ...extractPost(page), content };
 }
